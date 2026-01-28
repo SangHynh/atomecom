@@ -5,11 +5,11 @@ import express, {
 } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import router from './shared/index.route.js';
 import { NotFoundError } from './shared/core/error.response.js';
+import { httpLogger } from '@shared/utils/logger.js';
 
 const app = express();
 
@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(cors());
-app.use(morgan('dev'));
+app.use(httpLogger);
 app.use(compression());
 app.use(
   rateLimit({

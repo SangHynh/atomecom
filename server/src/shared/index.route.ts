@@ -1,4 +1,4 @@
-import express , { type Request, type Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import healthRouter from '@monitoring/interfaces/health.route.js';
 
 const router = express.Router();

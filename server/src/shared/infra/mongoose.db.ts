@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import type { IDatabase } from '../../../shared/interfaces/IDatabase.js';
-import { InternalServerError } from '../../../shared/core/error.response.js';
+import { InternalServerError } from '@core/error.response.js';
+import type { IDatabase } from '@shared/interfaces/IDatabase.js';
 
 const MAX_POOL_SIZE = 100;
 const MIN_POOL_SIZE = 5;
