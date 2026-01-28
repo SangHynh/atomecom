@@ -40,5 +40,28 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
+
+    // Module Resolution
+    "baseUrl": ".",
+    "paths": {
+      "@modules/*": ["src/modules/*"],
+      "@cart/*": ["src/modules/cart/*"],
+      "@users/*": ["src/modules/users/*"],
+      "@products/*": ["src/modules/products/*"],
+      "@orders/*": ["src/modules/orders/*"],
+      "@categories/*": ["src/modules/categories/*"],
+      "@auth/*": ["src/modules/auth/*"],
+      "@discounts/*": ["src/modules/discounts/*"],
+      "@monitoring/*": ["src/modules/monitoring/*"],
+      "@reviews/*": ["src/modules/reviews/*"],
+      "@payments/*": ["src/modules/payments/*"],
+      "@blogs/*": ["src/modules/blogs/*"],
+
+      "@shared/*": ["src/shared/*"],
+      "@config/*": ["src/shared/configs/*"],
+      "@core/*": ["src/shared/core/*"],
+      "@interfaces/*": ["src/shared/interfaces/*"],
+      "@enum/*": ["src/shared/enum/*"]
+    }
   }
 }

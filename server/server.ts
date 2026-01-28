@@ -1,9 +1,9 @@
 import 'dotenv/config';
 import app from './src/app.js';
-import appConfig, { NODE_ENV } from './src/configs/app.config.js';
+import appConfig, { NODE_ENV } from './src/shared/configs/app.config.js';
 import type { Server } from 'node:http';
-import type { IDatabase } from './src/core/interfaces/IDatabase.js';
-import { MongoDatabase } from './src/infra/configs/mongoose.db.js';
+import { MongoDatabase } from './src/modules/monitoring/infra/mongoose.db.js';
+import type { IDatabase } from 'src/shared/interfaces/IDatabase.js';
 
 const SHUTDOWN_TIMEOUT_MS = 10000;
 const line = '='.repeat(50);

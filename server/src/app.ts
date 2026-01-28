@@ -8,8 +8,8 @@ import cors from 'cors';
 import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
-import { NotFoundError } from './core/utils/error.response.js';
-import router from './routes/index.route.js';
+import router from './shared/index.route.js';
+import { NotFoundError } from './shared/core/error.response.js';
 
 const app = express();
 
@@ -32,7 +32,7 @@ app.use(
 app.use(router);
 
 // error handlers
-app.use((req: Request, res: Response, next: NextFunction) => {
+app.use((_req: Request, _res: Response, next: NextFunction) => {
   const error = new NotFoundError('Route not found');
   next(error);
 });
