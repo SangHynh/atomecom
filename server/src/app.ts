@@ -8,8 +8,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
-import { NotFoundError } from './core/error.response.js';
-import { register } from 'node:module';
+import { NotFoundError } from './core/utils/error.response.js';
 import router from './routes/index.route.js';
 
 const app = express();
@@ -38,7 +37,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next(error);
 });
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   const statusCode = err.status || 500;
   if (statusCode >= 500) {
     console.error(`[Error][${err.module || 'App'}]:`, err);

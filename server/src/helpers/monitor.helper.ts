@@ -16,4 +16,4 @@ export const checkOverload = (dbMonitor: IDatabase) => {
   }
 };
 
-export default {checkOverload};
+export default { checkOverload };

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import type { IDatabase } from '../core/interfaces/IDatabase.js';
-import { InternalServerError } from '../core/error.response.js';
+import type { IDatabase } from '../../core/interfaces/IDatabase.js';
+import { InternalServerError } from '../../core/utils/error.response.js';
 
 const MAX_POOL_SIZE = 100;
 const MIN_POOL_SIZE = 5;
@@ -20,11 +20,11 @@ export class MongoDatabase implements IDatabase {
   public async connect(): Promise<void> {
     try {
       console.log(`Connecting to MongoDB...`);
-      await mongoose.connect(this._uri,{
+      await mongoose.connect(this._uri, {
         maxPoolSize: MAX_POOL_SIZE,
         minPoolSize: MIN_POOL_SIZE,
         socketTimeoutMS: SOCKET_TIMEOUT_MS,
-        serverSelectionTimeoutMS: SERVER_SELECTION_TIMEOUT_MS
+        serverSelectionTimeoutMS: SERVER_SELECTION_TIMEOUT_MS,
       });
       console.log(`MongoDB Connected`);
     } catch (err: any) {

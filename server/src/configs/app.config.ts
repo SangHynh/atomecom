@@ -7,6 +7,8 @@ interface Config {
   app: {
     port: number;
     host: string;
+    version: string;
+    _v: string;
   };
   db: {
     uri: string;
@@ -18,6 +20,8 @@ const development: Config = {
   app: {
     port: Number(process.env.DEV_APP_PORT) || 5000,
     host: process.env.DEV_APP_HOST || 'localhost',
+    version: '1.0.0',
+    _v: 'v1',
   },
   db: {
     uri: process.env.DEV_DB_URI || 'mongodb://localhost:27017/dev_db',
@@ -29,6 +33,8 @@ const production: Config = {
   app: {
     port: Number(process.env.PROD_APP_PORT) || 8080,
     host: process.env.PROD_APP_HOST || '0.0.0.0',
+    version: '1.0.0',
+    _v: 'v1',
   },
   db: {
     uri: process.env.PROD_DB_URI || '',

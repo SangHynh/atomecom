@@ -12,18 +12,18 @@ class HealthService {
         memoryUsage: {
           heapUsed: `${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`,
           rss: `${(process.memoryUsage().rss / 1024 / 1024).toFixed(2)} MB`,
-        }
+        },
       },
       system: {
         platform: process.platform,
         cpuCores: os.cpus().length,
         freeMemory: `${(os.freemem() / 1024 / 1024 / 1024).toFixed(2)} GB`,
-        loadAverage: os.loadavg(), 
+        loadAverage: os.loadavg(),
       },
       database: {
         type: this.db.name,
         activeConnections: this.db.getNumberOfConnections(),
-      }
+      },
     };
   }
 }

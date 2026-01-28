@@ -1,0 +1,8 @@
+export enum PAYMENT_METHOD {
+    VNPAY = 'VNPAY',
+    COD = 'COD',
+    STRIPE = 'STRIPE',
+    PAYPAL = 'PAYPAL',
+    BANK_TRANSFER = 'BANK_TRANSFER',
+    CASH_ON_DELIVERY = 'CASH_ON_DELIVERY'
+}
