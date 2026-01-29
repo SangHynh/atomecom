@@ -1,5 +1,5 @@
 import { type Request, type Response } from 'express';
-import { OK } from '../../../shared/core/success.response.js';
+import { OK } from '@shared/core/success.response.js';
 import type HealthService from '../use-cases/health.service.js';
 
 class HealthController {

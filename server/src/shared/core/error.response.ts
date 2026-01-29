@@ -16,35 +16,29 @@ const STATUS_CODE = {
 interface AppErrorArgs {
   message: string;
   status: number;
-  errorCode?: string;
   layer?: string;
   module?: string;
-}
-
-interface ErrorOptions {
-  module?: string;
-  layer?: string;
+  errors?: any[];
 }
 
 // ===== BASE ERROR =====
 export class AppError extends Error {
   public readonly status: number;
-  public readonly errorCode: string;
-  public readonly layer: string;
-  public readonly module: string;
-
+  public layer: string;
+  public module: string;
+  public errors: any[];
   constructor({
     message,
     status,
-    errorCode = 'APP_ERROR',
     layer = 'unknown',
     module = 'unknown',
+    errors = [],
   }: AppErrorArgs) {
     super(message);
     this.status = status;
-    this.errorCode = errorCode;
     this.layer = layer;
     this.module = module;
+    this.errors = errors;
 
     Object.setPrototypeOf(this, new.target.prototype);
 
@@ -56,106 +50,85 @@ export class AppError extends Error {
 
 // ===== CLIENT ERRORS =====
 export class BadRequestError extends AppError {
-  constructor(
-    message: string = 'Bad request',
-    { module = 'unknown', layer = 'unknown' }: ErrorOptions = {},
-  ) {
+  constructor(message: string = 'Bad request', errors: any[] = []) {
     super({
-      message,
+      message: message || 'BAD_REQUEST',
       status: STATUS_CODE.BAD_REQUEST,
-      errorCode: 'BAD_REQUEST',
-      module,
-      layer,
+      module: 'unknown',
+      layer: 'unknown',
+      errors,
     });
   }
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(
-    message: string = 'Unauthorized',
-    { module = 'unknown', layer = 'unknown' }: ErrorOptions = {},
-  ) {
+  constructor(message: string = 'Unauthorized', errors: any[] = []) {
     super({
-      message,
+      message: message || 'UNAUTHORIZED',
       status: STATUS_CODE.UNAUTHORIZED,
-      errorCode: 'UNAUTHORIZED',
-      module,
-      layer,
+      module: 'unknown',
+      layer: 'unknown',
+      errors,
     });
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(
-    message: string = 'Forbidden',
-    { module = 'unknown', layer = 'unknown' }: ErrorOptions = {},
-  ) {
+  constructor(message: string = 'Forbidden', errors: any[] = []) {
     super({
-      message,
+      message: message || 'FORBIDDEN',
       status: STATUS_CODE.FORBIDDEN,
-      errorCode: 'FORBIDDEN',
-      module,
-      layer,
+      module: 'unknown',
+      layer: 'unknown',
+      errors,
     });
   }
 }
 
 export class NotFoundError extends AppError {
-  constructor(
-    message: string = 'Resource not found',
-    { module = 'unknown', layer = 'unknown' }: ErrorOptions = {},
-  ) {
+  constructor(message: string = 'Resource not found', errors: any[] = []) {
     super({
-      message,
+      message: message || 'NOT_FOUND',
       status: STATUS_CODE.NOT_FOUND,
-      errorCode: 'NOT_FOUND',
-      module,
-      layer,
+      module: 'unknown',
+      layer: 'unknown',
+      errors,
     });
   }
 }
 
 export class ConflictError extends AppError {
-  constructor(
-    message: string = 'Conflict',
-    { module = 'unknown', layer = 'unknown' }: ErrorOptions = {},
-  ) {
+  constructor(message: string = 'Conflict', errors: any[] = []) {
     super({
-      message,
+      message: message || 'CONFLICT',
       status: STATUS_CODE.CONFLICT,
-      errorCode: 'CONFLICT',
-      module,
-      layer,
+      module: 'unknown',
+      layer: 'unknown',
+      errors,
     });
   }
 }
 
 export class UnprocessableEntityError extends AppError {
-  constructor(
-    message: string = 'Unprocessable entity',
-    { module = 'unknown', layer = 'unknown' }: ErrorOptions = {},
-  ) {
+  constructor(message: string = 'Unprocessable entity', errors: any[] = []) {
     super({
-      message,
+      message: message || 'UNPROCESSABLE_ENTITY',
       status: STATUS_CODE.UNPROCESSABLE_ENTITY,
-      errorCode: 'UNPROCESSABLE_ENTITY',
-      module,
-      layer,
+      module: 'unknown',
+      layer: 'unknown',
+      errors,
     });
   }
 }
 
 export class TooManyRequestsError extends AppError {
-  constructor(
-    message: string = 'Too many requests',
-    { module = 'unknown', layer = 'unknown' }: ErrorOptions = {},
-  ) {
+  constructor(message: string = 'Too many requests', errors: any[] = []) {
     super({
-      message,
+      message: message || 'TOO_MANY_REQUESTS',
       status: STATUS_CODE.TOO_MANY_REQUESTS,
-      errorCode: 'TOO_MANY_REQUESTS',
-      module,
-      layer,
+      module: 'unknown',
+      layer: 'unknown',
+      errors,
     });
   }
 }
@@ -163,46 +136,37 @@ export class TooManyRequestsError extends AppError {
 // ===== SERVER ERRORS =====
 
 export class InternalServerError extends AppError {
-  constructor(
-    message: string = 'Internal server error',
-    { module = 'unknown', layer = 'unknown' }: ErrorOptions = {},
-  ) {
+  constructor(message: string = 'Internal server error', errors: any[] = []) {
     super({
-      message,
+      message: message || 'INTERNAL_SERVER_ERROR',
       status: STATUS_CODE.INTERNAL_SERVER_ERROR,
-      errorCode: 'INTERNAL_SERVER_ERROR',
-      module,
-      layer,
+      module: 'unknown',
+      layer: 'unknown',
+      errors,
     });
   }
 }
 
 export class BadGatewayError extends AppError {
-  constructor(
-    message: string = 'Bad gateway',
-    { module = 'unknown', layer = 'unknown' }: ErrorOptions = {},
-  ) {
+  constructor(message: string = 'Bad gateway', errors: any[] = []) {
     super({
-      message,
+      message: message || 'BAD_GATEWAY',
       status: STATUS_CODE.BAD_GATEWAY,
-      errorCode: 'BAD_GATEWAY',
-      module,
-      layer,
+      module: 'unknown',
+      layer: 'unknown',
+      errors,
     });
   }
 }
 
 export class ServiceUnavailableError extends AppError {
-  constructor(
-    message: string = 'Service unavailable',
-    { module = 'unknown', layer = 'unknown' }: ErrorOptions = {},
-  ) {
+  constructor(message: string = 'Service unavailable', errors: any[] = []) {
     super({
-      message,
+      message: message || 'SERVICE_UNAVAILABLE',
       status: STATUS_CODE.SERVICE_UNAVAILABLE,
-      errorCode: 'SERVICE_UNAVAILABLE',
-      module,
-      layer,
+      module: 'unknown',
+      layer: 'unknown',
+      errors,
     });
   }
 }

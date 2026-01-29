@@ -1,0 +1,12 @@
+@url_dev=http://localhost:5000/v1/api
+
+### Create user
+POST {{url_dev}}/users
+Content-Type: application/json
+
+{
+    "name": "Hacker Lỏ",
+    "email": "test2@gmail.com",
+    "password": "abc123",
+    "role": "user" 
+}

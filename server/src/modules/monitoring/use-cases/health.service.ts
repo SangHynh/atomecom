@@ -1,6 +1,6 @@
 import os from 'os';
 import process from 'process';
-import type { IDatabase } from '../../../shared/interfaces/IDatabase.js';
+import type { IDatabase } from '@shared/interfaces/IDatabase.js';
 
 class HealthService {
   constructor(private readonly db: IDatabase) {}

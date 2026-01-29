@@ -10,6 +10,7 @@ import rateLimit from 'express-rate-limit';
 import router from './shared/index.route.js';
 import { NotFoundError } from './shared/core/error.response.js';
 import { httpLogger } from '@shared/utils/logger.js';
+import { ZodError } from 'zod';
 
 const app = express();
 
@@ -39,16 +40,35 @@ app.use((_req: Request, _res: Response, next: NextFunction) => {
 
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   const statusCode = err.status || 500;
+
+  // St1: Validation error
+  if (err instanceof ZodError) {
+    return res.status(400).json({
+      status: 'error',
+      statusCode: 400,
+      module: 'VALIDATION',
+      layer: 'INTERFACE',
+      message: 'VALIDATION_ERROR',
+      errors: err.issues.map((e) => ({
+        field: e.path.join('.'),
+        message: e.message.toUpperCase().replace(/ /g, '_'), 
+      })),
+    });
+  }
+
+  // St2: Log error
   if (statusCode >= 500) {
     console.error(`[Error][${err.module || 'App'}]:`, err);
   }
+
+  // St3: App error
   res.status(statusCode).json({
     status: 'error',
     statusCode,
-    errorCode: err.errorCode,
     module: err.module || 'App',
     layer: err.layer || 'App',
-    message: err.message || 'Internal Server Error',
+    message: err.message.toUpperCase().replace(/ /g, '_') || 'INTERNAL_SERVER_ERROR',
+    errors: err.errors || [],
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 });
