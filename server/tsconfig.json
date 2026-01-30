@@ -49,7 +49,6 @@
       "@users/*": ["src/modules/users/*"],
       "@products/*": ["src/modules/products/*"],
       "@orders/*": ["src/modules/orders/*"],
-      "@categories/*": ["src/modules/categories/*"],
       "@auth/*": ["src/modules/auth/*"],
       "@discounts/*": ["src/modules/discounts/*"],
       "@monitoring/*": ["src/modules/monitoring/*"],

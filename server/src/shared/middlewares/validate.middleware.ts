@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { asyncHandler } from '@shared/core/asyncHandler.js';
 
 export const validate = (schema: any) =>
-  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
     // St1: Validate and parse data
     const parsed = await schema.parseAsync({
       body: req.body,

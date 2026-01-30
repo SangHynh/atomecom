@@ -9,7 +9,7 @@ const UserAddressSchema = z.object({
 });
 
 
-// Create user DTO & validation
+// Create user validation
 export const CreateUserRequestSchema = z.object({
   body: z.object({
     name: z.string().min(2, "NAME_MUST_BE_AT_LEAST_2_CHARS"),
@@ -20,12 +20,7 @@ export const CreateUserRequestSchema = z.object({
   })
 });
 
-export type CreateUserDTO = z.infer<typeof CreateUserRequestSchema>['body'];
-
-
-// Update user DTO & validation
+// Update user  validation
 export const UpdateUserRequestSchema = z.object({
   body: CreateUserRequestSchema.shape.body.partial()
 });
-
-export type UpdateUserDTO = z.infer<typeof UpdateUserRequestSchema>['body'];

@@ -15,6 +15,6 @@ export interface UserRepository {
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
   findByPhone(phone: string): Promise<User | null>;
-  create(user: User): Promise<User>;
-  update(id: string, data: Partial<User>): Promise<User | null>;
+  create(user: Omit<User, 'id'>): Promise<User>;
+  update(id: string, data: Partial<Omit<User, 'id'>>): Promise<User | null>;
 }

@@ -2,7 +2,6 @@ import type { User, UserAddress } from '@modules/users/domain/user.domain.js';
 import { USER_ROLE } from '@shared/enum/userRole.enum.js';
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
-
 // 1. Address Sub-schema
 const AddressSchema = new Schema<UserAddress>(
   {

@@ -12,7 +12,6 @@ export class MongooseUserRepo implements UserRepository {
   }): Promise<{ data: User[]; totalElements: number }> {
     const { status, keyword, role, offset = 0, limit = 10 } = params;
 
-    // St1: Build dynamic filter query based on input params
     const query: any = {};
     if (status) query.status = status;
     if (role) query.role = role;
@@ -23,7 +22,6 @@ export class MongooseUserRepo implements UserRepository {
       ];
     }
 
-    // St2: Execute data fetching and counting in parallel for performance
     const [data, totalElements] = await Promise.all([
       UserModel.find(query)
         .sort({ createdAt: -1 })
@@ -34,37 +32,56 @@ export class MongooseUserRepo implements UserRepository {
     ]);
 
     return {
-      data: data as unknown as User[],
+      data: data.map((item) => this._toDomain(item)!),
       totalElements,
     };
   }
 
   public async findByEmail(email: string): Promise<User | null> {
-    const result = await UserModel.findOne({ email }).select('+password').lean();
-    return result as unknown as User;
+    const result = await UserModel.findOne({ email })
+      .select('+password')
+      .lean();
+    return this._toDomain(result);
   }
 
   public async findByPhone(phone: string): Promise<User | null> {
-    const result = await UserModel.findOne({ phone }).select('+password').lean();
-    return result as unknown as User;
+    const result = await UserModel.findOne({ phone })
+      .select('+password')
+      .lean();
+    return this._toDomain(result);
   }
 
   public async findById(id: string): Promise<User | null> {
-    throw new Error('Method not implemented.');
+    const result = await UserModel.findById(id).lean();
+    return this._toDomain(result);
   }
 
-  public async update(id: string, data: any): Promise<User | null> {
+  public async update(
+    id: string,
+    data: Partial<Omit<User, 'id'>>,
+  ): Promise<User | null> {
     const updatedUser = await UserModel.findByIdAndUpdate(
       id,
       { $set: data },
-      { new: true }
+      { new: true },
     ).lean();
-    return updatedUser as unknown as User;
+
+    return this._toDomain(updatedUser);
   }
 
-  public async create(user: any): Promise<User> {
+  public async create(user: Omit<User, 'id'>): Promise<User> {
     const newUser = new UserModel(user);
     const savedUser = await newUser.save();
-    return savedUser.toJSON() as unknown as User;
+    return this._toDomain(savedUser.toJSON())!;
+  }
+
+  // Mapper to Domain Entity
+  private _toDomain(doc: any): User | null {
+    if (!doc) return null;
+    const { _id, ...rest } = doc;
+    return {
+      ...rest,
+      id: _id.toString(),
+    } as User;
   }
 }
