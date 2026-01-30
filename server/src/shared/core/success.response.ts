@@ -1,5 +1,6 @@
 import { type Response } from 'express';
 import appConfig from '@config/app.config.js';
+import type { PaginatedResult } from '@shared/interfaces/IPagination.js';
 
 // ===== HTTP SUCCESS CODE =====
 const SUCCESS_CODE = {
@@ -14,12 +15,12 @@ interface MetaData {
   timestamp: string;
   version: string;
   trace_id: string | null;
-  execution_time?: string;
+  execution_time?: string | null;
   pagination?: {
-    page: number;
-    limit: number;
     total_items: number;
     total_pages: number;
+    page: number;
+    limit: number;
   };
 }
 
@@ -54,6 +55,7 @@ class SuccessResponse<T = any> {
       timestamp: new Date().toISOString(),
       version: appConfig?.app?.version || '1.0.0',
       trace_id: null,
+      execution_time: null,
       ...metadata,
     };
   }
@@ -62,13 +64,18 @@ class SuccessResponse<T = any> {
     res: Response,
     headers: Record<string, string | string[]> = {},
   ): Response {
-    const traceId = (res as any).req?.traceId;
+    const req = (res as any).req;
+    const traceId = req?.traceId;
     if (traceId) {
       this.metadata.trace_id = traceId;
+      res.setHeader('x-trace-id', traceId);
     }
-
     if (Object.keys(headers).length > 0) {
       res.set(headers);
+    }
+    if (req?.startTime) {
+      const duration = (performance.now() - req.startTime).toFixed(3);
+      this.metadata.execution_time = `${duration}ms`;
     }
     return res.status(this.code).json(this);
   }
@@ -82,6 +89,21 @@ export class OK<T = any> extends SuccessResponse<T> {
     metadata,
   }: Partial<SuccessResponseArgs<T>> = {}) {
     super({ message, status: SUCCESS_CODE.OK, data, metadata });
+  }
+
+  public static withPagination<T>(res: Response, result: PaginatedResult<T>) {
+    return new OK({
+      message: 'Success',
+      data: result.data,
+      metadata: {
+        pagination: {
+          total_items: result.pagination.totalElements,
+          total_pages: result.pagination.totalPage,
+          page: result.pagination.currentPage,
+          limit: result.pagination.elementsPerPage,
+        },
+      },
+    }).send(res);
   }
 }
 

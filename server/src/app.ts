@@ -11,11 +11,15 @@ import router from './shared/index.route.js';
 import { NotFoundError } from './shared/core/error.response.js';
 import { httpLogger } from '@shared/utils/logger.js';
 import { ZodError } from 'zod';
+import { requestIdMiddleware } from '@shared/middlewares/requestID.middleware.js';
+import { performanceMiddleware } from '@shared/middlewares/perfomance.middleware.js';
 
 const app = express();
 
 // middleware
 app.use(express.json());
+app.use(requestIdMiddleware);
+app.use(performanceMiddleware);
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(cors());

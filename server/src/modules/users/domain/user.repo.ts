@@ -1,9 +1,9 @@
 import type { USER_STATUS } from '@enum/userStatus.enum.js';
 import type { User } from './user.domain.js';
 
-export interface UserRepository {
+export interface IUserRepository {
   findAll(params: {
-    status?: USER_STATUS;
+    status?: USER_STATUS | undefined;
     keyword?: string;
     role?: string;
     offset: number;

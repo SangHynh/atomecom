@@ -6,6 +6,7 @@ import { CreateUserRequestSchema } from "@modules/users/interfaces/user.validato
 
 const userRouter = Router();
 
+userRouter.get('/users', asyncHandler(userControllerImpl.findAll));
 userRouter.post('/users',validate(CreateUserRequestSchema), asyncHandler(userControllerImpl.create));
 
 export default userRouter;

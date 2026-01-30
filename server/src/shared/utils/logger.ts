@@ -80,8 +80,8 @@ export const httpLogger = morgan((tokens, req, res) => {
     `${tokens['response-time']?.(req, res) || 0}ms`,
   );
   const remoteAddr = chalk.dim(tokens['remote-addr']?.(req, res) || 'unknown');
-
-  const message = `${remoteAddr} ${method} ${url} ${statusColor(status)} - ${responseTime}`;
+  const traceId = chalk.dim(`[${(req as any).traceId || 'no-id'}]`);
+  const message = `${traceId} ${remoteAddr} ${method} ${url} ${statusColor(status)} - ${responseTime}`;
 
   logger.http(message);
   return null;

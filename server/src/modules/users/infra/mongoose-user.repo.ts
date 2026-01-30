@@ -1,12 +1,12 @@
 import type { User } from '@modules/users/domain/user.domain.js';
-import type { UserRepository } from '@modules/users/domain/user.repo.js';
+import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
 
-export class MongooseUserRepo implements UserRepository {
+export class MongooseUserRepo implements IUserRepository {
   public async findAll(params: {
-    status?: string;
-    keyword?: string;
-    role?: string;
+    status?: string | undefined;
+    keyword?: string | undefined;
+    role?: string | undefined;
     offset: number;
     limit: number;
   }): Promise<{ data: User[]; totalElements: number }> {
@@ -78,10 +78,11 @@ export class MongooseUserRepo implements UserRepository {
   // Mapper to Domain Entity
   private _toDomain(doc: any): User | null {
     if (!doc) return null;
-    const { _id, ...rest } = doc;
+    const data = doc.toObject ? doc.toObject() : doc;
+    const { _id, password, __v, ...rest } = data;
     return {
       ...rest,
-      id: _id.toString(),
+      id: _id.toString(), 
     } as User;
   }
 }

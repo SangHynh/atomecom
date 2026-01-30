@@ -1,5 +1,9 @@
 @url_dev=http://localhost:5000/v1/api
 
+### Find user
+GET {{url_dev}}/users
+Content-Type: application/json
+
 ### Create user
 POST {{url_dev}}/users
 Content-Type: application/json

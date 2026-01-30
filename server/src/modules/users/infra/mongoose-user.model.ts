@@ -49,7 +49,7 @@ const UserSchema = new Schema<User & Document>(
 );
 
 // 3. Indexing
-UserSchema.index({ email: 1 });
+
 
 // 4. Pre Hooks
 UserSchema.pre('save', async function (this: any) {
