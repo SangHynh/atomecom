@@ -13,6 +13,8 @@ import { httpLogger } from '@shared/utils/logger.js';
 import { ZodError } from 'zod';
 import { requestIdMiddleware } from '@shared/middlewares/requestID.middleware.js';
 import { performanceMiddleware } from '@shared/middlewares/perfomance.middleware.js';
+import { globalRateLimiter } from '@shared/middlewares/ratelimit.middleware.js';
+import { errorHandler } from '@shared/middlewares/error.middleware.js';
 
 const app = express();
 
@@ -25,14 +27,7 @@ app.use(helmet());
 app.use(cors());
 app.use(httpLogger);
 app.use(compression());
-app.use(
-  rateLimit({
-    windowMs: 60 * 1000,
-    max: 30,
-    standardHeaders: 'draft-8',
-    legacyHeaders: false,
-  }),
-);
+app.use(globalRateLimiter);
 // routes
 app.use(router);
 
@@ -42,39 +37,6 @@ app.use((_req: Request, _res: Response, next: NextFunction) => {
   next(error);
 });
 
-app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  const statusCode = err.status || 500;
-
-  // St1: Validation error
-  if (err instanceof ZodError) {
-    return res.status(400).json({
-      status: 'error',
-      statusCode: 400,
-      module: 'VALIDATION',
-      layer: 'INTERFACE',
-      message: 'VALIDATION_ERROR',
-      errors: err.issues.map((e) => ({
-        field: e.path.join('.'),
-        message: e.message.toUpperCase().replace(/ /g, '_'), 
-      })),
-    });
-  }
-
-  // St2: Log error
-  if (statusCode >= 500) {
-    console.error(`[Error][${err.module || 'App'}]:`, err);
-  }
-
-  // St3: App error
-  res.status(statusCode).json({
-    status: 'error',
-    statusCode,
-    module: err.module || 'App',
-    layer: err.layer || 'App',
-    message: err.message.toUpperCase().replace(/ /g, '_') || 'INTERNAL_SERVER_ERROR',
-    errors: err.errors || [],
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-  });
-});
+app.use(errorHandler);
 
 export default app;
