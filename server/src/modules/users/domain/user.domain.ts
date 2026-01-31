@@ -5,7 +5,6 @@ export interface UserAddress {
   isDefault: boolean;
   street: string;
   city: string;
-  phone: string;
   version?: number;
 }
 
@@ -13,10 +12,11 @@ export interface User {
   id?: string;
   name: string;
   email: string;
+  phone?: string;
   password?: string;
   role: USER_ROLE;
   addresses: UserAddress[];
   status?: USER_STATUS;
-  verified?: boolean;
+  isVerified?: boolean;
   version?: number;
 }

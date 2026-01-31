@@ -1,0 +1,37 @@
+@url_dev=http://localhost:5000/v1/api
+@page=1
+@limit=5
+@userId=
+@userEmail=test@gmail.com
+@userPhone=
+
+############################################################################################
+
+### 1. Find user (Query Param)
+GET {{url_dev}}/users?page={{page}}&limit={{limit}}
+Content-Type: application/json
+
+### 2. Find User By ID (Path Param)
+GET {{url_dev}}/users/{{userId}}
+Content-Type: application/json
+
+### 3. Find User By Email (Path Param)
+GET {{url_dev}}/users/email/{{userEmail}}
+Content-Type: application/json
+
+### 4. Find User By Phone (Path Param)
+GET {{url_dev}}/users/phone/{{userPhone}}
+Content-Type: application/json
+
+### 5. Create user
+POST {{url_dev}}/users
+Content-Type: application/json
+
+{
+    "name": "Hacker Lỏ",
+    "email": "test@gmail.com",
+    "phone": "0123456789",
+    "password": "abc123",
+    "role": "user" 
+}
+

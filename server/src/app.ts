@@ -32,11 +32,6 @@ app.use(globalRateLimiter);
 app.use(router);
 
 // error handlers
-app.use((_req: Request, _res: Response, next: NextFunction) => {
-  const error = new NotFoundError('Route not found');
-  next(error);
-});
-
 app.use(errorHandler);
 
 export default app;

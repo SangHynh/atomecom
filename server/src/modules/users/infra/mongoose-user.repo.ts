@@ -1,6 +1,7 @@
 import type { User } from '@modules/users/domain/user.domain.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
+import { InternalServerError } from '@shared/core/error.response.js';
 
 export class MongooseUserRepo implements IUserRepository {
   public async findAll(params: {
@@ -79,10 +80,17 @@ export class MongooseUserRepo implements IUserRepository {
   private _toDomain(doc: any): User | null {
     if (!doc) return null;
     const data = doc.toObject ? doc.toObject() : doc;
-    const { _id, password, __v, ...rest } = data;
+    const targetId = data._id || data.id;
+    if (!targetId) {
+      const error = new InternalServerError('DATA_MAPPING_ERROR');
+      error.layer = 'Repository';
+      error.module = 'User';
+      throw error;
+    }
+    const { _id, id, password, __v, ...rest } = data;
     return {
       ...rest,
-      id: _id.toString(), 
+      id: targetId.toString(),
     } as User;
   }
 }

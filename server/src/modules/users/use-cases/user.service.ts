@@ -1,37 +1,86 @@
-import type { User } from "@modules/users/domain/user.domain.js";
-import type { IUserRepository } from "@modules/users/domain/user.repo.js";
-import type { CreateUserDTO, FindAllUserDTO } from "@modules/users/interfaces/user.dtos.js";
-import { ConflictError } from "@shared/core/error.response.js";
-import { USER_ROLE } from "@shared/enum/userRole.enum.js";
-import { USER_STATUS } from "@shared/enum/userStatus.enum.js";
-import type { PaginatedResult } from "@shared/interfaces/IPagination.js";
+import type { User } from '@modules/users/domain/user.domain.js';
+import type { IUserRepository } from '@modules/users/domain/user.repo.js';
+import type {
+  CreateUserDTO,
+  FindAllUserDTO,
+  UpdateUserDTO,
+} from '@modules/users/interfaces/user.dtos.js';
+import { ConflictError, NotFoundError } from '@shared/core/error.response.js';
+import { USER_ROLE } from '@shared/enum/userRole.enum.js';
+import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
+import type { PaginatedResult } from '@shared/interfaces/IPagination.js';
 
 export class UserService {
   constructor(private readonly userRepo: IUserRepository) {}
 
   public async findAll(dto: FindAllUserDTO): Promise<PaginatedResult<User>> {
-    const query = this._toRepositoryQuery(dto);
+    const query = this._toFindAllQuery(dto);
     const { data, totalElements } = await this.userRepo.findAll(query);
     return this._toPaginatedResponse(data, totalElements, dto);
   }
 
+  public async findById(id: string): Promise<User | null> {
+    return await this.userRepo.findById(id);
+  }
+
+  public async findByEmail(email: string): Promise<User | null> {
+    return await this.userRepo.findByEmail(email);
+  }
+
+  public async findByPhone(phone: string): Promise<User | null> {
+    return await this.userRepo.findByPhone(phone);
+  }
+
   public async create(dto: CreateUserDTO): Promise<User> {
-    await this._validateUniqueness(dto.email, dto.phone);
+    // TODO: Transaction
+    await Promise.all([
+      this._validateEmailUniqueness(dto.email),
+      dto.phone ? this._validatePhoneUniqueness(dto.phone) : Promise.resolve(),
+    ]);
     const entityData = this._toCreateEntity(dto);
     return await this.userRepo.create(entityData);
   }
 
-  /* ============================================================================== */
-  /* INTERNAL MAPPERS                                                               */
-  /* ============================================================================== */
+  public async changePassword(
+    id: string,
+    passwordHash: string,
+  ): Promise<User | null> {
+    return await this.userRepo.update(id, { password: passwordHash });
+  }
+
+  public async changeEmail(id: string, newEmail: string): Promise<User | null> {
+    await Promise.all([
+      this._getExistingUser(id),
+      this._validateEmailUniqueness(newEmail, id),
+    ]);
+    return await this.userRepo.update(id, { email: newEmail });
+  }
+
+  public async changePhone(id: string, newPhone: string): Promise<User | null> {
+    await Promise.all([
+      this._getExistingUser(id),
+      this._validatePhoneUniqueness(newPhone, id),
+    ])
+    return await this.userRepo.update(id, { phone: newPhone });
+  }
+
+  public async updateStatusAccount(id: string, status: USER_STATUS): Promise<User | null> {
+    await this._getExistingUser(id);
+    return await this.userRepo.update(id, { status });
+  }
+
+  public async verifyAccount(id: string, isVerified: boolean): Promise<User | null> {
+    await this._getExistingUser(id);
+    return await this.userRepo.update(id, { isVerified });
+  }
 
   /**
    * DTO -> Repository Query (Translate request from Client to Repository Query)
    */
-  private _toRepositoryQuery(dto: FindAllUserDTO) {
+  private _toFindAllQuery(dto: FindAllUserDTO) {
     const page = Number(dto.page) || 1;
     const limit = Number(dto.limit) || 10;
-    
+
     return {
       offset: (page - 1) * limit,
       limit,
@@ -44,7 +93,11 @@ export class UserService {
   /**
    * Domain Result -> Paginated Response (Encapsulate data and pagination info)
    */
-  private _toPaginatedResponse(data: User[], total: number, dto: FindAllUserDTO): PaginatedResult<User> {
+  private _toPaginatedResponse(
+    data: User[],
+    total: number,
+    dto: FindAllUserDTO,
+  ): PaginatedResult<User> {
     const limit = Number(dto.limit) || 10;
     return {
       data,
@@ -64,29 +117,50 @@ export class UserService {
     return {
       ...dto,
       status: USER_STATUS.ACTIVE,
-      verified: false,
+      isVerified: false,
       role: dto.role || USER_ROLE.USER,
       addresses: dto.addresses || [],
     };
   }
 
-  /* ============================================================================== */
-  /* INTERNAL VALIDATORS                                                            */
-  /* ============================================================================== */
+  /**
+   * Validate user existence
+   */
+  private async _getExistingUser(id: string): Promise<User> {
+    const user = await this.userRepo.findById(id);
+    if (!user) {
+      throw new NotFoundError('USER_NOT_FOUND');
+    }
+    return user;
+  }
 
-  private async _validateUniqueness(email: string, phone?: string): Promise<void> {
-    const errors: any[] = [];
-    
-    const [emailExists, phoneExists] = await Promise.all([
-      this.userRepo.findByEmail(email),
-      phone ? this.userRepo.findByPhone(phone) : null
-    ]);
+  /**
+   * Validate Email uniqueness
+   */
+  private async _validateEmailUniqueness(
+    email: string,
+    excludeId?: string,
+  ): Promise<void> {
+    const user = await this.userRepo.findByEmail(email);
+    if (user && user.id !== excludeId) {
+      throw new ConflictError('EMAIL_ALREADY_EXISTS', [
+        { field: 'email', message: 'EMAIL_ALREADY_EXISTS' },
+      ]);
+    }
+  }
 
-    if (emailExists) errors.push({ field: 'email', message: 'EMAIL_ALREADY_EXISTS' });
-    if (phoneExists) errors.push({ field: 'phone', message: 'PHONE_ALREADY_EXISTS' });
-
-    if (errors.length > 0) {
-      throw new ConflictError('USER_ALREADY_EXISTS', errors);
+  /**
+   * Validate Phone uniqueness
+   */
+  private async _validatePhoneUniqueness(
+    phone: string,
+    excludeId?: string,
+  ): Promise<void> {
+    const user = await this.userRepo.findByPhone(phone);
+    if (user && user.id !== excludeId) {
+      throw new ConflictError('PHONE_ALREADY_EXISTS', [
+        { field: 'phone', message: 'PHONE_ALREADY_EXISTS' },
+      ]);
     }
   }
 }

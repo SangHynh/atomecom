@@ -18,11 +18,7 @@ export interface CreateUserDTO {
   addresses?: UserAddress[]; 
 }
 
-export interface UserResponseDTO {
-  id: string;
-  name: string;
-  email: string;
-  role: USER_ROLE;
-  status: USER_STATUS;
-  addresses: UserAddress[];
+export interface UpdateUserDTO {
+  name?: string;
+  addresses?: UserAddress[]; 
 }

@@ -8,7 +8,6 @@ const AddressSchema = new Schema<UserAddress>(
     isDefault: { type: Boolean, default: false },
     street: { type: String, required: true },
     city: { type: String, required: true },
-    phone: { type: String, required: true },
     version: { type: Number, default: 1 },
   },
   { _id: false },
@@ -25,6 +24,7 @@ const UserSchema = new Schema<User & Document>(
       lowercase: true,
       trim: true,
     },
+    phone: { type: String, trim: true, unique: true },
     password: { type: String, required: true, select: false },
     role: {
       type: String,
@@ -50,7 +50,6 @@ const UserSchema = new Schema<User & Document>(
 
 // 3. Indexing
 
-
 // 4. Pre Hooks
 UserSchema.pre('save', async function (this: any) {
   if (!this.isModified('password')) return;
@@ -58,7 +57,9 @@ UserSchema.pre('save', async function (this: any) {
   this.password = await bcrypt.hash(this.password as string, salt);
 });
 
-UserSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
+UserSchema.methods.comparePassword = async function (
+  password: string,
+): Promise<boolean> {
   return await bcrypt.compare(password, this.password);
 };
 
