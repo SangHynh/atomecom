@@ -3,4 +3,5 @@ export interface IDatabase {
   connect(): Promise<void>;
   disconnect(): Promise<void>;
   getNumberOfConnections(): number;
+  getInfo(): Promise<Record<string, any> | null>;
 }

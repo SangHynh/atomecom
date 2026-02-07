@@ -21,6 +21,7 @@ app.use(cors());
 app.use(httpLogger);
 app.use(compression());
 app.use(globalRateLimiter);
+
 // routes
 app.use(router);
 

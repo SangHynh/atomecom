@@ -9,15 +9,17 @@ import { AuthService } from '@modules/auth/use-cases/auth.service.js';
 import { BcryptHashAdapter } from '@modules/users/infra/bcryptHash.adapter.js';
 import { JwtTokenAdapter } from '@modules/auth/infra/jwtToken.adapter.js';
 import { AuthController } from '@modules/auth/presentation/auth.controller.js';
+import { RedisCache } from '@shared/infra/ioredis.cache.js';
 
 // 1. INFRA LAYER
-const db = new MongoDatabase(appConfig!.db.uri);
+export const db = new MongoDatabase(appConfig!.db.uri);
+export const cache = new RedisCache(appConfig!.cache.uri);
 const userRepo = new MongooseUserRepo();
 const hashService = new BcryptHashAdapter();
 const tokenService = new JwtTokenAdapter();
 
 // 2. USE-CASES LAYER
-const healthService = new HealthService(db);
+const healthService = new HealthService(db, cache);
 const userService = new UserService({ userRepo, hashService });
 const authService = new AuthService({ tokenService, userService });
 

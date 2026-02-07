@@ -8,14 +8,12 @@ import { MongoDatabase } from '@shared/infra/mongoose.db.js';
 import { InternalServerError } from '@shared/core/error.response.js';
 import type { ICache } from '@shared/interfaces/ICache.js';
 import { RedisCache } from '@shared/infra/ioredis.cache.js';
+import { cache, db } from '@shared/container.js';
 
 const SHUTDOWN_TIMEOUT_MS = 10000;
 const line = '='.repeat(50);
 
-let db: IDatabase;
-let cache: ICache;
 let server: Server | null = null;
-
 
 // Main bootstrap
 (async () => {
@@ -25,11 +23,7 @@ let server: Server | null = null;
     logger.info(`SERVER BOOTING...`);
 
     // Initialize database
-    db = new MongoDatabase(appConfig.db.uri);
     await db.connect();
-
-    // Initialize cache
-    cache = new RedisCache(appConfig.cache.uri);
     await cache.connect();
 
     logger.info(`Initial Connections:::${db.getNumberOfConnections()}`);

@@ -37,10 +37,31 @@ export class MongoDatabase implements IDatabase {
 
   public async disconnect(): Promise<void> {
     await mongoose.disconnect();
-    console.log(`MongoDB Disconnected`);
+    console.log(`[${this.name}] Disconnected`);
   }
 
   public getNumberOfConnections(): number {
     return mongoose.connections.filter((conn) => conn.readyState === 1).length;
+  }
+
+  public async getInfo(): Promise<Record<string, any> | null> {
+    try {
+      if (mongoose.connection.readyState !== 1) return null;
+
+      const db = mongoose.connection.db;
+      if (!db) return null;
+      
+      const serverStatus = await db.admin().serverStatus();
+
+      return {
+        version: serverStatus.version,
+        uptime: `${serverStatus.uptime}s`,
+        connections: serverStatus.connections,
+        pid: serverStatus.pid,
+      };
+    } catch (error) {
+      console.error('Failed to get MongoDB info:', error);
+      return null;
+    }
   }
 }

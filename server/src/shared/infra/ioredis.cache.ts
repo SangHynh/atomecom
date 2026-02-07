@@ -43,6 +43,27 @@ export class RedisCache implements ICache, ICacheRepo {
     }
   }
 
+  public async getInfo(): Promise<Record<string, any> | null> {
+    if (!this._client) return null;
+
+    const rawInfo = await this._client.info();
+    const stats: Record<string, string> = {};
+
+    rawInfo.split('\r\n').forEach((line) => {
+      const [key, value] = line.split(':');
+      if (key && value) {
+        stats[key] = value;
+      }
+    });
+
+    return {
+      version: stats['redis_version'],
+      memoryUsed: stats['used_memory_human'],
+      clients: stats['connected_clients'],
+      uptime: stats['uptime_in_seconds'] + 's',
+    };
+  }
+
   public async set<T>(
     key: string,
     value: T,
