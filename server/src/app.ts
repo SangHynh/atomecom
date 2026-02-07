@@ -1,16 +1,9 @@
-import express, {
-  type Request,
-  type Response,
-  type NextFunction,
-} from 'express';
+import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
-import rateLimit from 'express-rate-limit';
 import router from './shared/index.route.js';
-import { NotFoundError } from './shared/core/error.response.js';
 import { httpLogger } from '@shared/utils/logger.js';
-import { ZodError } from 'zod';
 import { requestIdMiddleware } from '@shared/middlewares/requestID.middleware.js';
 import { performanceMiddleware } from '@shared/middlewares/perfomance.middleware.js';
 import { globalRateLimiter } from '@shared/middlewares/ratelimit.middleware.js';

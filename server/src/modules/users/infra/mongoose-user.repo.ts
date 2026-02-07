@@ -1,7 +1,13 @@
 import type { User } from '@modules/users/domain/user.domain.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
-import { InternalServerError } from '@shared/core/error.response.js';
+import {
+  ConflictError,
+  InternalServerError,
+} from '@shared/core/error.response.js';
+
+const LAYER = 'Repository';
+const MODULE = 'User';
 
 export class MongooseUserRepo implements IUserRepository {
   public async findAll(params: {
@@ -61,12 +67,31 @@ export class MongooseUserRepo implements IUserRepository {
     id: string,
     data: Partial<Omit<User, 'id'>>,
   ): Promise<User | null> {
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      id,
-      { $set: data },
+    const { version, ...updateData } = data;
+    if (version === undefined) {
+      const error = new InternalServerError('DATA_MAPPING_ERROR', [
+        {
+          field: 'version',
+          message: 'VERSION_IS_REQUIRED',
+        },
+      ]);
+      error.layer = LAYER;
+      error.module = MODULE;
+      throw error;
+    }
+    const query = { _id: id, version: version };
+    const updatedUser = await UserModel.findOneAndUpdate(
+      query,
+      {
+        $set: updateData,
+        $inc: { version: 1 },
+      },
       { new: true },
     ).lean();
-
+    // Another user has modified the data at the same time
+    if (!updatedUser) {
+      throw new ConflictError('DATA_MODIFIED_CONCURRENTLY');
+    }
     return this._toDomain(updatedUser);
   }
 
@@ -83,8 +108,8 @@ export class MongooseUserRepo implements IUserRepository {
     const targetId = data._id || data.id;
     if (!targetId) {
       const error = new InternalServerError('DATA_MAPPING_ERROR');
-      error.layer = 'Repository';
-      error.module = 'User';
+      error.layer = LAYER;
+      error.module = MODULE;
       throw error;
     }
     const { _id, id, password, __v, ...rest } = data;

@@ -1,0 +1,46 @@
+@url_dev=http://localhost:3636/v1/api
+@email=test3636@gmail.com
+@password=abc123
+@phone=01234567234
+
+############################################################################################
+
+### 1. Register a new account (Public)
+# @name register
+POST {{url_dev}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "Hacker Lỏ",
+    "email": "{{email}}",
+    "password": "{{password}}",
+    "phone": "{{phone}}"
+}
+
+### 2. Login
+# @name login
+POST {{url_dev}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "{{email}}",
+    "password": "{{password}}"
+}
+
+### 3. Refresh Token (TODO: Implement later)
+# @name refreshToken
+POST {{url_dev}}/auth/refresh-token
+Content-Type: application/json
+
+{
+    "refreshToken": "put_refresh_token_here"
+}
+
+### 4. Logout (TODO: Implement later)
+# @name logout
+POST {{url_dev}}/auth/logout
+Content-Type: application/json
+
+{
+    "refreshToken": "put_refresh_token_here"
+}

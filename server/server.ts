@@ -5,22 +5,32 @@ import type { Server } from 'node:http';
 import type { IDatabase } from 'src/shared/interfaces/IDatabase.js';
 import logger from '@shared/utils/logger.js';
 import { MongoDatabase } from '@shared/infra/mongoose.db.js';
+import { InternalServerError } from '@shared/core/error.response.js';
+import type { ICache } from '@shared/interfaces/ICache.js';
+import { RedisCache } from '@shared/infra/ioredis.cache.js';
 
 const SHUTDOWN_TIMEOUT_MS = 10000;
 const line = '='.repeat(50);
 
 let db: IDatabase;
+let cache: ICache;
 let server: Server | null = null;
+
 
 // Main bootstrap
 (async () => {
   try {
-    if (!appConfig) throw new Error('Configuration is missing!');
+    if (!appConfig) throw new InternalServerError('Configuration is missing!');
 
     logger.info(`SERVER BOOTING...`);
 
+    // Initialize database
     db = new MongoDatabase(appConfig.db.uri);
     await db.connect();
+
+    // Initialize cache
+    cache = new RedisCache(appConfig.cache.uri);
+    await cache.connect();
 
     logger.info(`Initial Connections:::${db.getNumberOfConnections()}`);
     logger.info(line);

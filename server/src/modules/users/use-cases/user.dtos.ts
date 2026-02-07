@@ -1,4 +1,4 @@
-import type { UserAddress } from "@modules/users/domain/user.domain.js";
+import type { User, UserAddress } from "@modules/users/domain/user.domain.js";
 import type { USER_ROLE } from "@shared/enum/userRole.enum.js";
 import type { USER_STATUS } from "@shared/enum/userStatus.enum.js";
 
@@ -21,4 +21,18 @@ export interface CreateUserDTO {
 export interface UpdateUserDTO {
   name?: string;
   addresses?: UserAddress[]; 
+}
+
+export interface SafeUserResponseDTO {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: USER_ROLE;
+  status: USER_STATUS;
+  isVerified: boolean;
+  addresses: UserAddress[];
+  version: number; 
+  createdAt: Date;
+  updatedAt: Date;
 }

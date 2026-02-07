@@ -33,7 +33,7 @@ const UserSchema = new Schema<User & Document>(
     },
     addresses: [AddressSchema],
     status: { type: String, default: 'ACTIVE' },
-    verified: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: false },
     version: { type: Number, default: 1 },
   },
   {

@@ -13,18 +13,24 @@ interface Config {
   db: {
     uri: string;
   };
+  cache: {
+    uri: string;
+  };
 }
 
 // Development environment settings
 const development: Config = {
   app: {
-    port: Number(process.env.DEV_APP_PORT) || 5000,
+    port: Number(process.env.DEV_APP_PORT) || 3636,
     host: process.env.DEV_APP_HOST || 'localhost',
     version: '1.0.0',
     _v: 'v1',
   },
   db: {
     uri: process.env.DEV_DB_URI || 'mongodb://localhost:27017/dev_db',
+  },
+  cache: {
+    uri: process.env.DEV_CACHE_URI || 'redis://localhost:6379/0',
   },
 };
 
@@ -38,6 +44,9 @@ const production: Config = {
   },
   db: {
     uri: process.env.PROD_DB_URI || '',
+  },
+  cache: {
+    uri: process.env.PROD_CACHE_URI || '',
   },
 };
 

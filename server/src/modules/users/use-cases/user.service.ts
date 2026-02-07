@@ -1,18 +1,33 @@
+import type { IHashService } from '@modules/users/domain/IHashService.interface.js';
 import type { User } from '@modules/users/domain/user.domain.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import type {
   CreateUserDTO,
   FindAllUserDTO,
+  SafeUserResponseDTO,
   UpdateUserDTO,
-} from '@modules/users/interfaces/user.dtos.js';
-import { ConflictError, NotFoundError } from '@shared/core/error.response.js';
+} from '@modules/users/use-cases/user.dtos.js';
+import { ConflictError, NotFoundError, UnauthorizedError } from '@shared/core/error.response.js';
 import { USER_ROLE } from '@shared/enum/userRole.enum.js';
 import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
 import type { PaginatedResult } from '@shared/interfaces/IPagination.js';
 
-export class UserService {
-  constructor(private readonly userRepo: IUserRepository) {}
+const LAYER = 'Service';
+const MODULE = 'User';
 
+interface UserServiceDependencies {
+  userRepo: IUserRepository;
+  hashService: IHashService;
+}
+
+export class UserService {
+  private readonly userRepo: IUserRepository;
+  private readonly hashService: IHashService;
+
+  constructor({ userRepo, hashService }: UserServiceDependencies) {
+    this.userRepo = userRepo;
+    this.hashService = hashService;
+  }
   public async findAll(dto: FindAllUserDTO): Promise<PaginatedResult<User>> {
     const query = this._toFindAllQuery(dto);
     const { data, totalElements } = await this.userRepo.findAll(query);
@@ -31,20 +46,39 @@ export class UserService {
     return await this.userRepo.findByPhone(phone);
   }
 
+  public async verifyCredentials(
+    email: string,
+    passwordPlain: string,
+  ): Promise<User | null> {
+    const user = await this.userRepo.findByEmail(email);
+    if (!user || !user.password) throw new UnauthorizedError('INVALID_CREDENTIALS');
+
+    const isMatch = await this.hashService.compare(
+      passwordPlain,
+      user.password,
+    );
+
+    if (!isMatch) throw new UnauthorizedError('INVALID_CREDENTIALS');
+    return user;
+  }
+
   public async create(dto: CreateUserDTO): Promise<User> {
     // TODO: Transaction
     await Promise.all([
       this._validateEmailUniqueness(dto.email),
       dto.phone ? this._validatePhoneUniqueness(dto.phone) : Promise.resolve(),
     ]);
-    const entityData = this._toCreateEntity(dto);
+    const passwordHash = await this.hashService.hash(dto.password);
+    const entityData = this._toCreateEntity({ ...dto, password: passwordHash });
     return await this.userRepo.create(entityData);
   }
 
   public async changePassword(
     id: string,
-    passwordHash: string,
+    newPasswordPlain: string,
   ): Promise<User | null> {
+    await this._getExistingUser(id);
+    const passwordHash = await this.hashService.hash(newPasswordPlain);
     return await this.userRepo.update(id, { password: passwordHash });
   }
 
@@ -60,16 +94,22 @@ export class UserService {
     await Promise.all([
       this._getExistingUser(id),
       this._validatePhoneUniqueness(newPhone, id),
-    ])
+    ]);
     return await this.userRepo.update(id, { phone: newPhone });
   }
 
-  public async updateStatusAccount(id: string, status: USER_STATUS): Promise<User | null> {
+  public async updateStatusAccount(
+    id: string,
+    status: USER_STATUS,
+  ): Promise<User | null> {
     await this._getExistingUser(id);
     return await this.userRepo.update(id, { status });
   }
 
-  public async verifyAccount(id: string, isVerified: boolean): Promise<User | null> {
+  public async verifyAccount(
+    id: string,
+    isVerified: boolean,
+  ): Promise<User | null> {
     await this._getExistingUser(id);
     return await this.userRepo.update(id, { isVerified });
   }
@@ -94,13 +134,19 @@ export class UserService {
    * Domain Result -> Paginated Response (Encapsulate data and pagination info)
    */
   private _toPaginatedResponse(
-    data: User[],
+    data: any[],
     total: number,
     dto: FindAllUserDTO,
-  ): PaginatedResult<User> {
+  ): PaginatedResult<SafeUserResponseDTO> {
     const limit = Number(dto.limit) || 10;
+
+    const sanitizedData = data.map((item) => {
+      const { password, __v, ...safeData } = item.toObject ? item.toObject() : item;
+      return safeData as SafeUserResponseDTO;
+    });
+    
     return {
-      data,
+      data: sanitizedData,
       pagination: {
         totalElements: total,
         totalPage: Math.ceil(total / limit),

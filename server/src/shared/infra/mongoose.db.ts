@@ -12,21 +12,21 @@ export class MongoDatabase implements IDatabase {
   public readonly name = 'MongoDB';
   constructor(uri: string) {
     if (!uri) {
-      throw new Error('Database URI is required');
+      throw new InternalServerError('DATABASE_URI_REQUIRED');
     }
     this._uri = uri;
   }
 
   public async connect(): Promise<void> {
     try {
-      console.log(`Connecting to MongoDB...`);
+      console.log(`[${this.name}] Connecting to ${this._uri}...`);
       await mongoose.connect(this._uri, {
         maxPoolSize: MAX_POOL_SIZE,
         minPoolSize: MIN_POOL_SIZE,
         socketTimeoutMS: SOCKET_TIMEOUT_MS,
         serverSelectionTimeoutMS: SERVER_SELECTION_TIMEOUT_MS,
       });
-      console.log(`MongoDB Connected`);
+      console.log(`[${this.name}] Connected successfully.`);
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       throw new InternalServerError(

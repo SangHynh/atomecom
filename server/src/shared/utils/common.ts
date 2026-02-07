@@ -1,3 +1,5 @@
+export const isDev = process.env.NODE_ENV === 'development';
+
 /* Measures the execution time of a function. */
 export const timeit = async <T>(
   fn: (...args: any[]) => Promise<T> | T,
