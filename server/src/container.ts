@@ -10,10 +10,13 @@ import { BcryptHashAdapter } from '@modules/users/infra/bcryptHash.adapter.js';
 import { JwtTokenAdapter } from '@modules/auth/infra/jwtToken.adapter.js';
 import { AuthController } from '@modules/auth/presentation/auth.controller.js';
 import { RedisCache } from '@shared/infra/ioredis.cache.js';
+import { authMiddleware } from '@shared/middlewares/auth.middleware.js';
+import { SessionService } from '@modules/auth/use-cases/session.service.js';
 
 // 1. INFRA LAYER
 export const db = new MongoDatabase(appConfig!.db.uri);
 export const cache = new RedisCache(appConfig!.cache.uri);
+
 const userRepo = new MongooseUserRepo();
 const hashService = new BcryptHashAdapter();
 const tokenService = new JwtTokenAdapter();
@@ -21,9 +24,15 @@ const tokenService = new JwtTokenAdapter();
 // 2. USE-CASES LAYER
 const healthService = new HealthService(db, cache);
 const userService = new UserService({ userRepo, hashService });
-const authService = new AuthService({ tokenService, userService });
+const sessionService = new SessionService(cache);
+const authService = new AuthService({
+  tokenService,
+  userService,
+  sessionService,
+});
 
-// 3. INTERFACES LAYER
+// 3. PRESENTATION LAYER
 export const healthControllerImpl = new HealthController(healthService);
 export const userControllerImpl = new UserController(userService);
 export const authControllerImpl = new AuthController(authService);
+export const authMiddlewareImpl = authMiddleware(tokenService);

@@ -1,4 +1,4 @@
-import type { User, UserAddress } from '@modules/users/domain/user.domain.js';
+import type { User, UserAddress } from '@modules/users/domain/user.entity.js';
 import { USER_ROLE } from '@shared/enum/userRole.enum.js';
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
@@ -49,18 +49,5 @@ const UserSchema = new Schema<User & Document>(
 );
 
 // 3. Indexing
-
-// 4. Pre Hooks
-UserSchema.pre('save', async function (this: any) {
-  if (!this.isModified('password')) return;
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password as string, salt);
-});
-
-UserSchema.methods.comparePassword = async function (
-  password: string,
-): Promise<boolean> {
-  return await bcrypt.compare(password, this.password);
-};
 
 export const UserModel = mongoose.model<User & Document>('User', UserSchema);

@@ -1,16 +1,19 @@
-import type { IHashService } from '@modules/users/domain/IHashService.interface.js';
-import type { User } from '@modules/users/domain/user.domain.js';
+import type { IHashService } from '@modules/users/domain/IHash.service.js';
+import type { User } from '@modules/users/domain/user.entity.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import type {
   CreateUserDTO,
   FindAllUserDTO,
   SafeUserResponseDTO,
-  UpdateUserDTO,
 } from '@modules/users/use-cases/user.dtos.js';
-import { ConflictError, NotFoundError, UnauthorizedError } from '@shared/core/error.response.js';
+import {
+  ConflictError,
+  NotFoundError,
+  UnauthorizedError,
+} from '@shared/core/error.response.js';
 import { USER_ROLE } from '@shared/enum/userRole.enum.js';
 import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
-import type { PaginatedResult } from '@shared/interfaces/IPagination.js';
+import type { PaginatedResult } from '@shared/interfaces/pagination.model.js';
 
 const LAYER = 'Service';
 const MODULE = 'User';
@@ -21,39 +24,49 @@ interface UserServiceDependencies {
 }
 
 export class UserService {
-  private readonly userRepo: IUserRepository;
-  private readonly hashService: IHashService;
+  private readonly _userRepo: IUserRepository;
+  private readonly _hashService: IHashService;
 
   constructor({ userRepo, hashService }: UserServiceDependencies) {
-    this.userRepo = userRepo;
-    this.hashService = hashService;
+    this._userRepo = userRepo;
+    this._hashService = hashService;
   }
   public async findAll(dto: FindAllUserDTO): Promise<PaginatedResult<User>> {
     const query = this._toFindAllQuery(dto);
-    const { data, totalElements } = await this.userRepo.findAll(query);
+    const { data, totalElements } = await this._userRepo.findAll(query);
     return this._toPaginatedResponse(data, totalElements, dto);
   }
 
-  public async findById(id: string): Promise<User | null> {
-    return await this.userRepo.findById(id);
+  public async findById(
+    id: string,
+    status?: USER_STATUS,
+  ): Promise<User | null> {
+    return await this._userRepo.findById(id, status);
   }
 
-  public async findByEmail(email: string): Promise<User | null> {
-    return await this.userRepo.findByEmail(email);
+  public async findByEmail(
+    email: string,
+    status?: USER_STATUS,
+  ): Promise<User | null> {
+    return await this._userRepo.findByEmail(email, status);
   }
 
-  public async findByPhone(phone: string): Promise<User | null> {
-    return await this.userRepo.findByPhone(phone);
+  public async findByPhone(
+    phone: string,
+    status?: USER_STATUS,
+  ): Promise<User | null> {
+    return await this._userRepo.findByPhone(phone, status);
   }
 
   public async verifyCredentials(
     email: string,
     passwordPlain: string,
   ): Promise<User | null> {
-    const user = await this.userRepo.findByEmail(email);
-    if (!user || !user.password) throw new UnauthorizedError('INVALID_CREDENTIALS');
+    const user = await this._userRepo.findByEmail(email, USER_STATUS.ACTIVE);
+    if (!user || !user.password)
+      throw new UnauthorizedError('INVALID_CREDENTIALS');
 
-    const isMatch = await this.hashService.compare(
+    const isMatch = await this._hashService.compare(
       passwordPlain,
       user.password,
     );
@@ -68,9 +81,9 @@ export class UserService {
       this._validateEmailUniqueness(dto.email),
       dto.phone ? this._validatePhoneUniqueness(dto.phone) : Promise.resolve(),
     ]);
-    const passwordHash = await this.hashService.hash(dto.password);
+    const passwordHash = await this._hashService.hash(dto.password);
     const entityData = this._toCreateEntity({ ...dto, password: passwordHash });
-    return await this.userRepo.create(entityData);
+    return await this._userRepo.create(entityData);
   }
 
   public async changePassword(
@@ -78,8 +91,8 @@ export class UserService {
     newPasswordPlain: string,
   ): Promise<User | null> {
     await this._getExistingUser(id);
-    const passwordHash = await this.hashService.hash(newPasswordPlain);
-    return await this.userRepo.update(id, { password: passwordHash });
+    const passwordHash = await this._hashService.hash(newPasswordPlain);
+    return await this._userRepo.update(id, { password: passwordHash });
   }
 
   public async changeEmail(id: string, newEmail: string): Promise<User | null> {
@@ -87,7 +100,7 @@ export class UserService {
       this._getExistingUser(id),
       this._validateEmailUniqueness(newEmail, id),
     ]);
-    return await this.userRepo.update(id, { email: newEmail });
+    return await this._userRepo.update(id, { email: newEmail });
   }
 
   public async changePhone(id: string, newPhone: string): Promise<User | null> {
@@ -95,7 +108,7 @@ export class UserService {
       this._getExistingUser(id),
       this._validatePhoneUniqueness(newPhone, id),
     ]);
-    return await this.userRepo.update(id, { phone: newPhone });
+    return await this._userRepo.update(id, { phone: newPhone });
   }
 
   public async updateStatusAccount(
@@ -103,7 +116,7 @@ export class UserService {
     status: USER_STATUS,
   ): Promise<User | null> {
     await this._getExistingUser(id);
-    return await this.userRepo.update(id, { status });
+    return await this._userRepo.update(id, { status });
   }
 
   public async verifyAccount(
@@ -111,7 +124,7 @@ export class UserService {
     isVerified: boolean,
   ): Promise<User | null> {
     await this._getExistingUser(id);
-    return await this.userRepo.update(id, { isVerified });
+    return await this._userRepo.update(id, { isVerified });
   }
 
   /**
@@ -141,10 +154,12 @@ export class UserService {
     const limit = Number(dto.limit) || 10;
 
     const sanitizedData = data.map((item) => {
-      const { password, __v, ...safeData } = item.toObject ? item.toObject() : item;
+      const { password, __v, ...safeData } = item.toObject
+        ? item.toObject()
+        : item;
       return safeData as SafeUserResponseDTO;
     });
-    
+
     return {
       data: sanitizedData,
       pagination: {
@@ -173,7 +188,7 @@ export class UserService {
    * Validate user existence
    */
   private async _getExistingUser(id: string): Promise<User> {
-    const user = await this.userRepo.findById(id);
+    const user = await this._userRepo.findById(id);
     if (!user) {
       throw new NotFoundError('USER_NOT_FOUND');
     }
@@ -187,7 +202,7 @@ export class UserService {
     email: string,
     excludeId?: string,
   ): Promise<void> {
-    const user = await this.userRepo.findByEmail(email);
+    const user = await this._userRepo.findByEmail(email);
     if (user && user.id !== excludeId) {
       throw new ConflictError('EMAIL_ALREADY_EXISTS', [
         { field: 'email', message: 'EMAIL_ALREADY_EXISTS' },
@@ -202,7 +217,7 @@ export class UserService {
     phone: string,
     excludeId?: string,
   ): Promise<void> {
-    const user = await this.userRepo.findByPhone(phone);
+    const user = await this._userRepo.findByPhone(phone);
     if (user && user.id !== excludeId) {
       throw new ConflictError('PHONE_ALREADY_EXISTS', [
         { field: 'phone', message: 'PHONE_ALREADY_EXISTS' },

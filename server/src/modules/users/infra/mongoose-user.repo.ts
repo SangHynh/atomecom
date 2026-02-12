@@ -1,4 +1,4 @@
-import type { User } from '@modules/users/domain/user.domain.js';
+import type { User } from '@modules/users/domain/user.entity.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
 import {
@@ -44,22 +44,40 @@ export class MongooseUserRepo implements IUserRepository {
     };
   }
 
-  public async findByEmail(email: string): Promise<User | null> {
-    const result = await UserModel.findOne({ email })
+  public async findByEmail(
+    email: string,
+    status?: string,
+  ): Promise<User | null> {
+    const result = await UserModel.findOne({
+      email,
+      ...(status && { status }),
+    })
       .select('+password')
       .lean();
+
     return this._toDomain(result);
   }
 
-  public async findByPhone(phone: string): Promise<User | null> {
-    const result = await UserModel.findOne({ phone })
+  public async findByPhone(
+    phone: string,
+    status?: string,
+  ): Promise<User | null> {
+    const result = await UserModel.findOne({
+      phone,
+      ...(status && { status }),
+    })
       .select('+password')
       .lean();
+
     return this._toDomain(result);
   }
 
-  public async findById(id: string): Promise<User | null> {
-    const result = await UserModel.findById(id).lean();
+  public async findById(id: string, status?: string): Promise<User | null> {
+    const result = await UserModel.findOne({
+      _id: id,
+      ...(status && { status }),
+    }).lean();
+
     return this._toDomain(result);
   }
 
@@ -112,7 +130,7 @@ export class MongooseUserRepo implements IUserRepository {
       error.module = MODULE;
       throw error;
     }
-    const { _id, id, password, __v, ...rest } = data;
+    const { _id, id, __v, ...rest } = data;
     return {
       ...rest,
       id: targetId.toString(),

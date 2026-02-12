@@ -1,11 +1,13 @@
 import os from 'os';
 import process from 'process';
-import type { IDatabase } from '@shared/interfaces/IDatabase.js';
-import type { ICache } from '@shared/interfaces/ICache.js';
-
+import type { IDatabase } from '@shared/interfaces/IDatabase.provider.js';
+import type { ICache } from '@shared/interfaces/ICache.provider.js';
 
 class HealthService {
-  constructor(private readonly db: IDatabase, private readonly cache: ICache) {}
+  constructor(
+    private readonly _db: IDatabase,
+    private readonly _cache: ICache,
+  ) {}
   public async getStatus() {
     return {
       node: {
@@ -23,13 +25,13 @@ class HealthService {
         loadAverage: os.loadavg(),
       },
       database: {
-        type: this.db.name,
-        activeConnections: this.db.getNumberOfConnections(),
-        info: await this.db.getInfo(),
+        type: this._db.name,
+        activeConnections: this._db.getNumberOfConnections(),
+        info: await this._db.getInfo(),
       },
       cache: {
-        type: this.cache.name,
-        info: await this.cache.getInfo(),
+        type: this._cache.name,
+        info: await this._cache.getInfo(),
       },
     };
   }

@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
-import type {
-  ITokenService,
-  ITokenPayload,
-} from '@modules/auth/domain/ITokenService.js';
-import { InternalServerError } from '@shared/core/error.response.js';
+import type { ITokenService } from '@modules/auth/domain/IToken.service.js';
+import {
+  InternalServerError,
+  UnauthorizedError,
+} from '@shared/core/error.response.js';
+import type { TokenPayload } from '@modules/auth/domain/tokenPayload.model.js';
 
 const JWT_ALGORITHM: jwt.Algorithm = 'HS256';
 export class JwtTokenAdapter implements ITokenService {
@@ -38,11 +39,11 @@ export class JwtTokenAdapter implements ITokenService {
     this._refreshExpires = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
   }
 
-  public async generateAccessToken(payload: ITokenPayload): Promise<string> {
+  public async generateAccessToken(payload: TokenPayload): Promise<string> {
     return this._sign(payload, this._accessSecret, this._accessExpires);
   }
 
-  public async generateRefreshToken(payload: ITokenPayload): Promise<string> {
+  public async generateRefreshToken(payload: TokenPayload): Promise<string> {
     return this._sign(payload, this._refreshSecret, this._refreshExpires);
   }
 
@@ -54,36 +55,21 @@ export class JwtTokenAdapter implements ITokenService {
     return this._verify<T>(token, this._refreshSecret);
   }
 
-  public async saveRefreshToken(
-    userId: string,
-    token: string,
-    ttl: number,
-  ): Promise<void> {
-    throw new Error('Method not implemented.');
-  }
-  public async deleteRefreshToken(
-    userId: string,
-    token: string,
-  ): Promise<void> {
-    throw new Error('Method not implemented.');
-  }
-  public async isTokenBlacklisted(
-    userId: string,
-    token: string,
-  ): Promise<boolean> {
-    throw new Error('Method not implemented.');
-  }
-
   private async _sign(
     payload: any,
     secret: string,
     expires: string,
   ): Promise<string> {
     return new Promise((resolve, reject) => {
-      jwt.sign(payload, secret, { expiresIn: expires as any, algorithm: JWT_ALGORITHM }, (err, token) => {
-        if (err) return reject(err);
-        resolve(token as string);
-      });
+      jwt.sign(
+        payload,
+        secret,
+        { expiresIn: expires as any, algorithm: JWT_ALGORITHM },
+        (err, token) => {
+          if (err) return reject(err);
+          resolve(token as string);
+        },
+      );
     });
   }
 
@@ -92,8 +78,8 @@ export class JwtTokenAdapter implements ITokenService {
       jwt.verify(token, secret, (err, decoded) => {
         if (err) {
           if (err.name === 'TokenExpiredError')
-            return reject(new InternalServerError('TOKEN_EXPIRED'));
-          return reject(new InternalServerError('INVALID_TOKEN'));
+            return reject(new UnauthorizedError('TOKEN_EXPIRED'));
+          return reject(new UnauthorizedError('INVALID_TOKEN'));
         }
         resolve(decoded as T);
       });

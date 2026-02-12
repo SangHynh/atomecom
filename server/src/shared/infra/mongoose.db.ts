@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { InternalServerError } from '@core/error.response.js';
-import type { IDatabase } from '@shared/interfaces/IDatabase.js';
+import type { IDatabase } from '@shared/interfaces/IDatabase.provider.js';
 
 const MAX_POOL_SIZE = 100;
 const MIN_POOL_SIZE = 5;
@@ -50,7 +50,7 @@ export class MongoDatabase implements IDatabase {
 
       const db = mongoose.connection.db;
       if (!db) return null;
-      
+
       const serverStatus = await db.admin().serverStatus();
 
       return {

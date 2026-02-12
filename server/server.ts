@@ -2,13 +2,9 @@ import 'dotenv/config';
 import app from './src/app.js';
 import appConfig, { NODE_ENV } from './src/shared/configs/app.config.js';
 import type { Server } from 'node:http';
-import type { IDatabase } from 'src/shared/interfaces/IDatabase.js';
 import logger from '@shared/utils/logger.js';
-import { MongoDatabase } from '@shared/infra/mongoose.db.js';
 import { InternalServerError } from '@shared/core/error.response.js';
-import type { ICache } from '@shared/interfaces/ICache.js';
-import { RedisCache } from '@shared/infra/ioredis.cache.js';
-import { cache, db } from '@shared/container.js';
+import { cache, db } from 'src/container.js';
 
 const SHUTDOWN_TIMEOUT_MS = 10000;
 const line = '='.repeat(50);
@@ -26,7 +22,6 @@ let server: Server | null = null;
     await db.connect();
     await cache.connect();
 
-    logger.info(`Initial Connections:::${db.getNumberOfConnections()}`);
     logger.info(line);
 
     server = app.listen(appConfig.app.port, () => {

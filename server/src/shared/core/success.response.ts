@@ -1,6 +1,6 @@
 import { type Response } from 'express';
 import appConfig from '@config/app.config.js';
-import type { PaginatedResult } from '@shared/interfaces/IPagination.js';
+import type { PaginatedResult } from '@shared/interfaces/pagination.model.js';
 
 // ===== HTTP SUCCESS CODE =====
 const SUCCESS_CODE = {
@@ -84,7 +84,7 @@ class SuccessResponse<T = any> {
 // ===== SPECIFIC SUCCESS CLASSES =====
 export class OK<T = any> extends SuccessResponse<T> {
   constructor({
-    message = 'Success',
+    message = 'SUCCESS',
     data,
     metadata,
   }: Partial<SuccessResponseArgs<T>> = {}) {
@@ -93,7 +93,7 @@ export class OK<T = any> extends SuccessResponse<T> {
 
   public static withPagination<T>(res: Response, result: PaginatedResult<T>) {
     return new OK({
-      message: 'Success',
+      message: 'SUCCESS',
       data: result.data,
       metadata: {
         pagination: {
@@ -109,7 +109,7 @@ export class OK<T = any> extends SuccessResponse<T> {
 
 export class Created<T = any> extends SuccessResponse<T> {
   constructor({
-    message = 'Created successfully!',
+    message = 'CREATED_SUCCESS',
     data,
     metadata,
   }: Partial<SuccessResponseArgs<T>> = {}) {
@@ -119,7 +119,7 @@ export class Created<T = any> extends SuccessResponse<T> {
 
 export class Accepted<T = any> extends SuccessResponse<T> {
   constructor({
-    message = 'Request accepted and being processed',
+    message = 'REQUEST_ACCEPTED',
     data,
     metadata,
   }: Partial<SuccessResponseArgs<T>> = {}) {
@@ -128,7 +128,7 @@ export class Accepted<T = any> extends SuccessResponse<T> {
 }
 
 export class NoContent extends SuccessResponse<null> {
-  constructor(message: string = 'No content') {
+  constructor(message = 'NO_CONTENT') {
     super({ message, status: SUCCESS_CODE.NO_CONTENT, data: null });
   }
 }

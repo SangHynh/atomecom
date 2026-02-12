@@ -1,9 +1,7 @@
 @url_dev=http://localhost:3636/v1/api
-@email=test3636@gmail.com
+@email=test1819@gmail.com
 @password=abc123
-@phone=01234567234
-
-############################################################################################
+@phone=0343564320
 
 ### 1. Register a new account (Public)
 # @name register
@@ -27,20 +25,29 @@ Content-Type: application/json
     "password": "{{password}}"
 }
 
-### 3. Refresh Token (TODO: Implement later)
-# @name refreshToken
+### GET RESULT TOKENS
+@accessToken = {{login.response.body.data.tokens.accessToken}}
+@refreshToken = {{login.response.body.data.tokens.refreshToken}}
+
+### 3. Refresh Token
 POST {{url_dev}}/auth/refresh-token
 Content-Type: application/json
 
 {
-    "refreshToken": "put_refresh_token_here"
+    "refreshToken": "paste_rftk_here"
 }
 
+### GET RESULT TOKENS
+@refreshToken = 
+
 ### 4. Logout (TODO: Implement later)
-# @name logout
 POST {{url_dev}}/auth/logout
 Content-Type: application/json
 
 {
-    "refreshToken": "put_refresh_token_here"
+    "refreshToken": "paste_reftk_here"
 }
+
+### Test auth route middleware
+GET {{url_dev}}/health
+Authorization: Bearer {{accessToken}}

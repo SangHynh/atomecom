@@ -1,4 +1,4 @@
-import type { SafeUserResponseDTO } from "@modules/users/use-cases/user.dtos.js";
+import type { SafeUserResponseDTO } from '@modules/users/use-cases/user.dtos.js';
 
 export interface AuthResponseDTO {
   user: SafeUserResponseDTO;

@@ -3,10 +3,10 @@ import { type Request, type Response, type NextFunction } from 'express';
 
 export const globalRateLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 30, 
+  max: 30,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
-  handler: (req: Request, res: Response, next: NextFunction) => {
+  handler: (_req: Request, res: Response, _next: NextFunction) => {
     res.status(429).json({
       status: 'error',
       statusCode: 429,

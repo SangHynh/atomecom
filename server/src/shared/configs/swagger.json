@@ -1,0 +1,81 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Atomecom API Documentation",
+    "version": "1.0.0",
+    "description": "Hệ thống API cho dự án Thương mại điện tử Atomecom"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3636",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.atomecom.com",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/v1/api/users": {
+      "get": {
+        "summary": "Lấy danh sách tất cả người dùng",
+        "tags": ["Users"],
+        "responses": {
+          "200": { "description": "Thành công" }
+        }
+      },
+      "post": {
+        "summary": "Tạo người dùng mới",
+        "tags": ["Users"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateUserInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Tạo thành công" }
+        }
+      }
+    },
+    "/v1/api/users/{id}": {
+      "get": {
+        "summary": "Tìm người dùng theo ID",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Thành công" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "CreateUserInput": {
+        "type": "object",
+        "required": ["email", "password", "name"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 6 },
+          "name": { "type": "string" }
+        }
+      }
+    }
+  }
+}

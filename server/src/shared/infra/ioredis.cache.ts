@@ -1,5 +1,5 @@
 import { InternalServerError } from '@shared/core/error.response.js';
-import type { ICache } from '@shared/interfaces/ICache.js';
+import type { ICache } from '@shared/interfaces/ICache.provider.js';
 import type { ICacheRepo } from '@shared/interfaces/ICache.repo.js';
 import { Redis } from 'ioredis';
 
@@ -69,22 +69,68 @@ export class RedisCache implements ICache, ICacheRepo {
     value: T,
     ttlSeconds?: number,
   ): Promise<void> {
-    throw new Error('Method not implemented.');
+    if (!this._client) throw new InternalServerError('REDIS_NOT_CONNECTED');
+
+    const data = JSON.stringify(value);
+
+    if (ttlSeconds) {
+      await this._client.setex(key, ttlSeconds, data);
+    } else {
+      await this._client.set(key, data);
+    }
   }
 
   public async get<T>(key: string): Promise<T | null> {
-    throw new Error('Method not implemented.');
+    if (!this._client) throw new InternalServerError('REDIS_NOT_CONNECTED');
+
+    const data = await this._client.get(key);
+    if (!data) return null;
+
+    try {
+      return JSON.parse(data) as T;
+    } catch {
+      return data as unknown as T;
+    }
   }
 
   public async del(key: string): Promise<void> {
-    throw new Error('Method not implemented.');
+    if (!this._client) throw new InternalServerError('REDIS_NOT_CONNECTED');
+    await this._client.del(key);
   }
 
   public async has(key: string): Promise<boolean> {
-    throw new Error('Method not implemented.');
+    if (!this._client) throw new InternalServerError('REDIS_NOT_CONNECTED');
+    const result = await this._client.exists(key);
+    return result === 1;
   }
 
   public async flushAll(): Promise<void> {
-    throw new Error('Method not implemented.');
+    if (!this._client) throw new InternalServerError('REDIS_NOT_CONNECTED');
+    await this._client.flushall();
+  }
+
+  public async deleteByPattern(pattern: string): Promise<void> {
+    const client = this._client;
+    if (!client) {
+      throw new InternalServerError('REDIS_NOT_CONNECTED');
+    }
+
+    const stream = client.scanStream({
+      match: pattern,
+      count: 100,
+    });
+
+    stream.on('data', async (keys: string[]) => {
+      if (keys.length > 0) {
+        const pipeline = client.pipeline();
+        keys.forEach((key) => pipeline.del(key));
+        await pipeline.exec();
+      }
+    });
+
+    return new Promise((resolve, reject) => {
+      stream.on('end', resolve);
+      stream.on('error', reject);
+    });
   }
 }

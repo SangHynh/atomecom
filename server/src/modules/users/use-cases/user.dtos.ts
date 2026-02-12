@@ -1,6 +1,6 @@
-import type { User, UserAddress } from "@modules/users/domain/user.domain.js";
-import type { USER_ROLE } from "@shared/enum/userRole.enum.js";
-import type { USER_STATUS } from "@shared/enum/userStatus.enum.js";
+import type { UserAddress } from '@modules/users/domain/user.entity.js';
+import type { USER_ROLE } from '@shared/enum/userRole.enum.js';
+import type { USER_STATUS } from '@shared/enum/userStatus.enum.js';
 
 export interface FindAllUserDTO {
   page?: number;
@@ -12,15 +12,15 @@ export interface FindAllUserDTO {
 export interface CreateUserDTO {
   name: string;
   email: string;
-  password: string; 
-  phone?: string;   
-  role?: USER_ROLE; 
-  addresses?: UserAddress[]; 
+  password: string;
+  phone?: string;
+  role?: USER_ROLE;
+  addresses?: UserAddress[];
 }
 
 export interface UpdateUserDTO {
   name?: string;
-  addresses?: UserAddress[]; 
+  addresses?: UserAddress[];
 }
 
 export interface SafeUserResponseDTO {
@@ -32,7 +32,7 @@ export interface SafeUserResponseDTO {
   status: USER_STATUS;
   isVerified: boolean;
   addresses: UserAddress[];
-  version: number; 
+  version: number;
   createdAt: Date;
   updatedAt: Date;
 }
