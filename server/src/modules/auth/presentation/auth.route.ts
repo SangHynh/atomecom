@@ -22,5 +22,8 @@ authRouter.post(
 
 authRouter.post('/auth/refresh-token', authControllerImpl.refresh);
 authRouter.post('/auth/logout', authControllerImpl.logout);
-
+authRouter.get(
+  '/auth/verify-email', 
+  asyncHandler(authControllerImpl.verifyEmail)
+);
 export default authRouter;

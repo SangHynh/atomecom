@@ -5,6 +5,7 @@ import type {
   LoginInputDTO,
   RegisterInputDTO,
 } from '@modules/auth/use-cases/auth.dtos.js';
+import type { MailTokenService } from '@modules/auth/use-cases/mailToken.service.js';
 import type { SessionService } from '@modules/auth/use-cases/session.service.js';
 import type { SafeUserResponseDTO } from '@modules/users/use-cases/user.dtos.js';
 import type { UserService } from '@modules/users/use-cases/user.service.js';
@@ -13,6 +14,8 @@ import {
   UnauthorizedError,
 } from '@shared/core/error.response.js';
 import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
+import type { IEmailService } from '@shared/interfaces/IEmail.service.js';
+import logger from '@shared/utils/logger.js';
 import { getExpiresAt, getExpiresInSeconds } from '@shared/utils/time.js';
 
 const LAYER = 'Service';
@@ -22,20 +25,29 @@ interface AuthServiceDependencies {
   tokenService: ITokenService;
   userService: UserService;
   sessionService: SessionService;
+  emailService: IEmailService;
+  mailTokenService: MailTokenService;
 }
 
 export class AuthService {
   private readonly _tokenService: ITokenService;
   private readonly _userService: UserService;
   private readonly _sessionService: SessionService;
+  private readonly _emailService: IEmailService;
+  private readonly _mailTokenService: MailTokenService;
+
   constructor({
     tokenService,
     userService,
     sessionService,
+    emailService,
+    mailTokenService,
   }: AuthServiceDependencies) {
     this._tokenService = tokenService;
     this._userService = userService;
     this._sessionService = sessionService;
+    this._emailService = emailService;
+    this._mailTokenService = mailTokenService;
   }
 
   public async register(dto: RegisterInputDTO): Promise<AuthResponseDTO> {
@@ -43,7 +55,7 @@ export class AuthService {
     if (!user || !user.id)
       throw new InternalServerError('USER_CREATION_FAILED');
     const tokens = await this._createNewSession(user as SafeUserResponseDTO);
-    // TODO: Send email
+    this._sendEmailInBackground(user.id, user.email, 'EMAIL_VERIFICATION');
     return this._mapToAuthResponse(user as SafeUserResponseDTO, tokens);
   }
 
@@ -102,6 +114,29 @@ export class AuthService {
     } catch (error) {
       // still log out
     }
+  }
+
+  public async verifyEmail(token: string): Promise<AuthResponseDTO> {
+    // 1. Check token and get userId
+    const userId = await this._mailTokenService.verifyMailToken(
+      token,
+      'EMAIL_VERIFICATION',
+    );
+
+    // 2. Update user status
+    const updatedUser = await this._userService.verifyAccount(userId, true);
+
+    if (!updatedUser) {
+      throw new InternalServerError('VERIFY_ACCOUNT_FAILED');
+    }
+
+    // 3. Auto create session to login
+    const tokens = await this._createNewSession(
+      updatedUser as SafeUserResponseDTO,
+    );
+
+    // 4. return
+    return this._mapToAuthResponse(updatedUser as SafeUserResponseDTO, tokens);
   }
 
   /**
@@ -193,5 +228,27 @@ export class AuthService {
       user: safeUser as SafeUserResponseDTO,
       tokens,
     };
+  }
+
+  private async _sendEmailInBackground(
+    userId: string,
+    email: string,
+    type: 'EMAIL_VERIFICATION' | 'RESET_PASSWORD',
+  ): Promise<void> {
+    try {
+      // 1. Create email token and save to DB
+      const token = await this._mailTokenService.createMailToken(
+        userId,
+        email,
+        type,
+      );
+
+      // 2. Send email
+      await this._emailService.sendVerificationEmail(email, token);
+
+      logger.info(`Verification email sent to ${email}`);
+    } catch (err) {
+      logger.error(`Background Email Error:`, err);
+    }
   }
 }

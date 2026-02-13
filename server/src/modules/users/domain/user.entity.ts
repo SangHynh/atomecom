@@ -8,7 +8,7 @@ export interface UserAddress {
   version?: number;
 }
 
-export interface User {
+export interface UserEntity {
   id?: string;
   name: string;
   email: string;

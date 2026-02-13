@@ -1,4 +1,4 @@
-import type { User } from '@modules/users/domain/user.entity.js';
+import type { UserEntity } from '@modules/users/domain/user.entity.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
 import {
@@ -16,7 +16,7 @@ export class MongooseUserRepo implements IUserRepository {
     role?: string | undefined;
     offset: number;
     limit: number;
-  }): Promise<{ data: User[]; totalElements: number }> {
+  }): Promise<{ data: UserEntity[]; totalElements: number }> {
     const { status, keyword, role, offset = 0, limit = 10 } = params;
 
     const query: any = {};
@@ -47,7 +47,7 @@ export class MongooseUserRepo implements IUserRepository {
   public async findByEmail(
     email: string,
     status?: string,
-  ): Promise<User | null> {
+  ): Promise<UserEntity | null> {
     const result = await UserModel.findOne({
       email,
       ...(status && { status }),
@@ -61,7 +61,7 @@ export class MongooseUserRepo implements IUserRepository {
   public async findByPhone(
     phone: string,
     status?: string,
-  ): Promise<User | null> {
+  ): Promise<UserEntity | null> {
     const result = await UserModel.findOne({
       phone,
       ...(status && { status }),
@@ -72,7 +72,7 @@ export class MongooseUserRepo implements IUserRepository {
     return this._toDomain(result);
   }
 
-  public async findById(id: string, status?: string): Promise<User | null> {
+  public async findById(id: string, status?: string): Promise<UserEntity | null> {
     const result = await UserModel.findOne({
       _id: id,
       ...(status && { status }),
@@ -83,8 +83,8 @@ export class MongooseUserRepo implements IUserRepository {
 
   public async update(
     id: string,
-    data: Partial<Omit<User, 'id'>>,
-  ): Promise<User | null> {
+    data: Partial<Omit<UserEntity, 'id'>>,
+  ): Promise<UserEntity | null> {
     const { version, ...updateData } = data;
     if (version === undefined) {
       const error = new InternalServerError('DATA_MAPPING_ERROR', [
@@ -113,14 +113,14 @@ export class MongooseUserRepo implements IUserRepository {
     return this._toDomain(updatedUser);
   }
 
-  public async create(user: Omit<User, 'id'>): Promise<User> {
+  public async create(user: Omit<UserEntity, 'id'>): Promise<UserEntity> {
     const newUser = new UserModel(user);
     const savedUser = await newUser.save();
     return this._toDomain(savedUser.toJSON())!;
   }
 
   // Mapper to Domain Entity
-  private _toDomain(doc: any): User | null {
+  private _toDomain(doc: any): UserEntity | null {
     if (!doc) return null;
     const data = doc.toObject ? doc.toObject() : doc;
     const targetId = data._id || data.id;
@@ -134,6 +134,6 @@ export class MongooseUserRepo implements IUserRepository {
     return {
       ...rest,
       id: targetId.toString(),
-    } as User;
+    } as UserEntity;
   }
 }

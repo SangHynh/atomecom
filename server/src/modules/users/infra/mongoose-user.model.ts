@@ -1,7 +1,7 @@
-import type { User, UserAddress } from '@modules/users/domain/user.entity.js';
+import type { UserEntity, UserAddress } from '@modules/users/domain/user.entity.js';
 import { USER_ROLE } from '@shared/enum/userRole.enum.js';
 import mongoose, { Schema, Document } from 'mongoose';
-import bcrypt from 'bcrypt';
+
 // 1. Address Sub-schema
 const AddressSchema = new Schema<UserAddress>(
   {
@@ -14,7 +14,7 @@ const AddressSchema = new Schema<UserAddress>(
 );
 
 // 2. Main User Schema
-const UserSchema = new Schema<User & Document>(
+const UserSchema = new Schema<UserEntity & Document>(
   {
     name: { type: String, required: true, trim: true },
     email: {
@@ -50,4 +50,4 @@ const UserSchema = new Schema<User & Document>(
 
 // 3. Indexing
 
-export const UserModel = mongoose.model<User & Document>('User', UserSchema);
+export const UserModel = mongoose.model<UserEntity & Document>('User', UserSchema);

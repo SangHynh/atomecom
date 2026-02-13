@@ -2,20 +2,39 @@ import swaggerUi from 'swagger-ui-express';
 import { readFileSync } from 'fs';
 import path from 'path';
 import express from 'express';
+import YAML from 'yaml';
 
 const docsRouter = express.Router();
-const swaggerPath = path.join(process.cwd(), 'src/shared/configs/swagger.json');
-const swaggerDocument = JSON.parse(readFileSync(swaggerPath, 'utf8'));
+const swaggerPath = path.join(process.cwd(), 'src/shared/configs/swagger.yaml');
+const file = readFileSync(swaggerPath, 'utf8');
+const swaggerDocument = YAML.parse(file);
 const customOptions = {
   swaggerOptions: {
     persistAuthorization: true,
     displayRequestDuration: true,
     docExpansion: 'list',
+    filter: true,
+    defaultModelExpandDepth: 0,
+    defaultModelsExpandDepth: -1,
+    responseInterceptor: (res: any) => {
+      const contentType = res.headers['content-type'];
+      res.headers = { 'content-type': contentType }; 
+      return res;
+    },
   },
   customSiteTitle: 'Atomecom API Documentation',
   customCss: `
     .swagger-ui .topbar { display: none; }
-
+    .swagger-ui .responses-wrapper .curl-command { display: none !important; }
+    .swagger-ui .responses-wrapper .curl { display: none !important; }
+    .swagger-ui .responses-wrapper .request-url { display: none !important; }
+    .swagger-ui .responses-inner .response-col_description__inner > div:has(h5) {
+      display: none !important;
+    }
+      .swagger-ui .responses-inner .response-col_description__inner h5,
+    .swagger-ui .responses-inner .response-col_description__inner .microlight:has(.headerline) {
+      display: none !important;
+    }
     .swagger-ui .info { margin: 20px 0; }
     .swagger-ui .info .title { 
       font-size: 24px; 

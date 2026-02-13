@@ -1,7 +1,7 @@
-@url_dev=http://localhost:3636/v1/api
-@email=test1819@gmail.com
-@password=abc123
-@phone=0343564320
+@url_dev=http://localhost:3636/api
+@email=kemmutat2k2@gmail.com
+@password=coincard
+@phone=0343564321
 
 ### 1. Register a new account (Public)
 # @name register
@@ -51,3 +51,9 @@ Content-Type: application/json
 ### Test auth route middleware
 GET {{url_dev}}/health
 Authorization: Bearer {{accessToken}}
+
+### 5. Verify Email (Click from email)
+# @name verifyEmail
+@verifyToken = paste_token_from_db_here
+
+GET {{url_dev}}/auth/verify-email?token={{verifyToken}}

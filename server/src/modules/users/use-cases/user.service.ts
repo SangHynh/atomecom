@@ -1,5 +1,5 @@
 import type { IHashService } from '@modules/users/domain/IHash.service.js';
-import type { User } from '@modules/users/domain/user.entity.js';
+import type { UserEntity } from '@modules/users/domain/user.entity.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import type {
   CreateUserDTO,
@@ -31,7 +31,7 @@ export class UserService {
     this._userRepo = userRepo;
     this._hashService = hashService;
   }
-  public async findAll(dto: FindAllUserDTO): Promise<PaginatedResult<User>> {
+  public async findAll(dto: FindAllUserDTO): Promise<PaginatedResult<UserEntity>> {
     const query = this._toFindAllQuery(dto);
     const { data, totalElements } = await this._userRepo.findAll(query);
     return this._toPaginatedResponse(data, totalElements, dto);
@@ -40,28 +40,28 @@ export class UserService {
   public async findById(
     id: string,
     status?: USER_STATUS,
-  ): Promise<User | null> {
+  ): Promise<UserEntity | null> {
     return await this._userRepo.findById(id, status);
   }
 
   public async findByEmail(
     email: string,
     status?: USER_STATUS,
-  ): Promise<User | null> {
+  ): Promise<UserEntity | null> {
     return await this._userRepo.findByEmail(email, status);
   }
 
   public async findByPhone(
     phone: string,
     status?: USER_STATUS,
-  ): Promise<User | null> {
+  ): Promise<UserEntity | null> {
     return await this._userRepo.findByPhone(phone, status);
   }
 
   public async verifyCredentials(
     email: string,
     passwordPlain: string,
-  ): Promise<User | null> {
+  ): Promise<UserEntity | null> {
     const user = await this._userRepo.findByEmail(email, USER_STATUS.ACTIVE);
     if (!user || !user.password)
       throw new UnauthorizedError('INVALID_CREDENTIALS');
@@ -75,7 +75,7 @@ export class UserService {
     return user;
   }
 
-  public async create(dto: CreateUserDTO): Promise<User> {
+  public async create(dto: CreateUserDTO): Promise<UserEntity> {
     // TODO: Transaction
     await Promise.all([
       this._validateEmailUniqueness(dto.email),
@@ -89,13 +89,13 @@ export class UserService {
   public async changePassword(
     id: string,
     newPasswordPlain: string,
-  ): Promise<User | null> {
+  ): Promise<UserEntity | null> {
     await this._getExistingUser(id);
     const passwordHash = await this._hashService.hash(newPasswordPlain);
     return await this._userRepo.update(id, { password: passwordHash });
   }
 
-  public async changeEmail(id: string, newEmail: string): Promise<User | null> {
+  public async changeEmail(id: string, newEmail: string): Promise<UserEntity | null> {
     await Promise.all([
       this._getExistingUser(id),
       this._validateEmailUniqueness(newEmail, id),
@@ -103,7 +103,7 @@ export class UserService {
     return await this._userRepo.update(id, { email: newEmail });
   }
 
-  public async changePhone(id: string, newPhone: string): Promise<User | null> {
+  public async changePhone(id: string, newPhone: string): Promise<UserEntity | null> {
     await Promise.all([
       this._getExistingUser(id),
       this._validatePhoneUniqueness(newPhone, id),
@@ -114,7 +114,7 @@ export class UserService {
   public async updateStatusAccount(
     id: string,
     status: USER_STATUS,
-  ): Promise<User | null> {
+  ): Promise<UserEntity | null> {
     await this._getExistingUser(id);
     return await this._userRepo.update(id, { status });
   }
@@ -122,9 +122,13 @@ export class UserService {
   public async verifyAccount(
     id: string,
     isVerified: boolean,
-  ): Promise<User | null> {
-    await this._getExistingUser(id);
-    return await this._userRepo.update(id, { isVerified });
+  ): Promise<UserEntity | null> {
+    const existingUser = await this._getExistingUser(id);
+
+    return await this._userRepo.update(id, {
+      isVerified,
+      version: existingUser.version ?? 0,
+    });
   }
 
   /**
@@ -174,7 +178,7 @@ export class UserService {
   /**
    * DTO -> Domain Entity (Prepare data for Domain/Database)
    */
-  private _toCreateEntity(dto: CreateUserDTO): Omit<User, 'id'> {
+  private _toCreateEntity(dto: CreateUserDTO): Omit<UserEntity, 'id'> {
     return {
       ...dto,
       status: USER_STATUS.ACTIVE,
@@ -187,7 +191,7 @@ export class UserService {
   /**
    * Validate user existence
    */
-  private async _getExistingUser(id: string): Promise<User> {
+  private async _getExistingUser(id: string): Promise<UserEntity> {
     const user = await this._userRepo.findById(id);
     if (!user) {
       throw new NotFoundError('USER_NOT_FOUND');

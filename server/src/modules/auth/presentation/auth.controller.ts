@@ -1,6 +1,7 @@
 // src/modules/auth/presentation/auth.controller.ts
 
 import type { AuthService } from '@modules/auth/use-cases/auth.service.js';
+import { BadRequestError } from '@shared/core/error.response.js';
 import { Created, NoContent, OK } from '@shared/core/success.response.js';
 import type { Request, Response, NextFunction } from 'express';
 
@@ -45,5 +46,19 @@ export class AuthController {
     const { refreshToken } = req.body;
     await this.authService.logout(refreshToken);
     return new NoContent('LOGOUT_SUCCESS').send(res);
+  };
+
+  public verifyEmail = async (
+    req: Request,
+    res: Response,
+    _next: NextFunction,
+  ) => {
+    const { token } = req.query;
+    if (typeof token !== 'string') throw new BadRequestError('INVALID_TOKEN');
+    const result = await this.authService.verifyEmail(token);
+    return new OK({
+      message: 'ACCOUNT_VERIFICATION_SUCCESS',
+      data: result,
+    }).send(res);
   };
 }

@@ -21,7 +21,6 @@ let server: Server | null = null;
     // Initialize database
     await db.connect();
     await cache.connect();
-
     logger.info(line);
 
     server = app.listen(appConfig.app.port, () => {
