@@ -283,8 +283,8 @@ sequenceDiagram
         S->>R: findAll(query)
         R-->>S: { data, totalElements }
         S->>S: _toPaginatedResponse(data, totalElements, dto)
-        Note over S: Each user → _toSafeResponse
-        S-->>C: PaginatedResult&lt;SafeUserResponseDTO&gt;
+        Note over S: Each user -> _toSafeResponse
+        S-->>C: PaginatedResult[SafeUserResponseDTO]
     end
 ```
 
@@ -322,7 +322,7 @@ Two private methods ensure all public-facing outputs conform to the Safe Respons
 flowchart LR
     subgraph Input["Repo / DB"]
         A[UserEntity with password]
-        B[UserEntity[] + total]
+        B["UserEntity[] + total"]
     end
     subgraph Service["UserService"]
         C[_toSafeResponse]
@@ -330,7 +330,7 @@ flowchart LR
     end
     subgraph Output["Client"]
         E[SafeUserResponseDTO]
-        F[PaginatedResult&lt;SafeUserResponseDTO&gt;]
+        F["PaginatedResult[SafeUserResponseDTO]"]
     end
     A --> C --> E
     B --> D --> F
