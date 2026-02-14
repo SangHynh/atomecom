@@ -1,7 +1,7 @@
-@url_dev=http://localhost:5000/v1/api
+@url_dev=http://localhost:3636/v1/api
 @page=1
 @limit=5
-@userId=
+@userId=698f2519949a97c2964e66ef
 @userEmail=test@gmail.com
 @userPhone=
 

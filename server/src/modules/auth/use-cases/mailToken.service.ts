@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { BadRequestError, ConflictError } from '@shared/core/error.response.js';
 import type { IMailTokenRepo } from '@modules/auth/domain/IMailToken.repo.js';
+import { ErrorAuthCodes } from '@shared/core/error.enum.js';
 
 export class MailTokenService {
   constructor(private readonly _mailTokenRepo: IMailTokenRepo) {}
@@ -46,21 +47,21 @@ export class MailTokenService {
 
     // 2. Throw error if token does not exist in db
     if (!record) {
-      throw new BadRequestError('INVALID_URL');
+      throw new BadRequestError(ErrorAuthCodes.INVALID_OPAQUE_TOKEN);
     }
 
     // 3. Check if the token has already been consumed
     if (record.isUsed) {
       const errorMessage =
         type === 'EMAIL_VERIFICATION'
-          ? 'ACCOUNT_ALREADY_VERIFIED'
-          : 'LINK_ALREADY_USED';
+          ? ErrorAuthCodes.EMAIL_VERIFICATION_LINK_ALREADY_USED
+          : ErrorAuthCodes.EMAIL_RESET_PASSWORD_LINK_ALREADY_USED;
       throw new ConflictError(errorMessage);
     }
 
     // 4. Validate expiration date to ensure the link is still active
     if (record.expiresAt < new Date()) {
-      throw new BadRequestError('URL_EXPIRED');
+      throw new BadRequestError(ErrorAuthCodes.OPAQUE_TOKEN_EXPIRED);
     }
 
     // 5. Mark the token as used to prevent replay attacks and finalize verification

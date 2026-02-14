@@ -3,9 +3,10 @@ import type { UserEntity } from '@modules/users/domain/user.entity.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import type {
   CreateUserDTO,
-  FindAllUserDTO,
+  FindAllQueryUserDTO,
   SafeUserResponseDTO,
 } from '@modules/users/use-cases/user.dtos.js';
+import { ErrorUserCodes } from '@shared/core/error.enum.js';
 import {
   ConflictError,
   NotFoundError,
@@ -31,31 +32,41 @@ export class UserService {
     this._userRepo = userRepo;
     this._hashService = hashService;
   }
-  public async findAll(dto: FindAllUserDTO): Promise<PaginatedResult<UserEntity>> {
+  public async findAll(
+    dto: FindAllQueryUserDTO,
+  ): Promise<PaginatedResult<UserEntity>> {
     const query = this._toFindAllQuery(dto);
     const { data, totalElements } = await this._userRepo.findAll(query);
     return this._toPaginatedResponse(data, totalElements, dto);
   }
 
-  public async findById(
-    id: string,
-    status?: USER_STATUS,
-  ): Promise<UserEntity | null> {
-    return await this._userRepo.findById(id, status);
+  public async findById(id: string, status?: USER_STATUS): Promise<UserEntity> {
+    const user = await this._userRepo.findById(id, status);
+    if (!user) throw new NotFoundError(ErrorUserCodes.USER_NOT_FOUND);
+    return this._toSafeResponse(user);
   }
 
-  public async findByEmail(
+  /**
+   * Finds a user by their email address.
+   * Returns null instead of throwing an error to support validation flows
+   * (e.g., checking email uniqueness during registration or authentication).
+   */ public async findByEmail(
     email: string,
     status?: USER_STATUS,
   ): Promise<UserEntity | null> {
-    return await this._userRepo.findByEmail(email, status);
+    const user = await this._userRepo.findByEmail(email, status);
+    return this._toSafeResponse(user);
   }
 
+  /**
+   * Same as findByEmail but for phone
+   */
   public async findByPhone(
     phone: string,
     status?: USER_STATUS,
   ): Promise<UserEntity | null> {
-    return await this._userRepo.findByPhone(phone, status);
+    const user = await this._userRepo.findByPhone(phone, status);
+    return this._toSafeResponse(user);
   }
 
   public async verifyCredentials(
@@ -64,15 +75,16 @@ export class UserService {
   ): Promise<UserEntity | null> {
     const user = await this._userRepo.findByEmail(email, USER_STATUS.ACTIVE);
     if (!user || !user.password)
-      throw new UnauthorizedError('INVALID_CREDENTIALS');
+      throw new UnauthorizedError(ErrorUserCodes.INVALID_CREDENTIALS);
 
     const isMatch = await this._hashService.compare(
       passwordPlain,
       user.password,
     );
 
-    if (!isMatch) throw new UnauthorizedError('INVALID_CREDENTIALS');
-    return user;
+    if (!isMatch)
+      throw new UnauthorizedError(ErrorUserCodes.INVALID_CREDENTIALS);
+    return this._toSafeResponse(user);
   }
 
   public async create(dto: CreateUserDTO): Promise<UserEntity> {
@@ -83,58 +95,71 @@ export class UserService {
     ]);
     const passwordHash = await this._hashService.hash(dto.password);
     const entityData = this._toCreateEntity({ ...dto, password: passwordHash });
-    return await this._userRepo.create(entityData);
+    const user = await this._userRepo.create(entityData);
+    return this._toSafeResponse(user);
   }
 
   public async changePassword(
     id: string,
     newPasswordPlain: string,
   ): Promise<UserEntity | null> {
-    await this._getExistingUser(id);
+    await this.findById(id, USER_STATUS.ACTIVE);
     const passwordHash = await this._hashService.hash(newPasswordPlain);
-    return await this._userRepo.update(id, { password: passwordHash });
+    const user = await this._userRepo.update(id, { password: passwordHash });
+    return this._toSafeResponse(user);
   }
 
-  public async changeEmail(id: string, newEmail: string): Promise<UserEntity | null> {
+  public async changeEmail(
+    id: string,
+    newEmail: string,
+  ): Promise<UserEntity | null> {
     await Promise.all([
-      this._getExistingUser(id),
+      this.findById(id, USER_STATUS.ACTIVE),
       this._validateEmailUniqueness(newEmail, id),
     ]);
-    return await this._userRepo.update(id, { email: newEmail });
+    const user = await this._userRepo.update(id, { email: newEmail });
+    return this._toSafeResponse(user);
   }
 
-  public async changePhone(id: string, newPhone: string): Promise<UserEntity | null> {
+  public async changePhone(
+    id: string,
+    newPhone: string,
+  ): Promise<UserEntity | null> {
     await Promise.all([
-      this._getExistingUser(id),
+      this.findById(id, USER_STATUS.ACTIVE),
       this._validatePhoneUniqueness(newPhone, id),
     ]);
-    return await this._userRepo.update(id, { phone: newPhone });
+    const user = await this._userRepo.update(id, { phone: newPhone });
+    return this._toSafeResponse(user);
   }
 
   public async updateStatusAccount(
     id: string,
     status: USER_STATUS,
   ): Promise<UserEntity | null> {
-    await this._getExistingUser(id);
-    return await this._userRepo.update(id, { status });
+    await this.findById(id, USER_STATUS.ACTIVE);
+    const user = await this._userRepo.update(id, { status });
+    return this._toSafeResponse(user);
   }
 
   public async verifyAccount(
     id: string,
     isVerified: boolean,
   ): Promise<UserEntity | null> {
-    const existingUser = await this._getExistingUser(id);
+    const existingUser = await this.findById(id, USER_STATUS.ACTIVE);
 
-    return await this._userRepo.update(id, {
+    const user = await this._userRepo.update(id, {
       isVerified,
       version: existingUser.version ?? 0,
     });
+    
+    return this._toSafeResponse(user);
   }
 
   /**
    * DTO -> Repository Query (Translate request from Client to Repository Query)
    */
-  private _toFindAllQuery(dto: FindAllUserDTO) {
+  private _toFindAllQuery(dto: FindAllQueryUserDTO) {
     const page = Number(dto.page) || 1;
     const limit = Number(dto.limit) || 10;
 
@@ -148,21 +173,25 @@ export class UserService {
   }
 
   /**
+   * Domain Entity -> Safe Response (Prepare data for Client)
+   */
+  private _toSafeResponse(user: UserEntity): SafeUserResponseDTO {
+    const userObj = (user as any).toObject ? (user as any).toObject() : user;
+    const { password, __v, ...safeData } = userObj;
+    return safeData as SafeUserResponseDTO;
+  }
+
+  /**
    * Domain Result -> Paginated Response (Encapsulate data and pagination info)
    */
   private _toPaginatedResponse(
-    data: any[],
+    data: UserEntity[],
     total: number,
-    dto: FindAllUserDTO,
+    dto: FindAllQueryUserDTO,
   ): PaginatedResult<SafeUserResponseDTO> {
     const limit = Number(dto.limit) || 10;
 
-    const sanitizedData = data.map((item) => {
-      const { password, __v, ...safeData } = item.toObject
-        ? item.toObject()
-        : item;
-      return safeData as SafeUserResponseDTO;
-    });
+    const sanitizedData = data.map((user) => this._toSafeResponse(user));
 
     return {
       data: sanitizedData,
@@ -189,17 +218,6 @@ export class UserService {
   }
 
   /**
-   * Validate user existence
-   */
-  private async _getExistingUser(id: string): Promise<UserEntity> {
-    const user = await this._userRepo.findById(id);
-    if (!user) {
-      throw new NotFoundError('USER_NOT_FOUND');
-    }
-    return user;
-  }
-
-  /**
    * Validate Email uniqueness
    */
   private async _validateEmailUniqueness(
@@ -208,8 +226,8 @@ export class UserService {
   ): Promise<void> {
     const user = await this._userRepo.findByEmail(email);
     if (user && user.id !== excludeId) {
-      throw new ConflictError('EMAIL_ALREADY_EXISTS', [
-        { field: 'email', message: 'EMAIL_ALREADY_EXISTS' },
+      throw new ConflictError(ErrorUserCodes.EMAIL_ALREADY_EXISTS, [
+        { field: 'email', message: ErrorUserCodes.EMAIL_ALREADY_EXISTS },
       ]);
     }
   }
@@ -223,8 +241,8 @@ export class UserService {
   ): Promise<void> {
     const user = await this._userRepo.findByPhone(phone);
     if (user && user.id !== excludeId) {
-      throw new ConflictError('PHONE_ALREADY_EXISTS', [
-        { field: 'phone', message: 'PHONE_ALREADY_EXISTS' },
+      throw new ConflictError(ErrorUserCodes.PHONE_ALREADY_EXISTS, [
+        { field: 'phone', message: ErrorUserCodes.PHONE_ALREADY_EXISTS },
       ]);
     }
   }

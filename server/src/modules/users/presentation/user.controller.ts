@@ -1,5 +1,4 @@
 import type { UserService } from '@modules/users/use-cases/user.service.js';
-import { BadRequestError } from '@shared/core/error.response.js';
 import { Created, OK } from '@shared/core/success.response.js';
 import type { Request, Response, NextFunction } from 'express';
 
@@ -16,10 +15,7 @@ export class UserController {
     res: Response,
     _next: NextFunction,
   ) => {
-    const { id } = req.params;
-    if (typeof id !== 'string') {
-      throw new BadRequestError('INVALID_USER_ID');
-    }
+    const { id } = req.params as { id: string };
     const result = await this.userService.findById(id);
     return new OK({ data: result }).send(res);
   };
@@ -29,7 +25,7 @@ export class UserController {
     res: Response,
     _next: NextFunction,
   ) => {
-    const email = req.params.email as string;
+    const { email } = req.params as { email: string };
     const result = await this.userService.findByEmail(email);
     return new OK({ data: result }).send(res);
   };
@@ -39,7 +35,7 @@ export class UserController {
     res: Response,
     _next: NextFunction,
   ) => {
-    const phone = req.params.phone as string;
+    const { phone } = req.params as { phone: string };
     const result = await this.userService.findByPhone(phone);
     return new OK({ data: result }).send(res);
   };

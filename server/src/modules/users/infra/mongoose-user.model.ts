@@ -25,7 +25,7 @@ const UserSchema = new Schema<UserEntity & Document>(
       trim: true,
     },
     phone: { type: String, trim: true, unique: true },
-    password: { type: String, required: true, select: false },
+    password: { type: String, required: true },
     role: {
       type: String,
       required: true,
@@ -41,7 +41,7 @@ const UserSchema = new Schema<UserEntity & Document>(
     collection: 'users',
     toJSON: {
       transform: (_doc, ret) => {
-        const { _id, __v, password, ...rest } = ret;
+        const { _id, __v, ...rest } = ret;
         return { id: _id, ...rest };
       },
     },

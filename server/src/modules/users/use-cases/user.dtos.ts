@@ -2,7 +2,7 @@ import type { UserAddress } from '@modules/users/domain/user.entity.js';
 import type { USER_ROLE } from '@shared/enum/userRole.enum.js';
 import type { USER_STATUS } from '@shared/enum/userStatus.enum.js';
 
-export interface FindAllUserDTO {
+export interface FindAllQueryUserDTO {
   page?: number;
   limit?: number;
   status?: USER_STATUS;

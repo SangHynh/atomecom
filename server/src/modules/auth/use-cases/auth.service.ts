@@ -9,6 +9,7 @@ import type { MailTokenService } from '@modules/auth/use-cases/mailToken.service
 import type { SessionService } from '@modules/auth/use-cases/session.service.js';
 import type { SafeUserResponseDTO } from '@modules/users/use-cases/user.dtos.js';
 import type { UserService } from '@modules/users/use-cases/user.service.js';
+import { ErrorAuthCodes, ErrorUserCodes } from '@shared/core/error.enum.js';
 import {
   InternalServerError,
   UnauthorizedError,
@@ -53,7 +54,7 @@ export class AuthService {
   public async register(dto: RegisterInputDTO): Promise<AuthResponseDTO> {
     const user = await this._userService.create({ ...dto });
     if (!user || !user.id)
-      throw new InternalServerError('USER_CREATION_FAILED');
+      throw new InternalServerError(ErrorUserCodes.CREATE_USER_FAILED);
     const tokens = await this._createNewSession(user as SafeUserResponseDTO);
     this._sendEmailInBackground(user.id, user.email, 'EMAIL_VERIFICATION');
     return this._mapToAuthResponse(user as SafeUserResponseDTO, tokens);
@@ -72,13 +73,12 @@ export class AuthService {
   public async refresh(refreshToken: string): Promise<AuthResponseDTO> {
     const payload = await this._tokenService.verifyRefreshToken(refreshToken);
     if (!payload?.userId || !payload?.sessionId || !payload?.exp) {
-      throw new UnauthorizedError('REFRESH_TOKEN_INVALID');
+      throw new UnauthorizedError(ErrorAuthCodes.INVALID_REFRESH_TOKEN);
     }
     const user = await this._userService.findById(
       payload.userId,
       USER_STATUS.ACTIVE,
     );
-    if (!user) throw new UnauthorizedError('USER_NOT_FOUND');
 
     const originalExpiresAt = payload.exp * 1000;
     const { accessToken, refreshToken: newToken } =
@@ -127,7 +127,7 @@ export class AuthService {
     const updatedUser = await this._userService.verifyAccount(userId, true);
 
     if (!updatedUser) {
-      throw new InternalServerError('VERIFY_ACCOUNT_FAILED');
+      throw new InternalServerError(ErrorAuthCodes.VERIFY_ACCOUNT_FAILED);
     }
 
     // 3. Auto create session to login
@@ -248,7 +248,7 @@ export class AuthService {
 
       logger.info(`Verification email sent to ${email}`);
     } catch (err) {
-      logger.error(`Background Email Error:`, err);
+      logger.error(`Error sending verification email to ${email}:::`, err);
     }
   }
 }

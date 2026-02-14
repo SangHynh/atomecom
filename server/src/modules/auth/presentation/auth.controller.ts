@@ -17,6 +17,7 @@ export class AuthController {
     /**
      * TODO: Refactor to HttpOnly Cookie for Refresh Token to mitigate XSS risks.
      * Recommendation: Set the refresh token in a cookie and only return the access token/user in the body.
+     * Currently returning both tokens in the response body for initial development speed.
      */
     return new Created({
       message: 'REGISTER_SUCCESS',

@@ -1,6 +1,7 @@
 import type { UserEntity } from '@modules/users/domain/user.entity.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
+import { ErrorUserCodes } from '@shared/core/error.enum.js';
 import {
   ConflictError,
   InternalServerError,
@@ -87,10 +88,10 @@ export class MongooseUserRepo implements IUserRepository {
   ): Promise<UserEntity | null> {
     const { version, ...updateData } = data;
     if (version === undefined) {
-      const error = new InternalServerError('DATA_MAPPING_ERROR', [
+      const error = new InternalServerError(ErrorUserCodes.USER_DATA_MAPPING_ERROR, [
         {
           field: 'version',
-          message: 'VERSION_IS_REQUIRED',
+          message: ErrorUserCodes.USER_VERSION_IS_REQUIRED,
         },
       ]);
       error.layer = LAYER;
@@ -125,7 +126,7 @@ export class MongooseUserRepo implements IUserRepository {
     const data = doc.toObject ? doc.toObject() : doc;
     const targetId = data._id || data.id;
     if (!targetId) {
-      const error = new InternalServerError('DATA_MAPPING_ERROR');
+      const error = new InternalServerError(ErrorUserCodes.USER_DATA_MAPPING_ERROR);
       error.layer = LAYER;
       error.module = MODULE;
       throw error;
