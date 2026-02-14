@@ -159,39 +159,35 @@ sequenceDiagram
     participant R as UserRepo
     participant H as HashService
 
-    rect rgb(240, 248, 255)
-        Note over S: changePassword
-        C->>S: changePassword(id, newPasswordPlain)
-        S->>S: findById(id, ACTIVE)
-        alt User not found
-            S->>C: throw NotFoundError(USER_NOT_FOUND)
-        else User found
-            S->>H: hash(newPasswordPlain)
-            H-->>S: passwordHash
-            S->>R: update(id, { password })
-            R-->>S: UserEntity
-            S->>S: _toSafeResponse(user)
-            S-->>C: SafeUserResponseDTO
-        end
+    Note over S: changePassword flow
+    C->>S: changePassword(id, newPasswordPlain)
+    S->>S: findById(id, ACTIVE)
+    alt User not found
+        S->>C: throw NotFoundError(USER_NOT_FOUND)
+    else User found
+        S->>H: hash(newPasswordPlain)
+        H-->>S: passwordHash
+        S->>R: update(id, { password })
+        R-->>S: UserEntity
+        S->>S: _toSafeResponse(user)
+        S-->>C: SafeUserResponseDTO
     end
 
-    rect rgb(248, 255, 240)
-        Note over S: changeEmail / changePhone
-        C->>S: changeEmail(id, newEmail) or changePhone(id, newPhone)
-        par Existence + Uniqueness
-            S->>S: findById(id, ACTIVE)
-            S->>S: _validateEmailUniqueness / _validatePhoneUniqueness
-        end
-        alt User not found
-            S->>C: throw NotFoundError(USER_NOT_FOUND)
-        else Email/Phone already exists
-            S->>C: throw ConflictError(EMAIL_ALREADY_EXISTS / PHONE_ALREADY_EXISTS)
-        else All valid
-            S->>R: update(id, { email } or { phone })
-            R-->>S: UserEntity
-            S->>S: _toSafeResponse(user)
-            S-->>C: SafeUserResponseDTO
-        end
+    Note over S: changeEmail / changePhone flow
+    C->>S: changeEmail(id, newEmail) or changePhone(id, newPhone)
+    par Existence + Uniqueness
+        S->>S: findById(id, ACTIVE)
+        S->>S: _validateEmailUniqueness / _validatePhoneUniqueness
+    end
+    alt User not found
+        S->>C: throw NotFoundError(USER_NOT_FOUND)
+    else Email/Phone already exists
+        S->>C: throw ConflictError(EMAIL_ALREADY_EXISTS / PHONE_ALREADY_EXISTS)
+    else All valid
+        S->>R: update(id, { email } or { phone })
+        R-->>S: UserEntity
+        S->>S: _toSafeResponse(user)
+        S-->>C: SafeUserResponseDTO
     end
 ```
 
@@ -209,33 +205,29 @@ sequenceDiagram
     participant S as UserService
     participant R as UserRepo
 
-    rect rgb(255, 248, 240)
-        Note over S: updateStatusAccount
-        C->>S: updateStatusAccount(id, status)
-        S->>S: findById(id, ACTIVE)
-        alt User not found
-            S->>C: throw NotFoundError(USER_NOT_FOUND)
-        else User found
-            S->>R: update(id, { status })
-            R-->>S: UserEntity
-            S->>S: _toSafeResponse(user)
-            S-->>C: SafeUserResponseDTO
-        end
+    Note over S: updateStatusAccount Flow
+    C->>S: updateStatusAccount(id, status)
+    S->>S: findById(id, ACTIVE)
+    alt User not found
+        S->>C: throw NotFoundError(USER_NOT_FOUND)
+    else User found
+        S->>R: update(id, { status })
+        R-->>S: UserEntity
+        S->>S: _toSafeResponse(user)
+        S-->>C: SafeUserResponseDTO
     end
 
-    rect rgb(248, 240, 255)
-        Note over S: verifyAccount
-        C->>S: verifyAccount(id, isVerified)
-        S->>S: findById(id, ACTIVE)
-        alt User not found
-            S->>C: throw NotFoundError(USER_NOT_FOUND)
-        else User found
-            S->>R: update(id, { isVerified, version })
-            Note over R: Optimistic lock: version mismatch → USER_DATA_MODIFIED_CONCURRENTLY
-            R-->>S: UserEntity
-            S->>S: _toSafeResponse(user)
-            S-->>C: SafeUserResponseDTO
-        end
+    Note over S: verifyAccount (Optimistic Locking)
+    C->>S: verifyAccount(id, isVerified)
+    S->>S: findById(id, ACTIVE)
+    alt User not found
+        S->>C: throw NotFoundError(USER_NOT_FOUND)
+    else User found
+        S->>R: update(id, { isVerified, version })
+        Note over R: Version mismatch -> USER_DATA_MODIFIED_CONCURRENTLY
+        R-->>S: UserEntity
+        S->>S: _toSafeResponse(user)
+        S-->>C: SafeUserResponseDTO
     end
 ```
 
@@ -262,30 +254,26 @@ sequenceDiagram
     participant S as UserService
     participant R as UserRepo
 
-    rect rgb(240, 255, 248)
-        Note over S: findById
-        C->>S: findById(id, status?)
-        S->>R: findById(id, status)
-        alt User not found
-            R-->>S: null
-            S->>C: throw NotFoundError(USER_NOT_FOUND)
-        else User found
-            R-->>S: UserEntity
-            S->>S: _toSafeResponse(user)
-            S-->>C: SafeUserResponseDTO
-        end
+    Note over S: findById Flow
+    C->>S: findById(id, status?)
+    S->>R: findById(id, status)
+    alt User not found
+        R-->>S: null
+        S->>C: throw NotFoundError(USER_NOT_FOUND)
+    else User found
+        R-->>S: UserEntity
+        S->>S: _toSafeResponse(user)
+        S-->>C: SafeUserResponseDTO
     end
 
-    rect rgb(255, 248, 248)
-        Note over S: findAll
-        C->>S: findAll(FindAllQueryUserDTO)
-        S->>S: _toFindAllQuery(dto)
-        S->>R: findAll(query)
-        R-->>S: { data, totalElements }
-        S->>S: _toPaginatedResponse(data, totalElements, dto)
-        Note over S: Each user -> _toSafeResponse
-        S-->>C: PaginatedResult[SafeUserResponseDTO]
-    end
+    Note over S: findAll Flow (Pagination)
+    C->>S: findAll(FindAllQueryUserDTO)
+    S->>S: _toFindAllQuery(dto)
+    S->>R: findAll(query)
+    R-->>S: { data, totalElements }
+    S->>S: _toPaginatedResponse(data, totalElements, dto)
+    Note over S: Each user mapped via _toSafeResponse
+    S-->>C: "PaginatedResult[SafeUserResponseDTO]"
 ```
 
 ---
@@ -341,7 +329,90 @@ flowchart LR
 
 ## 4. Technical Design
 
-### 4.1 DTO Rules
+### 4.1 Data Schema
+
+Based on `mongoose-user.model.ts`. Internal fields such as `version` (optimistic locking) and `status` are included.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | String | Yes | User display name; trimmed |
+| `email` | String | Yes | Unique, lowercase, trimmed |
+| `phone` | String | No | Unique; trimmed |
+| `password` | String | Yes | Bcrypt hash; never returned in API responses |
+| `role` | String (enum) | Yes | `USER_ROLE` (e.g. `admin`, `user`); default `user` |
+| `addresses` | [AddressSchema] | No | Array of address sub-documents |
+| `status` | String | No | Account status (e.g. `ACTIVE`, `PENDING`); default `ACTIVE` |
+| `isVerified` | Boolean | No | Email verification flag; default `false` |
+| `version` | Number | No | Optimistic locking; incremented on each update; default `1` |
+| `createdAt` | Date | Auto | Mongoose timestamp |
+| `updatedAt` | Date | Auto | Mongoose timestamp |
+
+**Address Sub-schema**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `street` | String | Yes | Street address |
+| `city` | String | Yes | City name |
+| `isDefault` | Boolean | No | Default address flag; default `false` |
+| `version` | Number | No | Sub-document version; default `1` |
+
+### 4.2 Validation Rules
+
+Based on `user.validator.ts` for `CreateUserDTO` and `UpdateUserDTO`. Error codes match Section 5.
+
+| Field | DTO | Zod Type | Constraints | Error Code |
+|-------|-----|----------|-------------|------------|
+| `name` | CreateUser | `z.string()` | `min(2)` | `NAME_MUST_BE_AT_LEAST_2_CHARS` |
+| `email` | CreateUser | `z.string().email()` | Valid email format | `INVALID_EMAIL_FORMAT` |
+| `phone` | CreateUser | `z.string().optional()` | `min(10)` when present | `PHONE_NUMBER_MUST_BE_AT_LEAST_10_DIGITS` |
+| `password` | CreateUser | `z.string()` | `min(6)` | `PASSWORD_MUST_BE_AT_LEAST_6_CHARS` |
+| `role` | CreateUser | `z.nativeEnum(USER_ROLE).optional()` | Default `USER` | — |
+| `addresses` | CreateUser | `z.array(UserAddressSchema).optional()` | Default `[]` | — |
+| `name` | UpdateUser | `z.string().optional()` | `min(2)` when present | `NAME_MUST_BE_AT_LEAST_2_CHARS` |
+| `email` | UpdateUser | `z.string().email().optional()` | Valid email when present | `INVALID_EMAIL_FORMAT` |
+| `phone` | UpdateUser | `z.string().optional()` | `min(10)` when present | `PHONE_NUMBER_MUST_BE_AT_LEAST_10_DIGITS` |
+| `password` | UpdateUser | `z.string().optional()` | `min(6)` when present | `PASSWORD_MUST_BE_AT_LEAST_6_CHARS` |
+| `role` | UpdateUser | `z.nativeEnum(USER_ROLE).optional()` | — | — |
+| `addresses` | UpdateUser | `z.array(UserAddressSchema).optional()` | — | — |
+
+**UserAddressSchema (used in `addresses`)**
+
+| Field | Zod Type | Constraints | Error Code |
+|-------|----------|-------------|------------|
+| `street` | `z.string()` | `min(1)` | `STREET_IS_REQUIRED` |
+| `city` | `z.string()` | `min(1)` | `CITY_IS_REQUIRED` |
+| `isDefault` | `z.boolean()` | Default `false` | — |
+
+- **CreateUserDTO** uses `CreateUserRequestSchema`; **UpdateUserDTO** uses `UpdateUserRequestSchema` (partial of CreateUser body).
+- **Params validation:** `id` — `min(1)` → `INVALID_USER_ID`; `email` — `.email()` → `INVALID_EMAIL_FORMAT`; `phone` — `min(10)` → `PHONE_NUMBER_MUST_BE_AT_LEAST_10_DIGITS`.
+
+### 4.3 Safe Response Example
+
+Example `SafeUserResponseDTO` returned to the frontend. `password` and `__v` are never included.
+
+```json
+{
+  "id": "507f1f77bcf86cd799439011",
+  "name": "Jane Doe",
+  "email": "jane.doe@example.com",
+  "phone": "0912345678",
+  "role": "user",
+  "status": "active",
+  "isVerified": false,
+  "addresses": [
+    {
+      "isDefault": true,
+      "street": "123 Main St",
+      "city": "Ho Chi Minh City"
+    }
+  ],
+  "version": 1,
+  "createdAt": "2025-02-14T10:00:00.000Z",
+  "updatedAt": "2025-02-14T10:00:00.000Z"
+}
+```
+
+### 4.4 DTO Rules
 
 | DTO | Layer | Purpose |
 |-----|-------|---------|
@@ -353,7 +424,7 @@ flowchart LR
 - **Request DTOs** are validated by Zod schemas in `user.validator.ts` before reaching the Service.
 - **Response** is always `SafeUserResponseDTO` — no internal/DB-only fields such as password.
 
-### 4.2 Data Security
+### 4.5 Data Security
 
 | Concern | Implementation |
 |---------|----------------|
@@ -400,9 +471,12 @@ Error codes from `ErrorUserCodes` enum. Values below are the API code strings se
 | 4 | Find by phone | Valid phone | 200, `SafeUserResponseDTO` or null |
 | 5 | Find all (paginated) | page, limit | 200, paginated list of `SafeUserResponseDTO` |
 | 6 | Verify credentials | Valid email + password | `SafeUserResponseDTO` (no password) |
-| 7 | Change password | Valid id + new password | Updated `SafeUserResponseDTO` |
-| 8 | Change email | Valid id + new unique email | Updated `SafeUserResponseDTO` |
-| 9 | Change phone | Valid id + new unique phone | Updated `SafeUserResponseDTO` |
+| 7 | Change password | Valid id (ACTIVE user) + new password (min 6 chars) | 200, `SafeUserResponseDTO` with unchanged profile (password never in response) |
+| 8 | Change email | Valid id (ACTIVE user) + new unique email | 200, `SafeUserResponseDTO` with updated email |
+| 9 | Change phone | Valid id (ACTIVE user) + new unique phone | 200, `SafeUserResponseDTO` with updated phone |
+| 10 | Verify account | Valid id (ACTIVE user) + `isVerified: true` | 200, `SafeUserResponseDTO` with `isVerified: true`, incremented `version` |
+| 11 | Verify account (unverify) | Valid id (ACTIVE user) + `isVerified: false` | 200, `SafeUserResponseDTO` with `isVerified: false` |
+| 12 | Change email (same as current) | Valid id + same email as current user | 200, `SafeUserResponseDTO` (excludeId prevents false conflict) |
 
 ### Edge Cases
 
@@ -417,4 +491,11 @@ Error codes from `ErrorUserCodes` enum. Values below are the API code strings se
 | 7 | Email format validation | Invalid email | 400, `INVALID_EMAIL_FORMAT` |
 | 8 | Password length validation | Password &lt; 6 chars | 400, `INVALID_PASSWORD_FORMAT` |
 | 9 | Name length validation | Name &lt; 2 chars | 400, `INVALID_NAME_FORMAT` |
-| 10 | Optimistic lock conflict | Update with stale version | 409, `USER_DATA_MODIFIED_CONCURRENTLY` |
+| 10 | Optimistic lock conflict | `verifyAccount` with stale version (concurrent update) | 409, `USER_DATA_MODIFIED_CONCURRENTLY` |
+| 11 | Change password — user not found | Non-existent id | 404, `USER_NOT_FOUND` |
+| 12 | Change password — inactive user | id of PENDING/DEACTIVE/BANNED user | 404, `USER_NOT_FOUND` |
+| 13 | Change email — user not found | Non-existent id | 404, `USER_NOT_FOUND` |
+| 14 | Change email — inactive user | id of PENDING/DEACTIVE/BANNED user | 404, `USER_NOT_FOUND` |
+| 15 | Change email — email taken | New email already used by another user | 409, `EMAIL_ALREADY_EXISTS` |
+| 16 | Verify account — user not found | Non-existent id | 404, `USER_NOT_FOUND` |
+| 17 | Verify account — inactive user | id of PENDING/DEACTIVE/BANNED user | 404, `USER_NOT_FOUND` |
