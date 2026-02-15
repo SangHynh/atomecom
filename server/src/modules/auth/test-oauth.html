@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OAuth Test</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f4f4f4; }
+        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        button { background: #4285F4; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Atomecom Auth Test</h1>
+        <p>Click below to test Google Login</p>
+        <button onclick="login()">Login with Google</button>
+    </div>
+
+    <script>
+        function login() {
+            const client_id = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+            const redirect_uri = 'http://localhost:3636/v1/api/auth/google/callback';
+            const scope = 'openid email profile';
+            const response_type = 'code';
+
+            const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${client_id}&redirect_uri=${redirect_uri}&response_type=${response_type}&scope=${scope}&access_type=offline&prompt=consent`;
+            
+            window.location.href = url;
+        }
+    </script>
+</body>
+</html>
