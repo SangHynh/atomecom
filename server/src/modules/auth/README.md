@@ -17,49 +17,77 @@ The **Auth** module handles authentication, session management, and identity ver
 ## 2. Dependencies
 
 ### Internal Module Dependencies
+Internal modules that the **Auth Module** coordinates to complete business logic workflows.
 
 | Module | Usage |
-|--------|-------|
-| **Users** | User creation, credential verification, profile fetching, and status updates (password/verification) |
-| **Shared** | Error enums (`ErrorAuthCodes`, `ErrorUserCodes`), Base response types, Email service interface, and utility functions |
+|:---|:---|
+| **Users** | Managed via `UserService` for user creation, credential verification, and updating verification/password status. |
+| **Shared** | Provides `IEmailService` for notifications, `ICacheRepo` interface for session handling. |
 
-### External / Infrastructure Dependencies
+### Infrastructure & Implementation Dependencies
+Strict separation between programming interfaces (**Interfaces**) and concrete implementations (**Adapters/Repos**) following Clean Architecture principles.
 
-| Dependency | Purpose |
-|------------|---------|
-| **JWT** | Access and Refresh token generation/verification via `ITokenService` |
-| **Redis / Cache** | Session storage for refresh token rotation and revocation via `SessionService` |
-| **MongoDB** | Persistence for mail tokens (verification/reset) via `MailTokenModel` |
-| **Email Service** | Sending verification and reset emails via `IEmailService` |
+| Dependency | Interface | Implementation (Infra) | Purpose |
+|:---|:---:|:---:|:---|
+| **Token Service** | `ITokenService` | `JWT Adapter` | Issuance and validation of Access/Refresh Tokens (JWT). |
+| **Cache Store** | `ICacheRepo` | `Ioredis Cache` | Generic cache repository used by `SessionService` to manage session lifecycle in **Redis**. |
+| **Mail Token** | `IMailTokenRepo` | `Mongoose Mail Token Repo` | Persistence for verification codes and password reset tokens in **MongoDB**. |
+| **Email Provider** | `IEmailService` | `Resend Email Provider` | Concrete implementation for physical email delivery via Resend API. |
+
+---
+
+### System Architecture (Auth Module)
 
 ```mermaid
-flowchart LR
-    subgraph Auth["Auth Module"]
-        AS[AuthService]
+flowchart TD
+    subgraph Core["Auth Module (Core Logic)"]
+        direction TB
         AC[AuthController]
+        AS[AuthService]
         SS[SessionService]
         MTS[MailTokenService]
-    end
-    subgraph Users["Users Module"]
-        US[UserService]
-    end
-    subgraph Shared["Shared"]
-        EMAIL[EmailService]
-        JWT[JwtTokenAdapter]
-    end
-    subgraph Infra["Infrastructure"]
-        REDIS[(Redis)]
-        MONGO[(MongoDB)]
+        ITK{ITokenService}
+        IMR{IMailTokenRepo}
     end
 
+    subgraph External["External / Shared Dependencies"]
+        direction LR
+        US[UserService]
+        IES{IEmailService}
+        ICR{ICacheRepo}
+    end
+
+    subgraph Infra["Infrastructure Layer"]
+        direction LR
+        JTA[JWT Adapter]
+        SMTP[Resend Email Provider]
+        MTR[Mongoose Mail Token Repo]
+        RCR[Redis Cache Repo]
+        DB[(MongoDB)]
+        RD[(Redis)]
+    end
+
+    %% Main business flow
     AC --> AS
-    AS --> US
     AS --> SS
     AS --> MTS
-    AS --> EMAIL
-    AS --> JWT
-    SS --> REDIS
-    MTS --> MONGO
+    AS --> ITK
+    AS --> US
+    
+    %% Service usage
+    SS --> ICR
+    MTS --> IMR
+    AS --> IES
+
+    %% Dependency Inversion (Realization)
+    JTA -. "implements" .-> ITK
+    SMTP -. "implements" .-> IES
+    MTR -. "implements" .-> IMR
+    RCR -. "implements" .-> ICR
+
+    %% External Data Access
+    MTR -. "access" .-> DB
+    RCR -. "access" .-> RD
 ```
 
 ---

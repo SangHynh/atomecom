@@ -15,38 +15,46 @@ The **Users** module owns all user lifecycle operations and identity data. Its b
 
 ## 2. Dependencies
 
-### Internal Module Dependencies
+### Infrastructure & Implementation Dependencies
+Decoupling of business logic from technical details using the Repository and Adapter patterns.
 
-| Module | Usage |
-|--------|-------|
-| **Shared** | Error enums (`ErrorUserCodes`), response types (`OK`, `Created`), validation middleware, pagination types |
+| Dependency | Interface | Implementation (Infra) | Purpose |
+|:---|:---:|:---:|:---|
+| **Database** | `IUserRepository` | `MongooseUserRepository` | Handles user data persistence and queries on **MongoDB**. |
+| **Hash Service** | `IHashService` | `BcryptAdapter` | Manages password security through `hash()` and `compare()` operations. |
 
-### External / Infrastructure Dependencies
+---
 
-| Dependency | Purpose |
-|------------|---------|
-| **MongoDB (Mongoose)** | Persistence via `UserModel`; `MongooseUserRepo` implements `IUserRepository` |
-| **Bcrypt** | Password hashing via `IHashService` (`BcryptHashAdapter`) — `hash()` and `compare()` |
+### System Architecture (Users Module)
 
 ```mermaid
-flowchart LR
-    subgraph Users["Users Module"]
-        US[UserService]
+flowchart TD
+    subgraph Core["Users Module (Core Logic)"]
+        direction TB
         UC[UserController]
+        US[UserService]
+        UR{IUserRepository}
+        IHS{IHashService}
     end
-    subgraph Shared["Shared"]
-        ERR[ErrorUserCodes]
-        RES[Success Responses]
+
+    subgraph Infra["Infrastructure Layer"]
+        direction LR
+        MUR[MongooseUserRepository]
+        BHA[BcryptAdapter]
+        DB[(MongoDB)]
     end
-    subgraph Infra["Infrastructure"]
-        MONGO[(MongoDB)]
-        BCRYPT[BcryptHashAdapter]
-    end
+
+    %% Main business flow
     UC --> US
-    US --> MONGO
-    US --> BCRYPT
-    US --> ERR
-    UC --> RES
+    US --> UR
+    US --> IHS
+
+    %% Dependency Inversion (Realization)
+    MUR -. "implements" .-> UR
+    BHA -. "implements" .-> IHS
+
+    %% External Data Access
+    MUR -. "access" .-> DB
 ```
 
 ---
