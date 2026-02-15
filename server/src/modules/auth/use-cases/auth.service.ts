@@ -12,6 +12,7 @@ import type { UserService } from '@modules/users/use-cases/user.service.js';
 import { ErrorAuthCodes, ErrorUserCodes } from '@shared/core/error.enum.js';
 import {
   InternalServerError,
+  NotFoundError,
   UnauthorizedError,
 } from '@shared/core/error.response.js';
 import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
@@ -113,30 +114,72 @@ export class AuthService {
       }
     } catch (error) {
       // still log out
+      logger.error(
+        `[${MODULE}][${LAYER}][Logout] Error while revoking refresh token: ${error}`,
+      );
     }
   }
 
   public async verifyEmail(token: string): Promise<AuthResponseDTO> {
-    // 1. Check token and get userId
     const userId = await this._mailTokenService.verifyMailToken(
       token,
       'EMAIL_VERIFICATION',
     );
-
-    // 2. Update user status
     const updatedUser = await this._userService.verifyAccount(userId, true);
-
     if (!updatedUser) {
       throw new InternalServerError(ErrorAuthCodes.VERIFY_ACCOUNT_FAILED);
     }
-
-    // 3. Auto create session to login
     const tokens = await this._createNewSession(
       updatedUser as SafeUserResponseDTO,
     );
-
-    // 4. return
     return this._mapToAuthResponse(updatedUser as SafeUserResponseDTO, tokens);
+  }
+
+  public async resendVerificationEmail(email: string): Promise<void> {
+    const user = await this._userService.findByEmail(email);
+    if (user && user.id) {
+      if (user.isVerified) return;
+      this._sendEmailInBackground(user.id, email, 'EMAIL_VERIFICATION');
+    }
+    logger.info(
+      `[${MODULE}][${LAYER}][ResendEmail] Request initiated for email: ${email}`,
+    );
+  }
+
+  public async forgotPassword(email: string): Promise<void> {
+    const user = await this._userService.findByEmail(email, USER_STATUS.ACTIVE);
+    console.log(user)
+    if (user && user.id) {
+      this._sendEmailInBackground(user.id, email, 'RESET_PASSWORD');
+      logger.info(
+        `[${MODULE}][${LAYER}][ForgotPassword] Email sent to ${email} for password reset. UserID: ${user.id}`,
+      );
+    }
+    // background task, aldready logged, response 200 at controller
+  }
+
+  public async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<void> {
+    const userId = await this._mailTokenService.verifyMailToken(
+      token,
+      'RESET_PASSWORD',
+    );
+
+    const updatedUser = await this._userService.changePassword(
+      userId,
+      newPassword,
+    );
+
+    if (!updatedUser) {
+      throw new InternalServerError(ErrorAuthCodes.RESET_PASSWORD_FAILED);
+    }
+
+    // response 200 at controller
+    logger.info(
+      `[${MODULE}][${LAYER}][ResetPassword] Success for UserID: ${userId}`,
+    );
   }
 
   /**
@@ -236,7 +279,7 @@ export class AuthService {
     type: 'EMAIL_VERIFICATION' | 'RESET_PASSWORD',
   ): Promise<void> {
     try {
-      // 1. Create email token and save to DB
+      // 1. Create email token
       const token = await this._mailTokenService.createMailToken(
         userId,
         email,
@@ -244,11 +287,19 @@ export class AuthService {
       );
 
       // 2. Send email
-      await this._emailService.sendVerificationEmail(email, token);
-
-      logger.info(`Verification email sent to ${email}`);
+      if (type === 'EMAIL_VERIFICATION') {
+        await this._emailService.sendVerificationEmail(email, token);
+      } else if (type === 'RESET_PASSWORD') {
+        await this._emailService.sendResetPasswordEmail(email, token);
+      }
+      logger.info(
+        `[${MODULE}][${LAYER}][BackgroundMail] ${type} sent to ${email}`,
+      );
     } catch (err) {
-      logger.error(`Error sending verification email to ${email}:::`, err);
+      logger.error(
+        `[${MODULE}][${LAYER}][BackgroundMail] Failed to send ${type} to ${email}`,
+        { error: err },
+      );
     }
   }
 }

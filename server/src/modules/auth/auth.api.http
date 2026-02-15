@@ -1,4 +1,4 @@
-@url_dev=http://localhost:3636/api
+@url_dev=http://localhost:3636/v1/api
 @email=kemmutat2k2@gmail.com
 @password=coincard
 @phone=0343564321
@@ -48,12 +48,43 @@ Content-Type: application/json
     "refreshToken": "paste_reftk_here"
 }
 
+### 5. Verify Email (Click from email)
+# @name verifyEmail
+@verifyToken = opaque_token_in_email_reset_password_url
+
+GET {{url_dev}}/auth/verify-email?token={{verifyToken}}
+
+### 6. Forgot password (send email to user)
+# @name forgotPassword
+
+POST {{url_dev}}/auth/forgot-password
+Content-Type: application/json
+
+{
+    "email": "{{email}}"
+}
+
+### 7. Reset password (from url email)
+# @name resetPassword
+
+POST {{url_dev}}/auth/reset-password
+Content-Type: application/json
+
+{
+    "newPassword": "111111",
+    "token": "{{verifyToken}}"
+}
+
+### 8. Resend verification email
+# @name resendVerify
+POST {{url_dev}}/auth/resend-verification
+Content-Type: application/json
+
+{
+    "email": "{{email}}"
+}
+
 ### Test auth route middleware
 GET {{url_dev}}/health
 Authorization: Bearer {{accessToken}}
 
-### 5. Verify Email (Click from email)
-# @name verifyEmail
-@verifyToken = paste_token_from_db_here
-
-GET {{url_dev}}/auth/verify-email?token={{verifyToken}}

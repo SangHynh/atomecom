@@ -33,4 +33,5 @@ export enum ErrorAuthCodes {
 
   // --- Internal Server Errors (FE usually just shows a generic message) ---
   VERIFY_ACCOUNT_FAILED = 'VERIFY_ACCOUNT_FAILED',
+  RESET_PASSWORD_FAILED = 'RESET_PASSWORD_FAILED',
 }

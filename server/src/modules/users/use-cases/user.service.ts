@@ -48,13 +48,16 @@ export class UserService {
 
   /**
    * Finds a user by their email address.
-   * Returns null instead of throwing an error to support validation flows
-   * (e.g., checking email uniqueness during registration or authentication).
-   */ public async findByEmail(
+   * * @returns The user data or null if no record matches. Returning null instead 
+   * of throwing an error provides flexibility for various business flows, such 
+   * as email uniqueness validation or conditional authentication logic.
+   */
+  public async findByEmail(
     email: string,
     status?: USER_STATUS,
-  ): Promise<UserEntity | null> {
+  ): Promise<SafeUserResponseDTO | null> {
     const user = await this._userRepo.findByEmail(email, status);
+    if (!user) return null;
     return this._toSafeResponse(user);
   }
 
@@ -66,6 +69,7 @@ export class UserService {
     status?: USER_STATUS,
   ): Promise<UserEntity | null> {
     const user = await this._userRepo.findByPhone(phone, status);
+    if (!user) return null;
     return this._toSafeResponse(user);
   }
 
@@ -103,10 +107,10 @@ export class UserService {
     id: string,
     newPasswordPlain: string,
   ): Promise<UserEntity | null> {
-    await this.findById(id, USER_STATUS.ACTIVE);
+    const user = await this.findById(id, USER_STATUS.ACTIVE);
     const passwordHash = await this._hashService.hash(newPasswordPlain);
-    const user = await this._userRepo.update(id, { password: passwordHash });
-    return this._toSafeResponse(user);
+    const updatedUser = await this._userRepo.update(id, { password: passwordHash, version: user.version ?? 0 });
+    return this._toSafeResponse(updatedUser);
   }
 
   public async changeEmail(
@@ -152,7 +156,7 @@ export class UserService {
       isVerified,
       version: existingUser.version ?? 0,
     });
-    
+
     return this._toSafeResponse(user);
   }
 
@@ -175,7 +179,7 @@ export class UserService {
   /**
    * Domain Entity -> Safe Response (Prepare data for Client)
    */
-  private _toSafeResponse(user: UserEntity): SafeUserResponseDTO {
+  private _toSafeResponse(user: UserEntity | null): SafeUserResponseDTO {
     const userObj = (user as any).toObject ? (user as any).toObject() : user;
     const { password, __v, ...safeData } = userObj;
     return safeData as SafeUserResponseDTO;

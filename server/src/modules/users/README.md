@@ -339,9 +339,9 @@ Based on `mongoose-user.model.ts`. Internal fields such as `version` (optimistic
 | `email` | String | Yes | Unique, lowercase, trimmed |
 | `phone` | String | No | Unique; trimmed |
 | `password` | String | Yes | Bcrypt hash; never returned in API responses |
-| `role` | String (enum) | Yes | `USER_ROLE` (e.g. `admin`, `user`); default `user` |
+| `role` | String (enum) | Yes | `USER_ROLE` (e.g. `ADMIN`, `USER`, `SUPER_ADMIN` ); default `USER` |
 | `addresses` | [AddressSchema] | No | Array of address sub-documents |
-| `status` | String | No | Account status (e.g. `ACTIVE`, `PENDING`); default `ACTIVE` |
+| `status` | String | No | Account status (e.g. `ACTIVE`, `DEACTIVE`, `BANNED`, `DELETED`); default `ACTIVE` |
 | `isVerified` | Boolean | No | Email verification flag; default `false` |
 | `version` | Number | No | Optimistic locking; incremented on each update; default `1` |
 | `createdAt` | Date | Auto | Mongoose timestamp |

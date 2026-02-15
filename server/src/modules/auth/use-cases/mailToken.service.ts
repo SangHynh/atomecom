@@ -15,8 +15,8 @@ export class MailTokenService {
     type: 'EMAIL_VERIFICATION' | 'RESET_PASSWORD',
   ): Promise<string> {
     // 1. Generate Opaque Token
-    const token = randomBytes(32).toString('hex');
-
+    const token = randomBytes(64).toString('hex');
+    
     // 2. Set expiration 24 hours
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
@@ -30,7 +30,6 @@ export class MailTokenService {
       expiresAt,
       isUsed: false,
     });
-
     return token;
   }
 
@@ -44,12 +43,10 @@ export class MailTokenService {
   ): Promise<string> {
     // 1. Find token record from repo
     const record = await this._mailTokenRepo.findByToken(token, type);
-
     // 2. Throw error if token does not exist in db
     if (!record) {
       throw new BadRequestError(ErrorAuthCodes.INVALID_OPAQUE_TOKEN);
     }
-
     // 3. Check if the token has already been consumed
     if (record.isUsed) {
       const errorMessage =

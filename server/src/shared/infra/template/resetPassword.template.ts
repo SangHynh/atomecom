@@ -1,6 +1,6 @@
-export const registrationTemplate = (userName: string | undefined, url: string) => {
-  const logoUrl = process.env.EMAIL_LOGO_URL || ''; 
-  const projectName = process.env.PROJECT_NAME || 'System';
+export const passwordResetTemplate = (userName: string | undefined, url: string) => {
+  const logoUrl = process.env.EMAIL_LOGO_URL || '';
+  const projectName = process.env.PROJECT_NAME || 'Atomecom';
 
   return `
     <!DOCTYPE html>
@@ -9,7 +9,7 @@ export const registrationTemplate = (userName: string | undefined, url: string) 
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <meta http-equiv="X-UA-Compatible" content="IE=edge">
-      <title>VERIFY YOUR EMAIL - ${projectName.toUpperCase()}</title>
+      <title>RESET YOUR ${projectName.toUpperCase()} PASSWORD</title>
     </head>
     <body style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
       <center style="width: 100%; background-color: #ffffff;">
@@ -25,10 +25,10 @@ export const registrationTemplate = (userName: string | undefined, url: string) 
 
             <tr>
               <td style="padding: 50px 40px 20px 40px; text-align: left; background-color: #ffffff;">
-                <h2 style="margin: 0; font-size: 20px; line-height: 28px; color: #111111; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Identity Verification</h2>
-                <p style="margin: 20px 0; font-size: 15px; line-height: 24px; color: #444444;">
-                  Hello ${userName},<br><br>
-                  A request has been made to verify your email address for your <strong>${projectName}</strong> account. Please use the button below to complete this security verification.
+                <h2 style="margin: 0; font-size: 22px; line-height: 30px; color: #111111; font-weight: 700;">Password reset request</h2>
+                <p style="margin: 20px 0; font-size: 16px; line-height: 26px; color: #444444;">
+                  Hi ${userName},<br><br>
+                  We received a request to reset the password for your ${projectName} account. Click the button below to choose a new password.
                 </p>
               </td>
             </tr>
@@ -38,8 +38,8 @@ export const registrationTemplate = (userName: string | undefined, url: string) 
                 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0;">
                   <tr>
                     <td align="center" style="border-radius: 4px; background-color: #000000;">
-                      <a href="${url}" target="_blank" style="padding: 16px 36px; font-size: 13px; font-weight: 700; color: #ffffff; text-decoration: none; display: inline-block; text-transform: uppercase; letter-spacing: 1.5px;">
-                        Confirm Verification
+                      <a href="${url}" target="_blank" style="padding: 16px 32px; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none; display: inline-block; text-transform: uppercase; letter-spacing: 1px;">
+                        Reset Password
                       </a>
                     </td>
                   </tr>
@@ -48,19 +48,18 @@ export const registrationTemplate = (userName: string | undefined, url: string) 
             </tr>
 
             <tr>
-              <td style="padding: 0 40px 40px 40px; text-align: left; background-color: #ffffff; border-bottom: 1px solid #f4f4f4;">
-                <p style="margin: 0; font-size: 13px; line-height: 20px; color: #777777;">
-                  <strong>Note:</strong> This verification link is valid for <strong>24 hours</strong>. For security reasons, if you did not initiate this request, please disregard this email or contact support if you have concerns.
+              <td style="padding: 0 40px 40px 40px; text-align: left; background-color: #ffffff; border-bottom: 1px solid #f0f0f0;">
+                <p style="margin: 0; font-size: 13px; line-height: 20px; color: #888888;">
+                  <strong>Security Note:</strong> This password reset link will expire in <strong>24 hours</strong>. If you did not request a password reset, please ignore this email or secure your account if you suspect unauthorized access.
                 </p>
               </td>
             </tr>
 
             <tr>
-              <td style="padding: 40px 40px; text-align: center; color: #999999; font-size: 11px; line-height: 18px; background-color: #fafafa;">
-                <p style="margin: 0; font-weight: 700; color: #666666; text-transform: uppercase; letter-spacing: 1px;">${projectName} Security Team</p>
+              <td style="padding: 40px 40px; text-align: center; color: #999999; font-size: 12px; line-height: 18px; background-color: #fafafa;">
+                <p style="margin: 0; font-weight: bold; color: #666666; text-transform: uppercase; letter-spacing: 1px;">${projectName} System</p>
                 <p style="margin: 10px 0 0 0;">
-                  Automated message — Please do not reply. <br>
-                  Developed by <a href="https://sanghynh.info.vn" style="color: #000000; text-decoration: underline; font-weight: 600;">Sang Huynh</a>
+                  Designed and developed by <a href="https://sanghynh.info.vn" style="color: #000000; text-decoration: underline; font-weight: 600;">Sang Huynh</a>
                 </p>
                 <div style="margin-top: 20px;">
                   <a href="#" style="color: #999999; text-decoration: none; margin: 0 10px;">Privacy Policy</a> | 

@@ -26,7 +26,7 @@ const hashService = new BcryptHashAdapter();
 const tokenService = new JwtTokenAdapter();
 const mailTokenRepo = new MongooseMailTokenRepo();
 
-// 2. USE-CASES LAYER
+// 2. USE-CASES (APPLICATION) LAYER
 const healthService = new HealthService(db, cache);
 const userService = new UserService({ userRepo, hashService });
 const sessionService = new SessionService(cache);
