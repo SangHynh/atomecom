@@ -1,5 +1,8 @@
-export const registrationTemplate = (userName: string | undefined, url: string) => {
-  const logoUrl = process.env.EMAIL_LOGO_URL || ''; 
+export const registrationTemplate = (
+  userName: string | undefined,
+  url: string,
+) => {
+  const logoUrl = process.env.EMAIL_LOGO_URL || '';
   const projectName = process.env.PROJECT_NAME || 'System';
 
   return `
@@ -18,8 +21,11 @@ export const registrationTemplate = (userName: string | undefined, url: string) 
             
             <tr>
               <td style="padding: 60px 0 40px 0; text-align: center; background-color: #000000;">
-                ${logoUrl ? `<img src="${logoUrl}" width="150" alt="${projectName} Logo" style="display: block; margin: auto; border: 0;">` : 
-                `<h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 4px; font-weight: 900; text-transform: uppercase;">${projectName}</h1>`}
+                ${
+                  logoUrl
+                    ? `<img src="${logoUrl}" width="150" alt="${projectName} Logo" style="display: block; margin: auto; border: 0;">`
+                    : `<h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 4px; font-weight: 900; text-transform: uppercase;">${projectName}</h1>`
+                }
               </td>
             </tr>
 

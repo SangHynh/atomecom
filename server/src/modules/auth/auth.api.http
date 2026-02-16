@@ -84,6 +84,18 @@ Content-Type: application/json
     "email": "{{email}}"
 }
 
+### 9. Social Login (Google/Facebook)
+# @name socialLogin
+@provider = google
+@socialToken = paste_oauth_id_token_here (from test-oauth-html)
+
+POST {{url_dev}}/auth/social/{{provider}}
+Content-Type: application/json
+
+{
+    "token": "{{socialToken}}"
+}
+
 ### Test auth route middleware
 GET {{url_dev}}/health
 Authorization: Bearer {{accessToken}}

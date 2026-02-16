@@ -18,7 +18,7 @@ const customOptions = {
     defaultModelsExpandDepth: -1,
     responseInterceptor: (res: any) => {
       const contentType = res.headers['content-type'];
-      res.headers = { 'content-type': contentType }; 
+      res.headers = { 'content-type': contentType };
       return res;
     },
   },

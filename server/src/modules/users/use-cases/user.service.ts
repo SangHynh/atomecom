@@ -1,5 +1,9 @@
 import type { IHashService } from '@modules/users/domain/IHash.service.js';
-import type { UserEntity } from '@modules/users/domain/user.entity.js';
+import type {
+  IUserSocialLink,
+  UserAddress,
+  UserEntity,
+} from '@modules/users/domain/user.entity.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import type {
   CreateUserDTO,
@@ -12,12 +16,14 @@ import {
   NotFoundError,
   UnauthorizedError,
 } from '@shared/core/error.response.js';
+import type { OauthProvider } from '@shared/enum/oauthProvider.enum.js';
 import { USER_ROLE } from '@shared/enum/userRole.enum.js';
 import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
 import type { PaginatedResult } from '@shared/interfaces/pagination.model.js';
 
 const LAYER = 'Service';
 const MODULE = 'User';
+const PLACE_HOLDER_AVATAR = `https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y`;
 
 interface UserServiceDependencies {
   userRepo: IUserRepository;
@@ -48,8 +54,8 @@ export class UserService {
 
   /**
    * Finds a user by their email address.
-   * * @returns The user data or null if no record matches. Returning null instead 
-   * of throwing an error provides flexibility for various business flows, such 
+   * * @returns The user data or null if no record matches. Returning null instead
+   * of throwing an error provides flexibility for various business flows, such
    * as email uniqueness validation or conditional authentication logic.
    */
   public async findByEmail(
@@ -109,7 +115,10 @@ export class UserService {
   ): Promise<UserEntity | null> {
     const user = await this.findById(id, USER_STATUS.ACTIVE);
     const passwordHash = await this._hashService.hash(newPasswordPlain);
-    const updatedUser = await this._userRepo.update(id, { password: passwordHash, version: user.version ?? 0 });
+    const updatedUser = await this._userRepo.update(id, {
+      password: passwordHash,
+      version: user.version ?? 0,
+    });
     return this._toSafeResponse(updatedUser);
   }
 
@@ -117,23 +126,27 @@ export class UserService {
     id: string,
     newEmail: string,
   ): Promise<UserEntity | null> {
-    await Promise.all([
-      this.findById(id, USER_STATUS.ACTIVE),
-      this._validateEmailUniqueness(newEmail, id),
-    ]);
-    const user = await this._userRepo.update(id, { email: newEmail });
-    return this._toSafeResponse(user);
+    const existingUser = await this.findById(id, USER_STATUS.ACTIVE);
+    await this._validateEmailUniqueness(newEmail, id);
+    const updatedUser = await this._userRepo.update(id, {
+      email: newEmail,
+      isEmailMissing: false,
+      isVerified: false,
+      version: existingUser.version ?? 0,
+    });
+    return this._toSafeResponse(updatedUser);
   }
 
   public async changePhone(
     id: string,
     newPhone: string,
   ): Promise<UserEntity | null> {
-    await Promise.all([
-      this.findById(id, USER_STATUS.ACTIVE),
-      this._validatePhoneUniqueness(newPhone, id),
-    ]);
-    const user = await this._userRepo.update(id, { phone: newPhone });
+    const existingUser = await this.findById(id, USER_STATUS.ACTIVE);
+    await this._validatePhoneUniqueness(newPhone, id);
+    const user = await this._userRepo.update(id, {
+      phone: newPhone,
+      version: existingUser.version ?? 0,
+    });
     return this._toSafeResponse(user);
   }
 
@@ -141,8 +154,11 @@ export class UserService {
     id: string,
     status: USER_STATUS,
   ): Promise<UserEntity | null> {
-    await this.findById(id, USER_STATUS.ACTIVE);
-    const user = await this._userRepo.update(id, { status });
+    const existingUser = await this.findById(id);
+    const user = await this._userRepo.update(id, {
+      status,
+      version: existingUser.version ?? 0,
+    });
     return this._toSafeResponse(user);
   }
 
@@ -156,6 +172,89 @@ export class UserService {
       isVerified,
       version: existingUser.version ?? 0,
     });
+
+    return this._toSafeResponse(user);
+  }
+
+  // --- OAuth methods ---
+
+  public async findByOAuthId(
+    provider: OauthProvider,
+    providerId: string,
+    status?: USER_STATUS,
+  ): Promise<SafeUserResponseDTO | null> {
+    const user = await this._userRepo.findByOAuthId(
+      provider,
+      providerId,
+      status,
+    );
+    if (!user) return null;
+    return this._toSafeResponse(user);
+  }
+
+  public async upsertOAuthUser(dto: {
+    providerInfo: {
+      provider: OauthProvider;
+      providerId: string;
+    };
+    email?: string;
+    name: string;
+    avatar?: string;
+  }): Promise<SafeUserResponseDTO> {
+    const { providerInfo, email, name, avatar } = dto;
+
+    // 1. Check if the user already exists by specific provider and providerId
+    let user = await this._userRepo.findByOAuthId(
+      providerInfo.provider,
+      providerInfo.providerId,
+    );
+
+    // 2. If not found by provider, try to find by email to perform account linking
+    if (!user && email) {
+      user = await this._userRepo.findByEmail(email);
+
+      if (user) {
+        // Check if this provider is already linked to the account to prevent duplicates
+        const isAlreadyLinked = user.providers.some(
+          (p) => p.provider === providerInfo.provider,
+        );
+
+        if (!isAlreadyLinked) {
+          // Link new provider to existing account instead of overwriting
+          user.providers.push(providerInfo);
+
+          user = await this._userRepo.update(user.id!, {
+            providers: user.providers,
+            avatar: avatar || user.avatar || PLACE_HOLDER_AVATAR,
+            version: user.version ?? 0,
+          });
+        }
+      }
+    }
+
+    // 3. If still not found (new user), create a new account with the first provider
+    if (!user) {
+      const newUserData: Omit<UserEntity, 'id'> = {
+        name,
+        ...(email && { email }),
+        avatar: avatar || PLACE_HOLDER_AVATAR,
+        providers: [providerInfo],
+        status: USER_STATUS.ACTIVE,
+        isVerified: true,
+        role: USER_ROLE.USER,
+        addresses: [],
+        isEmailMissing: !email,
+        isExternal: true,
+      };
+      user = await this._userRepo.create(newUserData);
+    } else {
+      // 4. If user exists, update basic profile information if necessary
+      user = await this._userRepo.update(user.id!, {
+        avatar: avatar || user.avatar || PLACE_HOLDER_AVATAR,
+        name: name || user.name,
+        version: user.version ?? 0,
+      });
+    }
 
     return this._toSafeResponse(user);
   }
@@ -179,9 +278,26 @@ export class UserService {
   /**
    * Domain Entity -> Safe Response (Prepare data for Client)
    */
+  /**
+   * Domain Entity -> Safe Response
+   * Converts a UserEntity to a SafeUserResponseDTO for client-side consumption.
+   */
   private _toSafeResponse(user: UserEntity | null): SafeUserResponseDTO {
     const userObj = (user as any).toObject ? (user as any).toObject() : user;
     const { password, __v, ...safeData } = userObj;
+
+    /**
+     * PREVENT DUMMY EMAIL EXPOSURE:
+     * For OAuth users without a provided email, the system generates a placeholder
+     * email (e.g., facebook_123@atomecom.dummy) to satisfy DB UNIQUE constraints.
+     * * When returning data to the client, if 'isEmailMissing' is true, we mask this
+     * dummy email as 'null'. This signals the Frontend to prompt the user for
+     * a valid email address.
+     */
+    if (safeData.isEmailMissing) {
+      safeData.email = null;
+    }
+
     return safeData as SafeUserResponseDTO;
   }
 
@@ -217,7 +333,44 @@ export class UserService {
       status: USER_STATUS.ACTIVE,
       isVerified: false,
       role: dto.role || USER_ROLE.USER,
-      addresses: dto.addresses || [],
+      addresses: (dto.addresses as UserAddress[]) || ([] as UserAddress[]),
+      isEmailMissing: false, // traditional auth email is required first
+      providers: [] as IUserSocialLink[],
+    };
+  }
+
+  /**
+   * DTO -> Domain Entity (Prepare data for Domain/Database)
+   */
+
+  private _toCreateOAuthEntity(dto: {
+    providerInfo: {
+      provider: OauthProvider;
+      providerId: string;
+    };
+    email?: string | null;
+    name: string;
+    avatar?: string;
+  }): Omit<UserEntity, 'id'> {
+    const { providerInfo, email, name, avatar } = dto;
+    const isMissing = !email;
+
+    // Create a dummy email if none is provided by the social provider
+    const finalEmail =
+      email ||
+      `${providerInfo.provider.toLowerCase()}_${providerInfo.providerId}@atomecom.dummy`;
+
+    return {
+      name: name,
+      email: finalEmail,
+      avatar: avatar ?? PLACE_HOLDER_AVATAR,
+      providers: [providerInfo],
+      role: USER_ROLE.USER,
+      status: USER_STATUS.ACTIVE,
+      isVerified: !isMissing,
+      isEmailMissing: isMissing,
+      addresses: [] as UserAddress[],
+      isExternal: true,
     };
   }
 

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Atomecom OAuth Google Test</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #eef2f5; margin: 0; }
+        .card { background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 500px; }
+        .token-box { margin-top: 20px; padding: 15px; background: #2d3436; color: #fab1a0; border-radius: 6px; word-break: break-all; text-align: left; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; display: none; }
+        .copy-btn { margin-top: 10px; background: #00b894; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; display: none; }
+        h1 { color: #2d3436; margin-bottom: 0.5rem; }
+        p { color: #636e72; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Atomecom Google Auth</h1>
+        <p>Login to get <b>ID Token</b> for REST Client</p>
+        
+        <div id="g_id_onload"
+             data-client_id="PASTE_YOUR_CLIENT_ID_FROM_GOOGLE_CLOUD_CONSOLE_OR_ENV_TO_HERE"
+             data-callback="handleCredentialResponse">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
+
+        <div id="tokenResult" class="token-box"></div>
+        <button id="copyBtn" class="copy-btn" onclick="copyToken()">Copy Token</button>
+    </div>
+
+    <script>
+        function handleCredentialResponse(response) {
+            // response.credential chính là ID TOKEN (JWT)
+            const token = response.credential;
+            
+            const tokenBox = document.getElementById('tokenResult');
+            const copyBtn = document.getElementById('copyBtn');
+            
+            tokenBox.innerText = token;
+            tokenBox.style.display = 'block';
+            copyBtn.style.display = 'inline-block';
+            
+            console.log("ID Token:", token);
+        }
+
+        function copyToken() {
+            const token = document.getElementById('tokenResult').innerText;
+            navigator.clipboard.writeText(token).then(() => {
+                alert("Token copied to clipboard!");
+            });
+        }
+    </script>
+</body>
+</html>

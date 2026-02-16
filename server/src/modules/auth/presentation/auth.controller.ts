@@ -1,5 +1,6 @@
 import type { AuthService } from '@modules/auth/use-cases/auth.service.js';
 import { Created, NoContent, OK } from '@shared/core/success.response.js';
+import type { OauthProvider } from '@shared/enum/oauthProvider.enum.js';
 import type { Request, Response } from 'express';
 
 export class AuthController {
@@ -66,6 +67,20 @@ export class AuthController {
     await this.authService.resetPassword(token, newPassword);
     return new OK({
       message: 'RESET_PASSWORD_SUCCESS',
+    }).send(res);
+  };
+
+  public socialLogin = async (req: Request, res: Response) => {
+    const { provider } = req.params as { provider: string };
+    const { token } = req.body;
+    const result = await this.authService.socialLogin(
+      provider.toUpperCase() as OauthProvider,
+      token,
+    );
+
+    return new OK({
+      message: 'SOCIAL_LOGIN_SUCCESS',
+      data: result,
     }).send(res);
   };
 }

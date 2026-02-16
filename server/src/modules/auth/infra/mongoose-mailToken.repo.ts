@@ -43,9 +43,6 @@ export class MongooseMailTokenRepo implements IMailTokenRepo {
    * Mark a token as used after successful verification.
    */
   public async markAsUsed(token: string): Promise<void> {
-    await MailTokenModel.updateOne(
-      { token },
-      { $set: { isUsed: true } }
-    );
+    await MailTokenModel.updateOne({ token }, { $set: { isUsed: true } });
   }
 }

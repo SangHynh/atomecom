@@ -16,7 +16,7 @@ export class MailTokenService {
   ): Promise<string> {
     // 1. Generate Opaque Token
     const token = randomBytes(64).toString('hex');
-    
+
     // 2. Set expiration 24 hours
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);

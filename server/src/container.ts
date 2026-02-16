@@ -15,6 +15,10 @@ import { SessionService } from '@modules/auth/use-cases/session.service.js';
 import { ResendMailService } from '@shared/infra/resend-mail.service.js';
 import { MongooseMailTokenRepo } from '@modules/auth/infra/mongoose-mailToken.repo.js';
 import { MailTokenService } from '@modules/auth/use-cases/mailToken.service.js';
+import { GoogleProvider } from '@modules/auth/infra/google-oauth.adapter.js';
+import { FacebookProvider } from '@modules/auth/infra/facebook-oauth.adapter.js';
+import { OauthFactory } from '@modules/auth/use-cases/oauth.factory.js';
+import type { IOAuthProvider } from '@modules/auth/domain/IOauthProvider.service.js';
 
 // 1. INFRA LAYER
 export const db = new MongoDatabase(appConfig!.db.uri);
@@ -25,6 +29,10 @@ const userRepo = new MongooseUserRepo();
 const hashService = new BcryptHashAdapter();
 const tokenService = new JwtTokenAdapter();
 const mailTokenRepo = new MongooseMailTokenRepo();
+const googleProvider = new GoogleProvider();
+const facebookProvider = new FacebookProvider();
+const providers: IOAuthProvider[] = [googleProvider, facebookProvider];
+const oauthFactory = new OauthFactory(providers);
 
 // 2. USE-CASES (APPLICATION) LAYER
 const healthService = new HealthService(db, cache);
@@ -37,6 +45,7 @@ const authService = new AuthService({
   sessionService,
   emailService,
   mailTokenService,
+  oauthFactory,
 });
 
 // 3. PRESENTATION LAYER

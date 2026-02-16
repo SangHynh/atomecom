@@ -1,5 +1,6 @@
 import type { ITokenService } from '@modules/auth/domain/IToken.service.js';
 import type { TokenPayload } from '@modules/auth/domain/tokenPayload.model.js';
+import type { OauthFactory } from '@modules/auth/use-cases/oauth.factory.js';
 import type {
   AuthResponseDTO,
   LoginInputDTO,
@@ -11,10 +12,11 @@ import type { SafeUserResponseDTO } from '@modules/users/use-cases/user.dtos.js'
 import type { UserService } from '@modules/users/use-cases/user.service.js';
 import { ErrorAuthCodes, ErrorUserCodes } from '@shared/core/error.enum.js';
 import {
+  ForbiddenError,
   InternalServerError,
-  NotFoundError,
   UnauthorizedError,
 } from '@shared/core/error.response.js';
+import type { OauthProvider } from '@shared/enum/oauthProvider.enum.js';
 import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
 import type { IEmailService } from '@shared/interfaces/IEmail.service.js';
 import logger from '@shared/utils/logger.js';
@@ -29,6 +31,7 @@ interface AuthServiceDependencies {
   sessionService: SessionService;
   emailService: IEmailService;
   mailTokenService: MailTokenService;
+  oauthFactory: OauthFactory;
 }
 
 export class AuthService {
@@ -37,6 +40,7 @@ export class AuthService {
   private readonly _sessionService: SessionService;
   private readonly _emailService: IEmailService;
   private readonly _mailTokenService: MailTokenService;
+  private readonly _oauthFactory: OauthFactory;
 
   constructor({
     tokenService,
@@ -44,20 +48,26 @@ export class AuthService {
     sessionService,
     emailService,
     mailTokenService,
+    oauthFactory,
   }: AuthServiceDependencies) {
     this._tokenService = tokenService;
     this._userService = userService;
     this._sessionService = sessionService;
     this._emailService = emailService;
     this._mailTokenService = mailTokenService;
+    this._oauthFactory = oauthFactory;
   }
 
   public async register(dto: RegisterInputDTO): Promise<AuthResponseDTO> {
     const user = await this._userService.create({ ...dto });
-    if (!user || !user.id)
+    if (!user || !user.id || !user.email)
       throw new InternalServerError(ErrorUserCodes.CREATE_USER_FAILED);
     const tokens = await this._createNewSession(user as SafeUserResponseDTO);
-    this._sendEmailInBackground(user.id, user.email, 'EMAIL_VERIFICATION');
+    this._sendEmailInBackground(
+      user.id,
+      user.email as string,
+      'EMAIL_VERIFICATION',
+    );
     return this._mapToAuthResponse(user as SafeUserResponseDTO, tokens);
   }
 
@@ -148,7 +158,7 @@ export class AuthService {
 
   public async forgotPassword(email: string): Promise<void> {
     const user = await this._userService.findByEmail(email, USER_STATUS.ACTIVE);
-    console.log(user)
+    console.log(user);
     if (user && user.id) {
       this._sendEmailInBackground(user.id, email, 'RESET_PASSWORD');
       logger.info(
@@ -180,6 +190,33 @@ export class AuthService {
     logger.info(
       `[${MODULE}][${LAYER}][ResetPassword] Success for UserID: ${userId}`,
     );
+  }
+
+  // Oauth Login/Signup
+  public async socialLogin(provider: OauthProvider, token: string) {
+    // 1. Verify token with provider (Google, Facebook, etc.) through strategy pattern
+    const oauthStrategy = this._oauthFactory.getStrategy(provider);
+    const oauthProfile = await oauthStrategy.getProfile(token);
+
+    // 2. Sync data to db
+    const user = await this._userService.upsertOAuthUser({
+      name: oauthProfile.name,
+      ...(oauthProfile.email && { email: oauthProfile.email }),
+      ...(oauthProfile.avatar && { avatar: oauthProfile.avatar }),
+      providerInfo: {
+        provider: oauthProfile.provider,
+        providerId: oauthProfile.providerId,
+      },
+    });
+
+    // 3. Check account status
+    if (user.status !== USER_STATUS.ACTIVE) {
+      throw new ForbiddenError(ErrorUserCodes.USER_ACCOUNT_LOCKED);
+    }
+
+    // 4. Generate tokens
+    const tokens = await this._createNewSession(user as SafeUserResponseDTO);
+    return this._mapToAuthResponse(user as SafeUserResponseDTO, tokens);
   }
 
   /**
@@ -259,16 +296,16 @@ export class AuthService {
   }
 
   private _mapToAuthResponse(
-    user: any,
+    user: SafeUserResponseDTO,
     tokens: { accessToken: string; refreshToken: string },
   ): AuthResponseDTO {
     /**
      * TODO: Refactor to HttpOnly Cookie for Refresh Token to mitigate XSS risks.
      * Currently returning both tokens in the response body for initial development speed.
      */
-    const { password, ...safeUser } = user.toObject ? user.toObject() : user;
+    // safe response from user service (no password)
     return {
-      user: safeUser as SafeUserResponseDTO,
+      user,
       tokens,
     };
   }

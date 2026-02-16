@@ -36,11 +36,30 @@ function createTestApp(): Express {
   const userController = new UserController(userService);
 
   const userRouter = express.Router();
-  userRouter.get('/users', asyncHandler(userController.findAll.bind(userController)));
-  userRouter.post('/users', validate(CreateUserRequestSchema), asyncHandler(userController.create.bind(userController)));
-  userRouter.get('/users/:id', validate(FindUserByIdSchema), asyncHandler(userController.findById.bind(userController)));
-  userRouter.get('/users/email/:email', validate(FindUserByEmailSchema), asyncHandler(userController.findByEmail.bind(userController)));
-  userRouter.get('/users/phone/:phone', validate(FindUserByPhoneSchema), asyncHandler(userController.findByPhone.bind(userController)));
+  userRouter.get(
+    '/users',
+    asyncHandler(userController.findAll.bind(userController)),
+  );
+  userRouter.post(
+    '/users',
+    validate(CreateUserRequestSchema),
+    asyncHandler(userController.create.bind(userController)),
+  );
+  userRouter.get(
+    '/users/:id',
+    validate(FindUserByIdSchema),
+    asyncHandler(userController.findById.bind(userController)),
+  );
+  userRouter.get(
+    '/users/email/:email',
+    validate(FindUserByEmailSchema),
+    asyncHandler(userController.findByEmail.bind(userController)),
+  );
+  userRouter.get(
+    '/users/phone/:phone',
+    validate(FindUserByPhoneSchema),
+    asyncHandler(userController.findByPhone.bind(userController)),
+  );
 
   const app = express();
   app.use(express.json());
@@ -79,7 +98,9 @@ describe('Users Module - Integration Tests', () => {
         password: 'password123',
         phone: '09123456789',
         role: 'user',
-        addresses: [{ street: '123 Main St', city: 'Ho Chi Minh City', isDefault: true }],
+        addresses: [
+          { street: '123 Main St', city: 'Ho Chi Minh City', isDefault: true },
+        ],
       };
 
       const res = await request(app)
@@ -168,8 +189,22 @@ describe('Users Module - Integration Tests', () => {
 
     it('5. Find all (paginated) - page, limit returns 200, paginated list of SafeUserResponseDTO', async () => {
       await UserModel.create([
-        { name: 'U1', email: 'u1@ex.com', password: 'h', phone: '09111111111', role: 'user', status: 'active' },
-        { name: 'U2', email: 'u2@ex.com', password: 'h', phone: '09222222222', role: 'user', status: 'active' },
+        {
+          name: 'U1',
+          email: 'u1@ex.com',
+          password: 'h',
+          phone: '09111111111',
+          role: 'user',
+          status: 'active',
+        },
+        {
+          name: 'U2',
+          email: 'u2@ex.com',
+          password: 'h',
+          phone: '09222222222',
+          role: 'user',
+          status: 'active',
+        },
       ]);
 
       const res = await request(app)
@@ -253,7 +288,8 @@ describe('Users Module - Integration Tests', () => {
         const hasInvalidUserId =
           res.body.errors?.some(
             (e: { message: string }) =>
-              e.message === ErrorUserCodes.INVALID_USER_ID || e.message?.includes('INVALID_USER_ID')
+              e.message === ErrorUserCodes.INVALID_USER_ID ||
+              e.message?.includes('INVALID_USER_ID'),
           ) || res.body.message?.includes(ErrorUserCodes.INVALID_USER_ID);
         expect(hasInvalidUserId).toBeTruthy();
       }
@@ -275,8 +311,9 @@ describe('Users Module - Integration Tests', () => {
       expect(
         res.body.errors?.some(
           (e: { message: string }) =>
-            e.message === ErrorUserCodes.INVALID_EMAIL_FORMAT || e.message?.includes('INVALID_EMAIL')
-        )
+            e.message === ErrorUserCodes.INVALID_EMAIL_FORMAT ||
+            e.message?.includes('INVALID_EMAIL'),
+        ),
       ).toBeTruthy();
     });
 
@@ -294,8 +331,9 @@ describe('Users Module - Integration Tests', () => {
       expect(
         res.body.errors?.some(
           (e: { message: string }) =>
-            e.message === ErrorUserCodes.INVALID_PASSWORD_FORMAT || e.message?.includes('PASSWORD')
-        )
+            e.message === ErrorUserCodes.INVALID_PASSWORD_FORMAT ||
+            e.message?.includes('PASSWORD'),
+        ),
       ).toBeTruthy();
     });
 
@@ -313,8 +351,9 @@ describe('Users Module - Integration Tests', () => {
       expect(
         res.body.errors?.some(
           (e: { message: string }) =>
-            e.message === ErrorUserCodes.INVALID_NAME_FORMAT || e.message?.includes('NAME')
-        )
+            e.message === ErrorUserCodes.INVALID_NAME_FORMAT ||
+            e.message?.includes('NAME'),
+        ),
       ).toBeTruthy();
     });
   });

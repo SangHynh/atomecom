@@ -1,9 +1,9 @@
-import { InternalServerError } from "@shared/core/error.response.js";
-import { registrationTemplate } from "@shared/infra/template/registration.template.js";
-import { passwordResetTemplate } from "@shared/infra/template/resetPassword.template.js";
-import type { IEmailService } from "@shared/interfaces/IEmail.service.js";
-import logger from "@shared/utils/logger.js";
-import { Resend } from "resend";
+import { InternalServerError } from '@shared/core/error.response.js';
+import { registrationTemplate } from '@shared/infra/template/registration.template.js';
+import { passwordResetTemplate } from '@shared/infra/template/resetPassword.template.js';
+import type { IEmailService } from '@shared/interfaces/IEmail.service.js';
+import logger from '@shared/utils/logger.js';
+import { Resend } from 'resend';
 
 // TODO: Refactor error codes to enum
 const MODULE = 'Email';
@@ -23,7 +23,12 @@ export class ResendMailService implements IEmailService {
     this._resend = new Resend(apiKey);
   }
 
-  private async _send(options: { to: string; subject: string; html: string; priority?: string }) {
+  private async _send(options: {
+    to: string;
+    subject: string;
+    html: string;
+    priority?: string;
+  }) {
     if (!this.FROM_EMAIL || !this.CLIENT_HOST) {
       throw new InternalServerError('MISSING_REQUIRED_EMAIL_CONFIG_IN_ENV');
     }
@@ -40,7 +45,10 @@ export class ResendMailService implements IEmailService {
     });
 
     if (error) {
-      logger.error(`[${MODULE}] [${LAYER}] [SendEmail] Delivery failed:`, error);
+      logger.error(
+        `[${MODULE}] [${LAYER}] [SendEmail] Delivery failed:`,
+        error,
+      );
       throw new InternalServerError('EMAIL_DELIVERY_FAILED');
     }
   }
@@ -57,7 +65,10 @@ export class ResendMailService implements IEmailService {
     });
   }
 
-  public async resendVerificationEmail(to: string, token: string): Promise<void> {
+  public async resendVerificationEmail(
+    to: string,
+    token: string,
+  ): Promise<void> {
     const verificationUrl = `${this.CLIENT_HOST}/verify-email?token=${token}`;
     const fallbackName = to.split('@')[0];
 
@@ -69,7 +80,10 @@ export class ResendMailService implements IEmailService {
     });
   }
 
-  public async sendResetPasswordEmail(to: string, token: string): Promise<void> {
+  public async sendResetPasswordEmail(
+    to: string,
+    token: string,
+  ): Promise<void> {
     const resetUrl = `${this.CLIENT_HOST}/reset-password?token=${token}`;
     const fallbackName = to.split('@')[0];
 

@@ -1,4 +1,5 @@
 import { ErrorAuthCodes, ErrorUserCodes } from '@shared/core/error.enum.js';
+import { OauthProvider } from '@shared/enum/oauthProvider.enum.js';
 import { z } from 'zod';
 
 // 1. Register
@@ -19,7 +20,7 @@ export const LoginRequestSchema = z.object({
   }),
 });
 
-// 3. Refresh Token & Logout 
+// 3. Refresh Token & Logout
 export const TokenRequestSchema = z.object({
   body: z.object({
     refreshToken: z.string().min(1, ErrorAuthCodes.INVALID_REFRESH_TOKEN),
@@ -45,5 +46,20 @@ export const ResetPasswordRequestSchema = z.object({
   body: z.object({
     token: z.string().min(1, ErrorAuthCodes.INVALID_OPAQUE_TOKEN),
     newPassword: z.string().min(6, ErrorUserCodes.INVALID_PASSWORD_FORMAT),
+  }),
+});
+
+// 7. Social Login
+export const SocialLoginRequestSchema = z.object({
+  params: z.object({
+    provider: z
+      .string()
+      .toUpperCase()
+      .refine((val) => Object.values(OauthProvider).includes(val as any), {
+        message: 'OAUTH_PROVIDER_IS_NOT_SUPPORTED',
+      }),
+  }),
+  body: z.object({
+    token: z.string().min(1, 'OAUTH_TOKEN_IS_REQUIRED'),
   }),
 });

@@ -16,5 +16,13 @@ export interface IUserRepository {
   findByEmail(email: string, status?: USER_STATUS): Promise<UserEntity | null>;
   findByPhone(phone: string, status?: USER_STATUS): Promise<UserEntity | null>;
   create(user: Omit<UserEntity, 'id'>): Promise<UserEntity>;
-  update(id: string, data: Partial<Omit<UserEntity, 'id'>>): Promise<UserEntity | null>;
+  update(
+    id: string,
+    data: Partial<Omit<UserEntity, 'id'>>,
+  ): Promise<UserEntity | null>;
+  findByOAuthId(
+    provider: string,
+    providerId: string,
+    status?: USER_STATUS,
+  ): Promise<UserEntity | null>;
 }
