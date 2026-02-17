@@ -7,6 +7,7 @@ The **Auth** module handles authentication, session management, and identity ver
 | Goal | Description |
 |------|-------------|
 | **Authentication** | Support User Registration and Login (Email/Password) |
+| **Social Login (OAuth)** | Integration with external providers (Google, Facebook) for seamless authentication |
 | **Session Management** | Manage JWT-based sessions with Token Rotation and Revocation |
 | **Identity Verification** | Handle Email Verification via unique opaque tokens |
 | **Account Recovery** | Manage Forgot/Reset Password flows securely |
@@ -21,8 +22,8 @@ Internal modules that the **Auth Module** coordinates to complete business logic
 
 | Module | Usage |
 |:---|:---|
-| **Users** | Managed via `UserService` for user creation, credential verification, and updating verification/password status. |
-| **Shared** | Provides `IEmailService` for notifications, `ICacheRepo` interface for session handling. |
+| **Users** | Managed via `UserService` for user creation, credential verification, and syncing OAuth profiles. |
+| **Shared** | Provides `IEmailService` for notifications, `ICacheRepo` interface for session handling, and OAuth provider definitions. |
 
 ### Infrastructure & Implementation Dependencies
 Strict separation between programming interfaces (**Interfaces**) and concrete implementations (**Adapters/Repos**) following Clean Architecture principles.
@@ -33,6 +34,9 @@ Strict separation between programming interfaces (**Interfaces**) and concrete i
 | **Cache Store** | `ICacheRepo` | `Ioredis Cache` | Generic cache repository used by `SessionService` to manage session lifecycle in **Redis**. |
 | **Mail Token** | `IMailTokenRepo` | `Mongoose Mail Token Repo` | Persistence for verification codes and password reset tokens in **MongoDB**. |
 | **Email Provider** | `IEmailService` | `Resend Email Provider` | Concrete implementation for physical email delivery via Resend API. |
+| **OAuth Factory** | `OauthFactory` | `OAuth Strategy Pattern` | Dynamic selection and management of social login strategies. |
+| **Google Auth** | `IOauthProvider` | `Google OAuth Adapter` | Verification of Google OAuth tokens and profile retrieval. |
+| **Facebook Auth** | `IOauthProvider` | `Facebook OAuth Adapter` | Verification of Facebook OAuth tokens and profile retrieval. |
 
 ---
 
@@ -46,6 +50,8 @@ flowchart TD
         AS[AuthService]
         SS[SessionService]
         MTS[MailTokenService]
+        OF[OauthFactory]
+        IOP{IOAuthProvider}
         ITK{ITokenService}
         IMR{IMailTokenRepo}
     end
@@ -58,11 +64,15 @@ flowchart TD
     end
 
     subgraph Infra["Infrastructure Layer"]
-        direction LR
-        JTA[JWT Adapter]
-        SMTP[Resend Email Provider]
-        MTR[Mongoose Mail Token Repo]
-        RCR[Redis Cache Repo]
+        direction TB
+        subgraph Adapters["Adapters & Providers"]
+            JTA[JWT Adapter]
+            GOA[Google OAuth Adapter]
+            FOA[Facebook OAuth Adapter]
+            SMTP[Resend Email Provider]
+            MTR[Mongoose Mail Token Repo]
+            RCR[Redis Cache Repo]
+        end
         DB[(MongoDB)]
         RD[(Redis)]
     end
@@ -73,17 +83,21 @@ flowchart TD
     AS --> MTS
     AS --> ITK
     AS --> US
+    AS --> OF
     
     %% Service usage
     SS --> ICR
     MTS --> IMR
     AS --> IES
+    OF --> IOP
 
     %% Dependency Inversion (Realization)
     JTA -. "implements" .-> ITK
     SMTP -. "implements" .-> IES
     MTR -. "implements" .-> IMR
     RCR -. "implements" .-> ICR
+    GOA -. "implements" .-> IOP
+    FOA -. "implements" .-> IOP
 
     %% External Data Access
     MTR -. "access" .-> DB
@@ -109,19 +123,19 @@ sequenceDiagram
     US-->>AS: SafeUserResponseDTO
     AS->>AS: _createNewSession(user)
     AS->>SS: saveRefreshTokenToCache(sessionData)
-    AS->>EMAIL: sendVerificationEmail(email, token) [Async]
+    AS->>EMAIL: sendVerificationEmail(email, token) [Background]
     AS-->>C: AuthResponseDTO (user + tokens)
 ```
 
-1. **AuthService** calls **UserService** to create a new user.
-2. If successful, it initializes a new session via `_createNewSession`.
-3. It generates a pair of tokens (Access/Refresh) and saves the session to the cache.
-4. It triggers an email verification task in the background.
-5. Returns the user profile and the token pair to the client.
+1. **User Creation:** **AuthService** calls **UserService** to persist the new user.
+2. **Session Initialization:** If successful, it generates a unique `sessionId` and a pair of JWTs (Access/Refresh).
+3. **Persistence:** The session (refresh token context) is saved to **Redis** for rotation checks.
+4. **Onboarding:** Triggers an async email verification task.
+5. **Response:** Returns the user profile and initial tokens immediately.
 
 ---
 
-### 3.2 Login
+### 3.2 Login (Local)
 
 ```mermaid
 sequenceDiagram
@@ -138,38 +152,87 @@ sequenceDiagram
     AS-->>C: AuthResponseDTO (user + tokens)
 ```
 
-1. **AuthService** delegates credential verification to **UserService**.
-2. If credentials match, it creates a new session and returns tokens.
+1. **Verification:** **AuthService** delegates password matching to **UserService**.
+2. **Session:** Creates a fresh session record in **Redis**.
+3. **Response:** Returns the user profile and a new token pair.
 
 ---
 
-### 3.3 Token Refresh (Rotation)
+### 3.3 Social Login (OAuth 2.0)
 
 ```mermaid
 sequenceDiagram
     participant C as Controller
     participant AS as AuthService
-    participant JWT as TokenService
+    participant OF as OauthFactory
+    participant OS as OAuth Provider
     participant US as UserService
-    participant SS as SessionService
 
-    C->>AS: refresh(oldRefreshToken)
-    AS->>JWT: verifyRefreshToken(oldRefreshToken)
-    JWT-->>AS: TokenPayload
-    AS->>US: findById(userId, ACTIVE)
+    C->>AS: socialLogin(provider, token)
+    AS->>OF: getStrategy(provider)
+    OF-->>AS: Strategy
+    AS->>OS: getProfile(token)
+    OS-->>AS: OauthProfile (ID, Email, Name, Avatar)
+    AS->>US: upsertOAuthUser(profileData)
     US-->>AS: SafeUserResponseDTO
-    AS->>AS: _generateAuthTokens(user, expiresAt, sessionId)
-    AS->>SS: handleRefreshToken(userId, sessionId, oldRefreshToken, newRefreshToken)
-    SS-->>AS: void
-    AS-->>C: AuthResponseDTO (user + tokens)
+    AS->>AS: _createNewSession(user)
+    AS-->>C: AuthResponseDTO
 ```
 
-- Implements **Token Rotation**: Every time a refresh token is used, a new pair is issued.
-- The old refresh token is moved to a "Used" list in the session to detect potential reuse/hijacking.
+1. **Strategy Selection:** **OauthFactory** returns the specific provider logic (Google/Facebook).
+2. **External Verification:** The provider verifies the client's token and returns the user's social identity.
+3. **Identity Sync:** **UserService** matches the social ID or email to an existing account, or creates a new one.
+4. **Session:** Creates a standard system session, bypassing local password checks.
+
+### 3.4 Token Refresh & Rotation
+
+```mermaid
+sequenceDiagram
+    participant C as Controller
+    participant AS as AuthService
+    participant ITK as TokenService
+    participant SS as SessionService
+    participant US as UserService
+
+    C->>AS: refresh(oldRefreshToken)
+    AS->>ITK: verifyRefreshToken(oldRefreshToken)
+    ITK-->>AS: TokenPayload (userId, sessionId)
+    AS->>US: findById(userId, ACTIVE)
+    US-->>AS: SafeUserResponseDTO
+    AS->>SS: handleRefreshToken(userId, sessionId, oldRT, newRT)
+    Note over SS: Check rotation & Detect reuse
+    SS-->>AS: void
+    AS-->>C: AuthResponseDTO (user + new tokens)
+```
+
+- **Rotation:** Every refresh issues a **new** refresh token and invalidates the old one.
+- **Security:** If an old (already used) Refresh Token is presented, the **entire session** is revoked in Redis, protecting against token theft.
 
 ---
 
-### 3.4 Email Verification
+### 3.5 Logout
+
+```mermaid
+sequenceDiagram
+    participant C as Controller
+    participant AS as AuthService
+    participant ITK as TokenService
+    participant SS as SessionService
+
+    C->>AS: logout(refreshToken)
+    AS->>ITK: verifyRefreshToken(refreshToken)
+    ITK-->>AS: TokenPayload (userId, sessionId)
+    AS->>SS: revokeRefreshToken(userId, sessionId)
+    SS-->>AS: void
+    AS-->>C: 204 NoContent
+```
+
+1. **Identification:** Extracts the session context from the provided refresh token.
+2. **Revocation:** Removes the session entry from **Redis**, rendering all refresh tokens for that session useless.
+
+---
+
+### 3.6 Email Verification
 
 ```mermaid
 sequenceDiagram
@@ -184,25 +247,43 @@ sequenceDiagram
     AS->>US: verifyAccount(userId, true)
     US-->>AS: UpdatedUser
     AS->>AS: _createNewSession(user)
-    AS-->>C: AuthResponseDTO
+    AS-->>C: AuthResponseDTO (Logged in)
 ```
 
-- Validates the opaque token from the database.
-- Updates the user status to `isVerified: true`.
-- Automatically logs the user in by creating a session.
+1. **Token Validation:** Verifies the opaque token exists in MongoDB and hasn't expired.
+2. **Status Update:** Marks the user as `isVerified: true`.
+3. **Auto Login:** Automatically creates a session so the user doesn't have to log in manually after verifying.
 
 ---
 
-### 3.5 Password Reset Flow
+### 3.7 Password Recovery (Forgot & Reset)
 
-**Forgot Password:**
-1. Verifies user existence via `Users` module.
-2. Generates an opaque `MailToken` and sends it via email.
+```mermaid
+sequenceDiagram
+    participant C as Controller
+    participant AS as AuthService
+    participant US as UserService
+    participant MTS as MailTokenService
+    participant EMAIL as EmailService
 
-**Reset Password:**
-1. Validates the `MailToken`.
-2. Calls **UserService** `changePassword` to update the hash.
-3. Invalidates the token after use.
+    Note over C, AS: Flow 1: Request Reset
+    C->>AS: forgotPassword(email)
+    AS->>US: findByEmail(email, ACTIVE)
+    alt User exists
+        AS->>MTS: createMailToken(userId, 'RESET_PASSWORD')
+        AS->>EMAIL: sendResetPasswordEmail(email, token)
+    end
+    AS-->>C: 200 OK (Generic success message)
+
+    Note over C, AS: Flow 2: Set New Password
+    C->>AS: resetPassword(token, newPassword)
+    AS->>MTS: verifyMailToken(token, 'RESET_PASSWORD')
+    AS->>US: changePassword(userId, newPassword)
+    AS-->>C: 200 OK
+```
+
+- **Security:** `forgotPassword` returns a success message even if the email doesn't exist to prevent account enumeration.
+- **One-time Use:** Reset tokens are marked as `isUsed: true` immediately after a successful reset.
 
 ---
 
@@ -211,83 +292,129 @@ sequenceDiagram
 ### 4.1 Data Schema
 
 #### Mail Token (MongoDB)
-Used for Email Verification and Password Reset.
+Used for Email Verification and Password Reset. Based on `mailToken.entity.ts`.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `userId` | ObjectId | Reference to the User |
-| `token` | String | Unique opaque token |
-| `type` | Enum | `EMAIL_VERIFICATION` or `RESET_PASSWORD` |
-| `isUsed` | Boolean | Flag to prevent token reuse |
-| `expiresAt` | Date | Expiration time (TTL index enabled) |
+| Field | Type | Required | Description |
+|-------|------|:---:|-------------|
+| `userId` | String | Yes | Reference to the User ID |
+| `email` | String | Yes | Email address the token was sent to |
+| `token` | String | Yes | Unique opaque token (UUID v4) |
+| `type` | Enum | Yes | `EMAIL_VERIFICATION` or `RESET_PASSWORD` |
+| `isUsed` | Boolean| Yes | Prevents token reuse; default `false` |
+| `expiresAt`| Date | Yes | Expiration time (TTL index enabled) |
 
-#### Session (Redis / Cache Model)
-Used for tracking active sessions and refresh token rotation.
+#### Auth Session (Redis)
+Tracks active sessions and used refresh tokens for security rotation. Based on `authSession.model.ts`.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `sessionId` | String | Unique session identifier |
-| `userId` | String | User ID |
-| `refreshToken` | String | Current valid refresh token |
-| `refreshTokensUsed` | String[] | List of previously used refresh tokens (Rotation check) |
-| `expiresAt` | Number | Absolute expiration timestamp |
+| Field | Type | Required | Description |
+|-------|------|:---:|-------------|
+| `sessionId` | String | Yes | Unique identifier for the session (UUID) |
+| `userId` | String | Yes | Reference to the User ID |
+| `refreshToken`| String | Yes | Currently valid Refresh Token |
+| `refreshTokensUsed` | String[] | Yes | History of used tokens in this session (Max 5) |
+| `expiresAt` | Number | Yes | Absolute expiration timestamp (ms) |
 
 ### 4.2 Validation Rules
+Based on `auth.validator.ts`. Error codes match Section 5.
 
-Based on `auth.validator.ts`.
+| Field | DTO | Zod Type | Constraints | Error Code |
+|-------|-----|----------|-------------|------------|
+| `name` | Register | `z.string()` | `min(2)` | `NAME_MUST_BE_AT_LEAST_2_CHARS` |
+| `email` | Register/Login/Forgot | `z.string()` | `email()` | `INVALID_EMAIL_FORMAT` |
+| `password` | Register | `z.string()` | `min(6)` | `PASSWORD_MUST_BE_AT_LEAST_6_CHARS` |
+| `refreshToken`| Refresh/Logout | `z.string()`| `min(1)` | `INVALID_REFRESH_TOKEN` |
+| `token` | Verify/Reset | `z.string()` | `min(1)` | `INVALID_URL` |
+| `newPassword` | Reset | `z.string()` | `min(6)` | `PASSWORD_MUST_BE_AT_LEAST_6_CHARS` |
+| `provider` | SocialLogin | `Enum` | One of `GOOGLE`, `FACEBOOK` | `OAUTH_PROVIDER_IS_NOT_SUPPORTED` |
 
-| Field | DTO | Rule | Error Code |
-|-------|-----|------|------------|
-| `name` | Register | `min(2)` | `NAME_MUST_BE_AT_LEAST_2_CHARS` |
-| `email` | Register/Login | `email()` | `INVALID_EMAIL_FORMAT` |
-| `password` | Register | `min(6)` | `PASSWORD_MUST_BE_AT_LEAST_6_CHARS` |
-| `refreshToken` | Refresh | `min(1)` | `INVALID_REFRESH_TOKEN` |
-| `token` | Verify/Reset | `min(1)` | `INVALID_URL` |
+### 4.3 Safe Response Example
+Example of the `AuthResponseDTO` returned to the client. The `user` object follows the "Safe Response" policy of the **Users** module.
 
-### 4.3 DTO Rules
+```json
+{
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "role": "user",
+    "status": "active",
+    "isVerified": true,
+    "avatar": "https://...",
+    "version": 1,
+    "createdAt": "2025-02-14T10:00:00.000Z",
+    "updatedAt": "2025-02-14T10:00:00.000Z"
+  },
+  "tokens": {
+    "accessToken": "ey...",
+    "refreshToken": "ey..."
+  }
+}
+```
 
-| DTO | Purpose |
-|-----|---------|
-| `RegisterInputDTO` | Payload for user registration |
-| `LoginInputDTO` | Payload for logging in |
-| `AuthResponseDTO` | Standard output containing `user` (SafeResponse) and `tokens` object |
+---
+
+### 4.4 Advanced Security Mechanisms
+
+#### I. Absolute Token Expiration (The "Deadline")
+To prevent infinite sessions through refresh token rotation, the system enforces an **Absolute Expiration** policy:
+1. When a session is first created (Login/Register/OAuth), a `deadline` (e.g., 7 days) is calculated and stored in the **Session Model** (Redis).
+2. Every time a `refresh` occurs, the new JWT's `exp` field is synchronized with the **remaining time** until that original deadline.
+3. Even if the user refreshes frequently, the session will strictly expire once the deadline is reached, forcing a fresh login.
+
+#### II. OAuth Dummy Email & Identity Sync
+When a user authenticates via a social provider (Google/Facebook) that does not provide an email address:
+1. **Uniqueness:** The system generates a **Dummy Email** (e.g., `google_123@atomecom.dummy`) to satisfy DB unique constraints.
+2. **Identification:** The `isEmailMissing` flag is set to `true`.
+3. **Verification Status:** Such accounts are marked as `isVerified: false`, even if OAuth accounts are typically auto-verified.
+4. **Data Masking (Safe Response):** When returning the user profile, the dummy email is masked as `null`. This informs the Frontend that the user must undergo a "Complete Profile" flow to provide a real email.
+
+---
 
 ---
 
 ## 5. Business Exceptions
 
+Error codes from `ErrorAuthCodes` and `ErrorUserCodes` enums.
+
 | Error Code | HTTP Status | Description |
-|------------|-------------|-------------|
-| `INVALID_REFRESH_TOKEN` | 401 | Refresh token is invalid or malformed |
-| `INVALID_SESSION` | 401 | Session has expired or been manually revoked |
-| `TOKEN_REUSED_DETECTION` | 401 | A previously used refresh token was presented (Potential hijack) |
-| `ACCOUNT_ALREADY_VERIFIED` | 400 | Email verification link has already been used |
-| `LINK_ALREADY_USED` | 400 | Reset password link has already been used |
-| `INVALID_URL` | 400 | The opaque token (URL) is invalid |
-| `URL_EXPIRED` | 400 | The token (URL) has expired |
-| `VERIFY_ACCOUNT_FAILED` | 500 | Database update failed during verification |
-| `RESET_PASSWORD_FAILED` | 500 | Database update failed during password reset |
+|------------|:---:|-------------|
+| `INVALID_CREDENTIALS` | 401 | Email or password incorrect |
+| `INVALID_REFRESH_TOKEN` | 401 | Token is malformed, expired, or mismatch |
+| `INVALID_SESSION` | 401 | Session record deleted from Redis (Expired/Revoked) |
+| `TOKEN_REUSED_DETECTION` | 401 | Already used RT detected (Potential hijacking) |
+| `ACCOUNT_ALREADY_VERIFIED`| 400 | Verification link already used |
+| `LINK_ALREADY_USED` | 400 | Password reset link already used |
+| `INVALID_URL` | 400 | Opaque token is missing or malformed |
+| `URL_EXPIRED` | 400 | Opaque token has exceeded its TTL |
+| `USER_ACCOUNT_LOCKED` | 403 | Account is BANNED or DEACTIVE |
+| `VERIFY_ACCOUNT_FAILED`| 500 | Failed to update user verification status |
+| `RESET_PASSWORD_FAILED`| 500 | Failed to update password hash in DB |
 
 ---
 
 ## 6. Test Cases
 
 ### Happy Path
-| # | Case | Expected |
-|---|------|----------|
-| 1 | Register new user | 201, return User + Tokens, Verification Email sent |
-| 2 | Login valid user | 200, return User + Tokens |
-| 3 | Refresh token | 200, issue NEW Access/Refresh token pair |
-| 4 | Logout | 200, Session revoked in cache |
-| 5 | Verify Email | 200, User status updated, return User + Tokens |
-| 6 | Forgot Password | 200, Reset Email sent |
-| 7 | Reset Password | 200, Password updated, Token invalidated |
+| # | Case | Input | Expected |
+|:---:|------|-------|----------|
+| 1 | Register | Valid Email/Pass | 201, Return User+Tokens, background mail sent |
+| 2 | Login | Correct Credentials | 200, Return User+Tokens, session in Redis |
+| 3 | Social Login | Valid OAuth Token | 200, Sync Profile, Return User+Tokens |
+| 4 | Token Refresh | Valid RT | 200, ROTATE tokens, Revoke old, Issue new pair |
+| 5 | Verify Email | Valid Link | 200, Update `isVerified: true`, Auto-login |
+| 6 | Forgot Password | Active Email | 200, Send Mail, Create Token in MongoDB |
+| 7 | Reset Password | Valid Token+Pass | 200, Update Password, Invalidate Token |
+| 8 | Logout | Valid RT | 204, Delete Redis session |
 
-### Edge Cases
-| # | Case | Expected |
-|---|------|----------|
-| 1 | Refresh with used token | 401, `TOKEN_REUSED_DETECTION`, entire session revoked |
-| 2 | Verify with expired token | 400, `URL_EXPIRED` |
-| 3 | Login with wrong password | 401, `INVALID_CREDENTIALS` (from Users) |
-| 4 | Register with existing email | 409, `EMAIL_ALREADY_EXISTS` (from Users) |
-| 5 | Reset with non-matching token | 400, `INVALID_URL` |
+### Edge Cases & Security
+| # | Case | Input | Expected |
+|:---:|------|-------|----------|
+| 1 | Token Reuse | Used RT | 401, `TOKEN_REUSED_DETECTION`, Revoke ALL user sessions |
+| 2 | Expired Token | Expired RT | 401, `INVALID_REFRESH_TOKEN` |
+| 3 | Hijacking Detection| Modded RT | 401, `INVALID_REFRESH_TOKEN` |
+| 4 | Enumeration Guard | Non-existent Email | 200, "Generic Success" for Forgot Password |
+| 5 | Double Verify | Used Verify Link | 400, `ACCOUNT_ALREADY_VERIFIED` |
+| 6 | Expired Link | Expired Reset Link | 400, `URL_EXPIRED` |
+| 7 | Banned User | Social Login | 403, `USER_ACCOUNT_LOCKED` |
+| 8 | Missing Profile Info| Social Login | 200, `isEmailMissing: true`, User redirected to Profile |
+

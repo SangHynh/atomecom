@@ -6,10 +6,11 @@ The **Users** module owns all user lifecycle operations and identity data. Its b
 
 | Goal | Description |
 |------|-------------|
-| **User CRUD** | Create, read (findById, findByEmail, findByPhone, findAll with pagination), update profile, and manage account status |
-| **Credential Verification** | Verify email/password pairs for authentication flows without exposing internal data |
-| **Identity Uniqueness** | Enforce unique email and phone across the system |
-| **Data Security** | Ensure passwords are never returned in API responses; all outputs go through Safe Response mapping |
+| **User CRUD** | Create, read (findById, findByEmail, findAll), update profile, and manage account status |
+| **Identity Federation** | Handle OAuth-based identities (Google, Facebook) and link them to local accounts |
+| **Credential Verification** | Verify email/password pairs for traditional authentication flows |
+| **Identity Uniqueness** | Enforce unique email and phone across the system, including social links |
+| **Data Security** | Ensure sensitive data (passwords, dummy emails) are never exposed via Safe Response mapping |
 
 ---
 
@@ -61,7 +62,7 @@ flowchart TD
 
 ## 3. Detailed Logic Flows
 
-### 3.1 Create User
+### 3.1 Create User (Traditional)
 
 ```mermaid
 sequenceDiagram
@@ -77,48 +78,80 @@ sequenceDiagram
     H-->>S: passwordHash
     S->>S: _toCreateEntity(dto + passwordHash)
     S->>R: create(entityData)
-    R-->>S: UserEntity (raw, with password)
+    R-->>S: UserEntity (raw)
     S->>S: _toSafeResponse(user)
-    S-->>C: SafeUserResponseDTO (no password)
+    S-->>C: SafeUserResponseDTO
 ```
 
-1. **Controller** receives validated `CreateUserDTO` (name, email, password, phone?, role?, addresses?).
-2. **Service** runs uniqueness checks for email and phone in parallel.
-3. **HashService** hashes the plain password before persistence.
-4. **Service** maps DTO → entity (`status: ACTIVE`, `isVerified: false`, default `role: USER`).
-5. **Repo** persists and returns the entity (including password).
-6. **Service** maps entity → `SafeUserResponseDTO` via `_toSafeResponse` — password is stripped before returning.
+- **Uniqueness:** Email and Phone (if provided) are checked against the DB before creation.
+- **Status:** New users are initiated with `status: ACTIVE` but `isVerified: false`.
+- **Security:** Passwords are never stored in plain text.
 
 ---
 
-### 3.2 Find By ID
+### 3.2 Identity Queries (Find by Unique Field)
+
+These methods provide flexible lookups for internal and external modules.
 
 ```mermaid
 sequenceDiagram
-    participant C as Controller
+    participant M as Caller Module
     participant S as UserService
     participant R as UserRepo
 
-    C->>S: findById(id)
-    S->>R: findById(id)
-    alt User not found
-        R-->>S: null
-        S->>S: throw NotFoundError(USER_NOT_FOUND)
-    else User found
-        R-->>S: UserEntity (raw)
+    M->>S: findById / findByEmail / findByPhone
+    S->>R: Repo Query
+    alt Found
+        R-->>S: UserEntity
         S->>S: _toSafeResponse(user)
-        S-->>C: SafeUserResponseDTO
+        S-->>M: SafeUserResponseDTO
+    else Not Found
+        R-->>S: null
+        Note over S: findById throws 404<br/>Others return null
+        S-->>M: Error / null
     end
 ```
 
-- Returns `SafeUserResponseDTO` with `id`, `name`, `email`, `role`, `status`, `isVerified`, `addresses`, `version`, `createdAt`, `updatedAt`.
-- Password and `__v` are never included.
+- **`findById`**: Throws `USER_NOT_FOUND` if the record is missing.
+- **`findByEmail` / `findByPhone`**: Return `null` to allow callers to handle missing records gracefully (e.g., during login or uniqueness checks).
 
 ---
 
-### 3.3 Verify Credentials
+### 3.3 OAuth Identity Sync (`upsertOAuthUser`)
 
-Used by the Auth module for login.
+Handles Social Login identities from Google, Facebook, etc.
+
+```mermaid
+sequenceDiagram
+    participant AS as AuthService
+    participant S as UserService
+    participant R as UserRepo
+
+    AS->>S: upsertOAuthUser(profile)
+    S->>R: findByOAuthId(provider, providerId)
+    alt Social ID Exists
+        R-->>S: UserEntity
+    else Link by Email
+        S->>R: findByEmail(profile.email)
+        alt Account Found
+            S->>R: update(id, { add provider })
+        else New User
+            S->>S: Generate Dummy Email (if missing)
+            S->>R: create(OAuthUser)
+        end
+    end
+    S->>S: _toSafeResponse(user) [Masking Dummy]
+    S-->>AS: SafeUserResponseDTO
+```
+
+- **Dummy Email Mechanism:** If the provider doesn't supply an email, the system generates one (e.g., `facebook_123@atomecom.dummy`) to satisfy DB unique constraints.
+- **Masking:** When returning data to the client, if `isEmailMissing` is true, the `email` field is forced to `null`. This signals the Frontend to prompt the user for a valid email.
+
+---
+
+### 3.4 Verify Credentials
+
+Used by the **Auth Module** during local login.
 
 ```mermaid
 sequenceDiagram
@@ -127,211 +160,40 @@ sequenceDiagram
     participant R as UserRepo
     participant H as HashService
 
-    A->>S: verifyCredentials(email, passwordPlain)
+    A->>S: verifyCredentials(email, password)
     S->>R: findByEmail(email, ACTIVE)
-    alt No user or no password
-        S->>A: throw UnauthorizedError(INVALID_CREDENTIALS)
-    else User found
-        R-->>S: UserEntity (with password)
-        S->>H: compare(passwordPlain, user.password)
-        alt Mismatch
-            H-->>S: false
-            S->>A: throw UnauthorizedError(INVALID_CREDENTIALS)
-        else Match
-            H-->>S: true
-            S->>S: _toSafeResponse(user)
-            S-->>A: SafeUserResponseDTO
-        end
-    end
-```
-
-- Repo uses `select('+password')` to load password; Service never returns it.
-- Response is always `SafeUserResponseDTO` — no password in API output.
-
----
-
-### 3.4 Password & Identity Updates (`changePassword`, `changeEmail`, `changePhone`)
-
-These methods ensure the user exists and is active before performing updates. All return a `SafeUserResponseDTO` (no nulls for ID-based lookups — `findById` throws `USER_NOT_FOUND` if the user is missing or inactive).
-
-**`changePassword`** first calls `findById(id, ACTIVE)` to validate existence; on success, hashes the new password and updates via the repository.
-
-**`changeEmail`** and **`changePhone`** run the existence check and uniqueness validation in parallel via `Promise.all`:
-- `findById(id, ACTIVE)` — throws `NotFoundError(USER_NOT_FOUND)` if user is missing or inactive
-- `_validateEmailUniqueness(newEmail, id)` / `_validatePhoneUniqueness(newPhone, id)` — throws `ConflictError(EMAIL_ALREADY_EXISTS)` or `ConflictError(PHONE_ALREADY_EXISTS)` if the new value is already taken by another user (excluding the current user via `excludeId`)
-
-```mermaid
-sequenceDiagram
-    participant C as Controller
-    participant S as UserService
-    participant R as UserRepo
-    participant H as HashService
-
-    Note over S: changePassword flow
-    C->>S: changePassword(id, newPasswordPlain)
-    S->>S: findById(id, ACTIVE)
-    alt User not found
-        S->>C: throw NotFoundError(USER_NOT_FOUND)
-    else User found
-        S->>H: hash(newPasswordPlain)
-        H-->>S: passwordHash
-        S->>R: update(id, { password })
-        R-->>S: UserEntity
-        S->>S: _toSafeResponse(user)
-        S-->>C: SafeUserResponseDTO
-    end
-
-    Note over S: changeEmail / changePhone flow
-    C->>S: changeEmail(id, newEmail) or changePhone(id, newPhone)
-    par Existence + Uniqueness
-        S->>S: findById(id, ACTIVE)
-        S->>S: _validateEmailUniqueness / _validatePhoneUniqueness
-    end
-    alt User not found
-        S->>C: throw NotFoundError(USER_NOT_FOUND)
-    else Email/Phone already exists
-        S->>C: throw ConflictError(EMAIL_ALREADY_EXISTS / PHONE_ALREADY_EXISTS)
-    else All valid
-        S->>R: update(id, { email } or { phone })
-        R-->>S: UserEntity
-        S->>S: _toSafeResponse(user)
-        S-->>C: SafeUserResponseDTO
+    S->>H: compare(password, user.password)
+    alt Valid
+        H-->>S: true
+        S-->>A: SafeUserResponseDTO
+    else Invalid
+        S->>A: throw 401 INVALID_CREDENTIALS
     end
 ```
 
 ---
 
-### 3.5 Account Management (`updateStatusAccount`, `verifyAccount`)
+### 3.5 Profile & Account Updates
 
-**`updateStatusAccount`** ensures the user is `ACTIVE` before allowing a status change. It calls `findById(id, ACTIVE)` first; if the user is missing or not active, it throws `NotFoundError(USER_NOT_FOUND)`.
+All update methods use **Optimistic Locking** via the `version` field to prevent concurrent data loss.
 
-**`verifyAccount`** sets `isVerified` and explicitly passes the current `version` to the repository for optimistic locking. It fetches the active user via `findById(id, ACTIVE)` to obtain the version, then passes `{ isVerified, version: existingUser.version ?? 0 }` to the update. A version mismatch triggers `ConflictError(USER_DATA_MODIFIED_CONCURRENTLY)` (handled by the repository layer).
-
-```mermaid
-sequenceDiagram
-    participant C as Controller
-    participant S as UserService
-    participant R as UserRepo
-
-    Note over S: updateStatusAccount Flow
-    C->>S: updateStatusAccount(id, status)
-    S->>S: findById(id, ACTIVE)
-    alt User not found
-        S->>C: throw NotFoundError(USER_NOT_FOUND)
-    else User found
-        S->>R: update(id, { status })
-        R-->>S: UserEntity
-        S->>S: _toSafeResponse(user)
-        S-->>C: SafeUserResponseDTO
-    end
-
-    Note over S: verifyAccount (Optimistic Locking)
-    C->>S: verifyAccount(id, isVerified)
-    S->>S: findById(id, ACTIVE)
-    alt User not found
-        S->>C: throw NotFoundError(USER_NOT_FOUND)
-    else User found
-        S->>R: update(id, { isVerified, version })
-        Note over R: Version mismatch -> USER_DATA_MODIFIED_CONCURRENTLY
-        R-->>S: UserEntity
-        S->>S: _toSafeResponse(user)
-        S-->>C: SafeUserResponseDTO
-    end
-```
+| Method | Purpose | Side Effects |
+|:---|:---|:---|
+| `changePassword` | Update Bcrypt hash | Increments version |
+| `changeEmail` | Update email address | Resets `isVerified: false`, `isEmailMissing: false` |
+| `changePhone` | Update phone contact | Increments version |
+| `updateStatusAccount`| Change account state | `ACTIVE`, `BANNED`, etc. |
+| `verifyAccount` | Set email verified flag | Typically called by Auth Module |
 
 ---
 
-### 3.6 Data Querying (`findAll`, `findById`)
+### 3.6 Find All (Admin / Search)
 
-**`findById(id, status?)`** — Resolves a single user by ID, optionally filtered by status (e.g. `ACTIVE`). Throws `NotFoundError(USER_NOT_FOUND)` if no user matches. Never returns null for ID-based lookups; returns `SafeUserResponseDTO`.
+Transforms complex queries into paginated results.
 
-**`findAll(dto)`** — Transforms `FindAllQueryUserDTO` into a repository query via `_toFindAllQuery`:
-
-| DTO Field | Query Mapping |
-|-----------|---------------|
-| `page`, `limit` | `offset: (page - 1) * limit`, `limit` |
-| `status` | `status` (optional filter) |
-| `keyword` | `keyword` (optional search) |
-| `role` | `role` (optional filter) |
-
-The repository returns `{ data, totalElements }`. The service wraps this into `PaginatedResult<SafeUserResponseDTO>` via `_toPaginatedResponse`, which maps each item through `_toSafeResponse` and adds `pagination` (totalElements, totalPage, currentPage, elementsPerPage).
-
-```mermaid
-sequenceDiagram
-    participant C as Controller
-    participant S as UserService
-    participant R as UserRepo
-
-    Note over S: findById Flow
-    C->>S: findById(id, status?)
-    S->>R: findById(id, status)
-    alt User not found
-        R-->>S: null
-        S->>C: throw NotFoundError(USER_NOT_FOUND)
-    else User found
-        R-->>S: UserEntity
-        S->>S: _toSafeResponse(user)
-        S-->>C: SafeUserResponseDTO
-    end
-
-    Note over S: findAll Flow (Pagination)
-    C->>S: findAll(FindAllQueryUserDTO)
-    S->>S: _toFindAllQuery(dto)
-    S->>R: findAll(query)
-    R-->>S: { data, totalElements }
-    S->>S: _toPaginatedResponse(data, totalElements, dto)
-    Note over S: Each user mapped via _toSafeResponse
-    S-->>C: "PaginatedResult[SafeUserResponseDTO]"
-```
-
----
-
-### 3.7 Internal Helper Logic (The "Safe" Gatekeeper)
-
-Two private methods ensure all public-facing outputs conform to the Safe Response policy.
-
-**`_toSafeResponse(user)`** — Converts a `UserEntity` (possibly a Mongoose document) into `SafeUserResponseDTO`:
-
-1. **Mongoose document handling:** If the user has a `toObject` method (Mongoose documents do), call `(user as any).toObject()` to get a plain object; otherwise use the user as-is.
-2. **Strip sensitive fields:** Use destructuring: `const { password, __v, ...safeData } = userObj` to exclude `password` and `__v` from the response.
-3. **Return:** `safeData as SafeUserResponseDTO` — containing `id`, `name`, `email`, `phone`, `role`, `status`, `isVerified`, `addresses`, `version`, `createdAt`, `updatedAt`.
-
-**`_toPaginatedResponse(data, total, dto)`** — Wraps a list of `UserEntity` into `PaginatedResult<SafeUserResponseDTO>`:
-
-1. **Sanitize items:** `data.map((user) => this._toSafeResponse(user))`
-2. **Build pagination metadata:** `totalElements`, `totalPage` (Math.ceil(total / limit)), `currentPage`, `elementsPerPage`
-3. **Return:** `{ data: sanitizedData, pagination }`
-
-| Input | Transformation | Output |
-|-------|----------------|--------|
-| `UserEntity` (from Repo) | Strip `password`, `__v`; keep safe fields | `SafeUserResponseDTO` |
-| `UserEntity[]` + `total` + `dto` | Map each via `_toSafeResponse`, add pagination | `PaginatedResult<SafeUserResponseDTO>` |
-
-**Where they are used:**
-
-- `findById`, `findByEmail`, `findByPhone` → `_toSafeResponse`
-- `create`, `changePassword`, `changeEmail`, `changePhone`, `updateStatusAccount`, `verifyAccount` → `_toSafeResponse`
-- `findAll` → `_toPaginatedResponse` (which uses `_toSafeResponse` per item)
-- `verifyCredentials` → `_toSafeResponse`
-
-```mermaid
-flowchart LR
-    subgraph Input["Repo / DB"]
-        A[UserEntity with password]
-        B["UserEntity[] + total"]
-    end
-    subgraph Service["UserService"]
-        C[_toSafeResponse]
-        D[_toPaginatedResponse]
-    end
-    subgraph Output["Client"]
-        E[SafeUserResponseDTO]
-        F["PaginatedResult[SafeUserResponseDTO]"]
-    end
-    A --> C --> E
-    B --> D --> F
-    D -.->|uses| C
-```
+1. **Mapping:** Converts page/limit into offset/limit.
+2. **Filtering:** Supports `status`, `role`, and `keyword` search.
+3. **Response:** Encapsulates the results in a `PaginatedResult` object with metadata.
 
 ---
 
@@ -339,171 +201,144 @@ flowchart LR
 
 ### 4.1 Data Schema
 
-Based on `mongoose-user.model.ts`. Internal fields such as `version` (optimistic locking) and `status` are included.
+Based on `mongoose-user.model.ts`.
 
 | Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | String | Yes | User display name; trimmed |
-| `email` | String | Yes | Unique, lowercase, trimmed |
-| `phone` | String | No | Unique; trimmed |
-| `password` | String | Yes | Bcrypt hash; never returned in API responses |
-| `role` | String (enum) | Yes | `USER_ROLE` (e.g. `ADMIN`, `USER`, `SUPER_ADMIN` ); default `USER` |
-| `addresses` | [AddressSchema] | No | Array of address sub-documents |
-| `status` | String | No | Account status (e.g. `ACTIVE`, `DEACTIVE`, `BANNED`, `DELETED`); default `ACTIVE` |
-| `isVerified` | Boolean | No | Email verification flag; default `false` |
-| `version` | Number | No | Optimistic locking; incremented on each update; default `1` |
-| `createdAt` | Date | Auto | Mongoose timestamp |
-| `updatedAt` | Date | Auto | Mongoose timestamp |
-
-**Address Sub-schema**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `street` | String | Yes | Street address |
-| `city` | String | Yes | City name |
-| `isDefault` | Boolean | No | Default address flag; default `false` |
-| `version` | Number | No | Sub-document version; default `1` |
+|-------|------|:---:|-------------|
+| `name` | String | Yes | User display name |
+| `email` | String | Yes | Unique; may be a dummy for placeholder OAuth |
+| `avatar` | String | No | URL to profile picture (Gravatar or OAuth source) |
+| `password` | String | No | Bcrypt hash (Optional for pure social accounts) |
+| `role` | Enum | Yes | `USER_ROLE` (default `USER`) |
+| `providers` | Array | No | Linked social accounts (provider + providerId) |
+| `status` | String | Yes | `ACTIVE`, `DEACTIVE`, `BANNED`, `DELETED` |
+| `isExternal` | Boolean | No | Flag for accounts created via OAuth |
+| `isEmailMissing`| Boolean | No | True if user needs to provide a real email |
+| `isVerified` | Boolean | No | Email verification flag |
+| `version` | Number | No | Optimistic locking counter; default `0` |
 
 ### 4.2 Validation Rules
+Based on `user.validator.ts`.
 
-Based on `user.validator.ts` for `CreateUserDTO` and `UpdateUserDTO`. Error codes match Section 5.
+| Field | DTO | Constraints | Error Code |
+|-------|-----|-------------|------------|
+| `name` | Create | `min(2)` | `NAME_MUST_BE_AT_LEAST_2_CHARS` |
+| `email` | Create | `email()` | `INVALID_EMAIL_FORMAT` |
+| `phone` | Create | `min(10)` | `PHONE_NUMBER_MUST_BE_AT_LEAST_10_DIGITS` |
+| `password`| Create | `min(6)` | `PASSWORD_MUST_BE_AT_LEAST_6_CHARS` |
+| `id` | Params | `ObjectId` | `INVALID_USER_ID` |
 
-| Field | DTO | Zod Type | Constraints | Error Code |
-|-------|-----|----------|-------------|------------|
-| `name` | CreateUser | `z.string()` | `min(2)` | `NAME_MUST_BE_AT_LEAST_2_CHARS` |
-| `email` | CreateUser | `z.string().email()` | Valid email format | `INVALID_EMAIL_FORMAT` |
-| `phone` | CreateUser | `z.string().optional()` | `min(10)` when present | `PHONE_NUMBER_MUST_BE_AT_LEAST_10_DIGITS` |
-| `password` | CreateUser | `z.string()` | `min(6)` | `PASSWORD_MUST_BE_AT_LEAST_6_CHARS` |
-| `role` | CreateUser | `z.nativeEnum(USER_ROLE).optional()` | Default `USER` | — |
-| `addresses` | CreateUser | `z.array(UserAddressSchema).optional()` | Default `[]` | — |
-| `name` | UpdateUser | `z.string().optional()` | `min(2)` when present | `NAME_MUST_BE_AT_LEAST_2_CHARS` |
-| `email` | UpdateUser | `z.string().email().optional()` | Valid email when present | `INVALID_EMAIL_FORMAT` |
-| `phone` | UpdateUser | `z.string().optional()` | `min(10)` when present | `PHONE_NUMBER_MUST_BE_AT_LEAST_10_DIGITS` |
-| `password` | UpdateUser | `z.string().optional()` | `min(6)` when present | `PASSWORD_MUST_BE_AT_LEAST_6_CHARS` |
-| `role` | UpdateUser | `z.nativeEnum(USER_ROLE).optional()` | — | — |
-| `addresses` | UpdateUser | `z.array(UserAddressSchema).optional()` | — | — |
+### 4.3 Safe Response (The Gatekeeper)
+The private method `_toSafeResponse` acts as the final security gate for all User data:
+1. **Strip Secret Fields:** Removes `password` and `__v`.
+2. **Email Masking:** If `isEmailMissing: true`, returns `email: null` regardless of the dummy value in the DB.
+3. **Immutability:** Returns a plain object, preventing accidental DB updates from the presentation layer.
 
-**UserAddressSchema (used in `addresses`)**
+### 4.4 Response Examples
 
-| Field | Zod Type | Constraints | Error Code |
-|-------|----------|-------------|------------|
-| `street` | `z.string()` | `min(1)` | `STREET_IS_REQUIRED` |
-| `city` | `z.string()` | `min(1)` | `CITY_IS_REQUIRED` |
-| `isDefault` | `z.boolean()` | Default `false` | — |
-
-- **CreateUserDTO** uses `CreateUserRequestSchema`; **UpdateUserDTO** uses `UpdateUserRequestSchema` (partial of CreateUser body).
-- **Params validation:** `id` — `min(1)` → `INVALID_USER_ID`; `email` — `.email()` → `INVALID_EMAIL_FORMAT`; `phone` — `min(10)` → `PHONE_NUMBER_MUST_BE_AT_LEAST_10_DIGITS`.
-
-### 4.3 Safe Response Example
-
-Example `SafeUserResponseDTO` returned to the frontend. `password` and `__v` are never included.
-
+#### I. Standard User (SafeUserResponseDTO)
 ```json
 {
   "id": "507f1f77bcf86cd799439011",
   "name": "Jane Doe",
   "email": "jane.doe@example.com",
-  "phone": "0912345678",
   "role": "user",
   "status": "active",
-  "isVerified": false,
-  "addresses": [
-    {
-      "isDefault": true,
-      "street": "123 Main St",
-      "city": "Ho Chi Minh City"
-    }
-  ],
+  "isVerified": true,
+  "isExternal": false,
+  "isEmailMissing": false,
   "version": 1,
   "createdAt": "2025-02-14T10:00:00.000Z",
   "updatedAt": "2025-02-14T10:00:00.000Z"
 }
 ```
 
-### 4.4 DTO Rules
+#### II. Masked OAuth User (No Email provided by Social Provider)
+Notice `email` is `null` and `isEmailMissing` is `true`.
+```json
+{
+  "id": "60b8d2951f2a430015f6a9c1",
+  "name": "John Social",
+  "email": null,
+  "role": "user",
+  "status": "active",
+  "isVerified": false,
+  "isExternal": true,
+  "isEmailMissing": true,
+  "version": 0
+}
+```
 
-| DTO | Layer | Purpose |
-|-----|-------|---------|
-| `CreateUserDTO` | Request | Incoming create payload: name, email, password, phone?, role?, addresses? |
-| `UpdateUserDTO` | Request | Partial updates: name?, addresses? |
-| `FindAllQueryUserDTO` | Request | Query: page?, limit?, status?, keyword?, role? |
-| `SafeUserResponseDTO` | Response | Standard API response: id, name, email, phone, role, status, isVerified, addresses, version, timestamps |
-
-- **Request DTOs** are validated by Zod schemas in `user.validator.ts` before reaching the Service.
-- **Response** is always `SafeUserResponseDTO` — no internal/DB-only fields such as password.
-
-### 4.5 Data Security
-
-| Concern | Implementation |
-|---------|----------------|
-| **Password hashing** | `IHashService.hash()` (Bcrypt) before persistence; plain passwords never stored |
-| **Password masking** | Centralized in `UserService._toSafeResponse()` — all returned users pass through it |
-| **Password access in Repo** | Only for `findByEmail` / `findByPhone` when credentials must be verified; uses `select('+password')` |
-| **API output** | All endpoints return `SafeUserResponseDTO` — password and `__v` are excluded |
-
----
+#### III. Paginated Result
+```json
+{
+  "data": [
+    { "id": "...", "name": "User 1", ... },
+    { "id": "...", "name": "User 2", ... }
+  ],
+  "pagination": {
+    "totalElements": 45,
+    "totalPage": 5,
+    "currentPage": 1,
+    "elementsPerPage": 10
+  }
+}
+```
 
 ## 5. Business Exceptions
 
-Error codes from `ErrorUserCodes` enum. Values below are the API code strings sent to the client.
+Comprehensive list of error codes from `ErrorUserCodes`.
 
-| Error Code (API Value) | HTTP Status | Description |
-|------------------------|-------------|-------------|
-| `USER_NOT_FOUND` | 404 | User with given ID does not exist or does not match status filter |
-| `INVALID_CREDENTIALS` | 401 | Email/password combination is invalid (user not found or wrong password) |
-| `EMAIL_ALREADY_EXISTS` | 409 | Email is already in use by another user |
-| `PHONE_ALREADY_EXISTS` | 409 | Phone number is already in use by another user |
-| `INVALID_USER_ID` | 400 | Invalid or empty user ID in request params |
-| `USER_DATA_MODIFIED_CONCURRENTLY` | 409 | Optimistic lock conflict; version mismatch on update |
-| `STREET_IS_REQUIRED` | 400 | Street is empty or invalid (`INVALID_STREET_FORMAT`) |
-| `CITY_IS_REQUIRED` | 400 | City is empty or invalid (`INVALID_CITY_FORMAT`) |
-| `NAME_MUST_BE_AT_LEAST_2_CHARS` | 400 | Name has fewer than 2 characters (`INVALID_NAME_FORMAT`) |
-| `INVALID_EMAIL_FORMAT` | 400 | Email format is invalid |
-| `PASSWORD_MUST_BE_AT_LEAST_6_CHARS` | 400 | Password has fewer than 6 characters (`INVALID_PASSWORD_FORMAT`) |
-| `PHONE_NUMBER_MUST_BE_AT_LEAST_10_DIGITS` | 400 | Phone has fewer than 10 digits (`INVALID_PHONE_FORMAT`) |
-| `USER_DATA_MAPPING_ERROR` | 500 | Internal mapping/domain conversion error |
-| `USER_CREATE_FAILED` | 500 | User creation failed (used by Auth module; `CREATE_USER_FAILED`) |
-| `USER_VERSION_IS_REQUIRED` | 500 | Version required for optimistic locking update but not provided |
+| Error Code | HTTP Status | Description |
+|------------|:---:|-------------|
+| **Business Logic** | | |
+| `USER_NOT_FOUND` | 404 | User does not exist or matches criteria |
+| `INVALID_CREDENTIALS` | 401 | Email or password mismatch (Verify Credentials) |
+| `USER_ACCOUNT_LOCKED` | 403 | Attempt to access BANNED or DEACTIVE account |
+| `EMAIL_ALREADY_EXISTS` | 409 | Email taken by another account |
+| `PHONE_ALREADY_EXISTS` | 409 | Phone taken by another account |
+| `USER_DATA_MODIFIED_CONCURRENTLY`| 409 | Version mismatch (Optimistic Lock Conflict) |
+| `INVALID_USER_ID` | 400 | The provided ID is not a valid ObjectId |
+| **Validation** | | |
+| `STREET_IS_REQUIRED` | 400 | Street field is missing or empty |
+| `CITY_IS_REQUIRED` | 400 | City field is missing or empty |
+| `NAME_MUST_BE_AT_LEAST_2_CHARS` | 400 | Display name is too short |
+| `INVALID_EMAIL_FORMAT` | 400 | Email does not follow standard format |
+| `PASSWORD_MUST_BE_AT_LEAST_6_CHARS` | 400 | Password is too short |
+| `PHONE_NUMBER_MUST_BE_AT_LEAST_10_DIGITS` | 400 | Phone number is too short |
+| **Internal / Technical** | | |
+| `USER_DATA_MAPPING_ERROR` | 500 | Domain conversion / mapping failed |
+| `USER_CREATE_FAILED` | 500 | Database failed to persist new user |
+| `USER_VERSION_IS_REQUIRED`| 500 | Version missing during update operation |
 
 ---
 
 ## 6. Test Cases
 
 ### Happy Path
+| # | Case | Input | Expected Result |
+|:---:|------|-------|-----------------|
+| 1 | Traditional Create | Valid `CreateUserDTO` | 201, `isVerified: false`, `isExternal: false` |
+| 2 | OAuth Create (New)| Profile without email | 201, `isEmailMissing: true`, `email: null` |
+| 3 | OAuth Link | Email matching Social | 200, Social link added to existing account |
+| 4 | Find by ID | Valid ID | 200, `SafeUserResponseDTO`, stripped password |
+| 5 | Find by Email | Existing Email | 200, `SafeUserResponseDTO` |
+| 6 | Find All | page=1, limit=10 | 200, `PaginatedResult` with correct metadata |
+| 7 | Search by Keyword| keyword="John" | 200, Only users with "John" in name/email |
+| 8 | Filter by Role | role="ADMIN" | 200, Only users with ADMIN role |
+| 9 | Change Password | Valid ID + New Pass | 200, Password hashed, version incremented |
+| 10 | Change Email | Valid ID + New Email | 200, `isVerified: false`, `email` updated |
+| 11 | Verify Credentials| Correct Email/Pass | 200, Returns `SafeUserResponseDTO` |
 
-| # | Case | Input | Expected |
-|---|------|-------|----------|
-| 1 | Create user | Valid `CreateUserDTO` | 201, `SafeUserResponseDTO` without password |
-| 2 | Find by ID | Valid ID | 200, `SafeUserResponseDTO` |
-| 3 | Find by email | Valid email | 200, `SafeUserResponseDTO` or null |
-| 4 | Find by phone | Valid phone | 200, `SafeUserResponseDTO` or null |
-| 5 | Find all (paginated) | page, limit | 200, paginated list of `SafeUserResponseDTO` |
-| 6 | Verify credentials | Valid email + password | `SafeUserResponseDTO` (no password) |
-| 7 | Change password | Valid id (ACTIVE user) + new password (min 6 chars) | 200, `SafeUserResponseDTO` with unchanged profile (password never in response) |
-| 8 | Change email | Valid id (ACTIVE user) + new unique email | 200, `SafeUserResponseDTO` with updated email |
-| 9 | Change phone | Valid id (ACTIVE user) + new unique phone | 200, `SafeUserResponseDTO` with updated phone |
-| 10 | Verify account | Valid id (ACTIVE user) + `isVerified: true` | 200, `SafeUserResponseDTO` with `isVerified: true`, incremented `version` |
-| 11 | Verify account (unverify) | Valid id (ACTIVE user) + `isVerified: false` | 200, `SafeUserResponseDTO` with `isVerified: false` |
-| 12 | Change email (same as current) | Valid id + same email as current user | 200, `SafeUserResponseDTO` (excludeId prevents false conflict) |
-
-### Edge Cases
-
-| # | Case | Input | Expected |
-|---|------|-------|----------|
-| 1 | Duplicate email on create | Email already exists | 409, `EMAIL_ALREADY_EXISTS` |
-| 2 | Duplicate phone on create | Phone already exists | 409, `PHONE_ALREADY_EXISTS` |
-| 3 | Invalid credentials | Wrong password | 401, `INVALID_CREDENTIALS` |
-| 4 | Invalid credentials | Non-existent email | 401, `INVALID_CREDENTIALS` |
-| 5 | Find by ID not found | Invalid or non-existent ID | 404, `USER_NOT_FOUND` |
-| 6 | Invalid user ID format | Empty or malformed ID param | 400, `INVALID_USER_ID` |
-| 7 | Email format validation | Invalid email | 400, `INVALID_EMAIL_FORMAT` |
-| 8 | Password length validation | Password &lt; 6 chars | 400, `INVALID_PASSWORD_FORMAT` |
-| 9 | Name length validation | Name &lt; 2 chars | 400, `INVALID_NAME_FORMAT` |
-| 10 | Optimistic lock conflict | `verifyAccount` with stale version (concurrent update) | 409, `USER_DATA_MODIFIED_CONCURRENTLY` |
-| 11 | Change password — user not found | Non-existent id | 404, `USER_NOT_FOUND` |
-| 12 | Change password — inactive user | id of PENDING/DEACTIVE/BANNED user | 404, `USER_NOT_FOUND` |
-| 13 | Change email — user not found | Non-existent id | 404, `USER_NOT_FOUND` |
-| 14 | Change email — inactive user | id of PENDING/DEACTIVE/BANNED user | 404, `USER_NOT_FOUND` |
-| 15 | Change email — email taken | New email already used by another user | 409, `EMAIL_ALREADY_EXISTS` |
-| 16 | Verify account — user not found | Non-existent id | 404, `USER_NOT_FOUND` |
-| 17 | Verify account — inactive user | id of PENDING/DEACTIVE/BANNED user | 404, `USER_NOT_FOUND` |
+### Edge Cases & Errors
+| # | Case | Input | Expected Result |
+|:---:|------|-------|-----------------|
+| 1 | Duplicate Identity| Email already in DB | 409, `EMAIL_ALREADY_EXISTS` |
+| 2 | Optimistic Locking| Stale `version` | 409, `USER_DATA_MODIFIED_CONCURRENTLY` |
+| 3 | Access Banned | Banned User ID | 403, `USER_ACCOUNT_LOCKED` (on login/update) |
+| 4 | Find Missing | Invalid/Missing ID | 404, `USER_NOT_FOUND` |
+| 5 | Invalid ID Format| Malformed String | 400, `INVALID_USER_ID` |
+| 6 | Weak Password | "123" | 400, `PASSWORD_MUST_BE_AT_LEAST_6_CHARS` |
+| 7 | Missing Address | Street missing | 400, `STREET_IS_REQUIRED` |
+| 8 | Same Email Change| Current Email | 200, No conflict (exclude current user) |
+| 9 | Unauthenticated | Missing JWT | 401 (Handled by Global Auth Middleware) |
