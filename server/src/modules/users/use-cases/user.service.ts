@@ -126,8 +126,11 @@ export class UserService {
     id: string,
     newEmail: string,
   ): Promise<UserEntity | null> {
-    const existingUser = await this.findById(id, USER_STATUS.ACTIVE);
-    await this._validateEmailUniqueness(newEmail, id);
+    const [existingUser] = await Promise.all([
+      this.findById(id, USER_STATUS.ACTIVE),
+      this._validateEmailUniqueness(newEmail, id),
+    ]);
+
     const updatedUser = await this._userRepo.update(id, {
       email: newEmail,
       isEmailMissing: false,
@@ -141,8 +144,11 @@ export class UserService {
     id: string,
     newPhone: string,
   ): Promise<UserEntity | null> {
-    const existingUser = await this.findById(id, USER_STATUS.ACTIVE);
-    await this._validatePhoneUniqueness(newPhone, id);
+    const [existingUser] = await Promise.all([
+      this.findById(id, USER_STATUS.ACTIVE),
+      this._validatePhoneUniqueness(newPhone, id),
+    ]);
+
     const user = await this._userRepo.update(id, {
       phone: newPhone,
       version: existingUser.version ?? 0,
@@ -234,9 +240,14 @@ export class UserService {
 
     // 3. If still not found (new user), create a new account with the first provider
     if (!user) {
+      // Dummy Email Mechanism: generates placeholder if missing
+      const finalEmail =
+        email ||
+        `${providerInfo.provider.toLowerCase()}_${providerInfo.providerId}@atomecom.dummy`;
+
       const newUserData: Omit<UserEntity, 'id'> = {
         name,
-        ...(email && { email }),
+        email: finalEmail,
         avatar: avatar || PLACE_HOLDER_AVATAR,
         providers: [providerInfo],
         status: USER_STATUS.ACTIVE,

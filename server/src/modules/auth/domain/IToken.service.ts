@@ -1,4 +1,11 @@
-import type { TokenPayload } from '@modules/auth/domain/tokenPayload.model.js';
+export interface TokenPayload {
+  userId: string;
+  sessionId: string;
+  role: string;
+  nonce?: string;
+  iat?: number;
+  exp?: number;
+}
 
 export interface ITokenService {
   generateAccessToken(payload: TokenPayload): Promise<string>;

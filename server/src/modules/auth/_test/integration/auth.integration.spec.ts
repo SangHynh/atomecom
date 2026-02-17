@@ -1,0 +1,230 @@
+import type { Express } from 'express';
+import express from 'express';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import request from 'supertest';
+import mongoose from 'mongoose';
+import { ErrorAuthCodes } from '@shared/core/error.enum.js';
+import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
+import { MongooseUserRepo } from '@modules/users/infra/mongoose-user.repo.js';
+import { BcryptHashAdapter } from '@modules/users/infra/bcryptHash.adapter.js';
+import { UserService } from '@modules/users/use-cases/user.service.js';
+import { JwtTokenAdapter } from '@modules/auth/infra/jwtToken.adapter.js';
+import { SessionService } from '@modules/auth/use-cases/session.service.js';
+import { MailTokenService } from '@modules/auth/use-cases/mailToken.service.js';
+import { MongooseMailTokenRepo } from '@modules/auth/infra/mongoose-mailToken.repo.js';
+import { MailTokenModel } from '@modules/auth/infra/mongoose-mailToken.model.js';
+import { AuthService } from '@modules/auth/use-cases/auth.service.js';
+import { AuthController } from '@modules/auth/presentation/auth.controller.js';
+import { asyncHandler } from '@shared/core/asyncHandler.js';
+import { validate } from '@shared/middlewares/validate.middleware.js';
+import {
+  RegisterRequestSchema,
+  LoginRequestSchema,
+  TokenRequestSchema,
+  VerifyEmailRequestSchema,
+  EmailOnlyRequestSchema,
+} from '@modules/auth/presentation/auth.validator.js';
+import { errorHandler } from '@shared/middlewares/error.middleware.js';
+import type { ICacheRepo } from '@shared/interfaces/ICache.repo.js';
+import type { IEmailService } from '@shared/interfaces/IEmail.service.js';
+
+// env for JWT
+process.env.ACCESS_TOKEN_SECRET = 'test-access-secret';
+process.env.REFRESH_TOKEN_SECRET = 'test-refresh-secret';
+process.env.ACCESS_TOKEN_EXPIRES_IN = '15m';
+process.env.REFRESH_TOKEN_EXPIRES_IN = '7d';
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Mock Cache Repo (In-memory)
+class MockCacheRepo implements ICacheRepo {
+  private _data = new Map<string, any>();
+  async get<T>(key: string): Promise<T | null> { return this._data.get(key) || null; }
+  async set(key: string, value: any, ttl?: number): Promise<void> { this._data.set(key, value); }
+  async del(key: string): Promise<void> { this._data.delete(key); }
+  async has(key: string): Promise<boolean> { return this._data.has(key); }
+  async deleteByPattern(pattern: string): Promise<void> {
+    const p = pattern.replace(/\*/g, '.*');
+    const regex = new RegExp('^' + p + '$');
+    for (const key of this._data.keys()) {
+      if (regex.test(key)) this._data.delete(key);
+    }
+  }
+}
+
+// Mock Email Service
+const mockEmailService: IEmailService = {
+  sendVerificationEmail: jest.fn().mockResolvedValue(true),
+  sendResetPasswordEmail: jest.fn().mockResolvedValue(true),
+} as any;
+
+function createTestApp(): Express {
+  const userRepo = new MongooseUserRepo();
+  const hashService = new BcryptHashAdapter();
+  const userService = new UserService({ userRepo, hashService });
+  
+  const cacheRepo = new MockCacheRepo();
+  const sessionService = new SessionService(cacheRepo);
+  
+  const mailTokenRepo = new MongooseMailTokenRepo();
+  const mailTokenService = new MailTokenService(mailTokenRepo);
+  
+  const tokenService = new JwtTokenAdapter();
+  const oauthFactory = {} as any;
+
+  const authService = new AuthService({
+    userService,
+    tokenService,
+    sessionService,
+    emailService: mockEmailService,
+    mailTokenService,
+    oauthFactory,
+  });
+
+  const authController = new AuthController(authService);
+
+  const app = express();
+  app.use(express.json());
+
+  const authRouter = express.Router();
+  authRouter.post('/register', validate(RegisterRequestSchema), asyncHandler(authController.register.bind(authController)));
+  authRouter.post('/login', validate(LoginRequestSchema), asyncHandler(authController.login.bind(authController)));
+  authRouter.post('/refresh-token', validate(TokenRequestSchema), asyncHandler(authController.refresh.bind(authController)));
+  authRouter.post('/logout', validate(TokenRequestSchema), asyncHandler(authController.logout.bind(authController)));
+  authRouter.post('/forgot-password', validate(EmailOnlyRequestSchema), asyncHandler(authController.forgotPassword.bind(authController)));
+  authRouter.get('/verify-email', validate(VerifyEmailRequestSchema), asyncHandler(authController.verifyEmail.bind(authController)));
+
+  app.use('/auth', authRouter);
+  app.use(errorHandler);
+  return app;
+}
+
+describe('Auth Module - Integration Tests', () => {
+  let app: Express;
+  let mongoServer: MongoMemoryServer;
+
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+    app = createTestApp();
+  }, 120000);
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  beforeEach(async () => {
+    await UserModel.deleteMany({});
+    await MailTokenModel.deleteMany({});
+    jest.clearAllMocks();
+  });
+
+  describe('Happy Path', () => {
+    const registerDto = {
+      email: 'test@example.com',
+      password: 'password123',
+      name: 'Test User',
+    };
+
+    it('1. Register -> Login -> Refresh -> Logout', async () => {
+      // REGISTER
+      const regRes = await request(app).post('/auth/register').send(registerDto);
+      expect(regRes.status).toBe(201);
+      expect(regRes.body.data.user.email).toBe(registerDto.email);
+      expect(regRes.body.data.tokens.accessToken).toBeDefined();
+      
+      await delay(500); // Wait for background email
+      expect(mockEmailService.sendVerificationEmail).toHaveBeenCalled();
+
+      const refreshToken = regRes.body.data.tokens.refreshToken;
+
+      // LOGIN
+      const loginRes = await request(app).post('/auth/login').send({
+        email: registerDto.email,
+        password: registerDto.password,
+      });
+      expect(loginRes.status).toBe(200);
+      expect(loginRes.body.data.tokens.accessToken).toBeDefined();
+      const newRefreshToken = loginRes.body.data.tokens.refreshToken;
+
+      // REFRESH
+      const refreshRes = await request(app).post('/auth/refresh-token').send({
+        refreshToken: newRefreshToken,
+      });
+      expect(refreshRes.status).toBe(200);
+      expect(refreshRes.body.data.tokens.accessToken).toBeDefined();
+      expect(refreshRes.body.data.tokens.refreshToken).not.toBe(newRefreshToken);
+
+      // LOGOUT
+      const logoutRes = await request(app).post('/auth/logout').send({
+        refreshToken: refreshRes.body.data.tokens.refreshToken,
+      });
+      expect(logoutRes.status).toBe(204);
+    });
+
+    it('2. Forgot Password & Verify Email flow', async () => {
+      // Create user first
+      const regRes = await request(app).post('/auth/register').send(registerDto);
+      expect(regRes.status).toBe(201);
+      
+      // FORGOT PASSWORD (this creates a RESET_PASSWORD token)
+      const forgotRes = await request(app).post('/auth/forgot-password').send({ email: registerDto.email });
+      expect(forgotRes.status).toBe(200);
+      
+      await delay(1000); // Wait for background emails
+      expect(mockEmailService.sendResetPasswordEmail).toHaveBeenCalled();
+      expect(mockEmailService.sendVerificationEmail).toHaveBeenCalled();
+
+      // VERIFY EMAIL (using the token from register flow)
+      const tokenRecord = await MailTokenModel.findOne({ email: registerDto.email, type: 'EMAIL_VERIFICATION' });
+      expect(tokenRecord).toBeDefined();
+
+      const verifyRes = await request(app).get(`/auth/verify-email?token=${tokenRecord?.token}`);
+      expect(verifyRes.status).toBe(200);
+      expect(verifyRes.body.data.user.isVerified).toBe(true);
+    });
+  });
+
+  describe('Edge Cases & Security', () => {
+    it('1. Token Reuse Detection (Security Rotation)', async () => {
+      const regRes = await request(app).post('/auth/register').send({
+        email: 'security@test.com',
+        password: 'password123',
+        name: 'Sec User',
+      });
+      const rt1 = regRes.body.data.tokens.refreshToken;
+
+      // First Refresh (Valid)
+      const refresh1 = await request(app).post('/auth/refresh-token').send({ refreshToken: rt1 });
+      expect(refresh1.status).toBe(200);
+      const rt2 = refresh1.body.data.tokens.refreshToken;
+
+      // Second Refresh with rt1 (REUSE!)
+      const refresh2 = await request(app).post('/auth/refresh-token').send({ refreshToken: rt1 });
+      expect(refresh2.status).toBe(401);
+      
+      const body = refresh2.body;
+      // Depending on how error handler works, it might be in body.message or body.code
+      expect(body.message).toBe(ErrorAuthCodes.TOKEN_REUSED_DETECTION);
+
+      // Verify rt2 is also revoked now
+      const refresh3 = await request(app).post('/auth/refresh-token').send({ refreshToken: rt2 });
+      expect(refresh3.status).toBe(401);
+    });
+
+    it('2. Invalid Credentials', async () => {
+      await request(app).post('/auth/register').send({
+        email: 'wrong@test.com',
+        password: 'password123',
+        name: 'User',
+      });
+
+      const res = await request(app).post('/auth/login').send({
+        email: 'wrong@test.com',
+        password: 'wrongpassword',
+      });
+      expect(res.status).toBe(401);
+    });
+  });
+});

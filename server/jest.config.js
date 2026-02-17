@@ -3,9 +3,10 @@ export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
-  testMatch: ['**/*.spec.ts', '**/*.integration.spec.ts'],
+  testMatch: ['**/_test/**/*.spec.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   moduleNameMapper: {
+    '^@shared/utils/logger\\.js$': '<rootDir>/src/shared/utils/__mocks__/logger.ts',
     '^(\\.\\./)+app$': '<rootDir>/src/app.ts',
     '^(\\.\\./)+container$': '<rootDir>/src/container.ts',
     '^\\./shared/(.*)\\.js$': '<rootDir>/src/shared/$1.ts',
@@ -25,11 +26,21 @@ export default {
     '^@auth/(.*)$': '<rootDir>/src/modules/auth/$1',
     '^@monitoring/(.*)\\.js$': '<rootDir>/src/modules/monitoring/$1.ts',
     '^@monitoring/(.*)$': '<rootDir>/src/modules/monitoring/$1',
+    '^chalk$': '<rootDir>/src/shared/utils/__mocks__/logger.ts',
+    '^morgan$': '<rootDir>/src/shared/utils/__mocks__/logger.ts',
+    '^winston$': '<rootDir>/src/shared/utils/__mocks__/logger.ts',
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
   },
-  transformIgnorePatterns: ['/node_modules/(?!(.*\\.mjs$))'],
+  transformIgnorePatterns: ['/node_modules/(?!(.*\\.mjs$|mongodb-memory-server|@shared)/)'],
   testTimeout: 30000,
-  verbose: true,
+  verbose: false,
+  collectCoverage: true,
+  coverageDirectory: 'coverage',
+  reporters: [
+     'default',
+     '<rootDir>/src/shared/test/module-summary-reporter.cjs'
+  ],
+  coverageReporters: ['json', 'lcov', 'text', 'clover', 'html'],
 };

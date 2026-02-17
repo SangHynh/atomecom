@@ -368,7 +368,26 @@ When a user authenticates via a social provider (Google/Facebook) that does not 
 3. **Verification Status:** Such accounts are marked as `isVerified: false`, even if OAuth accounts are typically auto-verified.
 4. **Data Masking (Safe Response):** When returning the user profile, the dummy email is masked as `null`. This informs the Frontend that the user must undergo a "Complete Profile" flow to provide a real email.
 
----
+#### III. Refresh Token Rotation & Reuse Detection
+The system implements a rigorous session security policy to protect against token theft:
+1. **Rotation**: Every time a user refreshes their Access Token, a **new** Refresh Token is issued, and the old one is invalidated.
+2. **Detection**: The system tracks the history of used tokens (`refreshTokensUsed`) within a session (limited to the last 5 tokens for performance).
+3. **Revocation (Panic Button)**: If a client attempts to use a Refresh Token that has already been rotated (exists in history), it indicates a potential breach. The system immediately **revokes ALL active sessions** for that user from Redis to stop the attacker.
+
+#### IV. Opaque Token Mechanism (Mail Token)
+For high-security operations (Email Verification, Password Reset), the system uses **Opaque Tokens** instead of JWTs:
+- **Generation**: Created using `node:crypto.randomBytes(64).toString('hex')`, producing a 128-character high-entropy string that is impossible to guess.
+- **Storage**: Tokens are stored in MongoDB with a 24-hour expiration (`expiresAt`).
+- **One-Time Use**: Every token is strictly consumed upon use (`isUsed: true`). This prevents replay attacks where an attacker might try to use the same link twice.
+- **Security Logic**: Even if a token is valid and not expired, it will be rejected if it has already been marked as used.
+
+#### V. Token Uniqueness (Nonce)
+
+To ensure robust **Token Rotation** and prevent collisions in high-concurrency scenarios (e.g., rapid automated tests or abuse attempts), a `nonce` field is added to the JWT payload.
+
+1.  **Problem:** Standard JWTs generated within the same second for the same user have identical assertions (iat, exp). This causes the "Old Token" and "New Token" to be identical strings, breaking rotation logic (invalidating the old one accidentally invalidates the new one).
+2.  **Solution:** Every token generation includes a random UUID (`nonce: crypto.randomUUID()`).
+3.  **Result:** Every single token string is mathematically unique, even if issued at the exact same millisecond.
 
 ---
 

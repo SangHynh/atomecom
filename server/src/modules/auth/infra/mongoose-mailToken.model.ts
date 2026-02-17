@@ -14,6 +14,7 @@ const MailTokenSchema = new Schema<IMailTokenDocument>(
       ref: 'User',
       index: true,
     },
+    email: { type: String, required: true, index: true },
     token: { type: String, required: true, unique: true, index: true },
     type: {
       type: String,
@@ -31,7 +32,6 @@ const MailTokenSchema = new Schema<IMailTokenDocument>(
 
 MailTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-export const MailTokenModel = mongoose.model<IMailTokenDocument>(
-  'MailToken',
-  MailTokenSchema,
-);
+export const MailTokenModel =
+  (mongoose.models.MailToken as mongoose.Model<IMailTokenDocument>) ||
+  mongoose.model<IMailTokenDocument>('MailToken', MailTokenSchema);

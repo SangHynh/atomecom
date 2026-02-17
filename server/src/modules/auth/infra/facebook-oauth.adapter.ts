@@ -1,6 +1,5 @@
 // @modules/auth/infra/oauth/facebook.provider.ts
-import type { ExternalProfile } from '@modules/auth/domain/externalProfile.model.js';
-import type { IOAuthProvider } from '@modules/auth/domain/IOauthProvider.service.js';
+import type { ExternalProfile, IOAuthProvider } from '@modules/auth/domain/IOauthProvider.service.js';
 import { UnauthorizedError } from '@shared/core/error.response.js';
 import { OauthProvider } from '@shared/enum/oauthProvider.enum.js';
 import logger from '@shared/utils/logger.js';

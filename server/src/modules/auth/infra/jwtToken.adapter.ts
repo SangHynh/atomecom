@@ -1,10 +1,9 @@
 import jwt from 'jsonwebtoken';
-import type { ITokenService } from '@modules/auth/domain/IToken.service.js';
+import type { ITokenService, TokenPayload } from '@modules/auth/domain/IToken.service.js';
 import {
   InternalServerError,
   UnauthorizedError,
 } from '@shared/core/error.response.js';
-import type { TokenPayload } from '@modules/auth/domain/tokenPayload.model.js';
 
 const JWT_ALGORITHM: jwt.Algorithm = 'HS256';
 export class JwtTokenAdapter implements ITokenService {

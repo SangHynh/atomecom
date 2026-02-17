@@ -1,5 +1,4 @@
-import type { ITokenService } from '@modules/auth/domain/IToken.service.js';
-import type { TokenPayload } from '@modules/auth/domain/tokenPayload.model.js';
+import type { ITokenService, TokenPayload } from '@modules/auth/domain/IToken.service.js';
 import type { OauthFactory } from '@modules/auth/use-cases/oauth.factory.js';
 import type {
   AuthResponseDTO,
@@ -158,7 +157,6 @@ export class AuthService {
 
   public async forgotPassword(email: string): Promise<void> {
     const user = await this._userService.findByEmail(email, USER_STATUS.ACTIVE);
-    console.log(user);
     if (user && user.id) {
       this._sendEmailInBackground(user.id, email, 'RESET_PASSWORD');
       logger.info(
@@ -239,6 +237,7 @@ export class AuthService {
       userId: user.id,
       role: user.role,
       sessionId: finalSessionId,
+      nonce: crypto.randomUUID(),
     };
 
     // Step 3: Calculate refresh token expiration and remaining TTL

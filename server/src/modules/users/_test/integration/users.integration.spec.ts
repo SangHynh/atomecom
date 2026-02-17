@@ -13,6 +13,9 @@ import request from 'supertest';
 import mongoose from 'mongoose';
 import { ErrorUserCodes } from '@shared/core/error.enum.js';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
+import type { CreateUserDTO } from '@modules/users/use-cases/user.dtos.js';
+import { USER_ROLE } from '@shared/enum/userRole.enum.js';
+import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
 import { MongooseUserRepo } from '@modules/users/infra/mongoose-user.repo.js';
 import { BcryptHashAdapter } from '@modules/users/infra/bcryptHash.adapter.js';
 import { UserService } from '@modules/users/use-cases/user.service.js';
@@ -97,7 +100,7 @@ describe('Users Module - Integration Tests', () => {
         email: 'jane.doe@example.com',
         password: 'password123',
         phone: '09123456789',
-        role: 'user',
+        role: USER_ROLE.USER,
         addresses: [
           { street: '123 Main St', city: 'Ho Chi Minh City', isDefault: true },
         ],
@@ -115,7 +118,7 @@ describe('Users Module - Integration Tests', () => {
       expect(user.name).toBe(dto.name);
       expect(user.email).toBe(dto.email.toLowerCase());
       expect(user.phone).toBe(dto.phone);
-      expect(user.role).toBe('user');
+      expect(user.role).toBe(USER_ROLE.USER);
       expect(user.status).toBeDefined();
       expect(user.isVerified).toBe(false);
       expect(user.addresses).toHaveLength(1);
@@ -132,8 +135,8 @@ describe('Users Module - Integration Tests', () => {
         email: 'john@example.com',
         password: 'hashed',
         phone: '09876543210',
-        role: 'user',
-        status: 'active',
+        role: USER_ROLE.USER,
+        status: USER_STATUS.ACTIVE,
       });
       const id = created._id.toString();
 
@@ -155,8 +158,8 @@ describe('Users Module - Integration Tests', () => {
         email: 'alice@example.com',
         password: 'hashed',
         phone: '09111111111',
-        role: 'user',
-        status: 'active',
+        role: USER_ROLE.USER,
+        status: USER_STATUS.ACTIVE,
       });
 
       const res = await request(app)
@@ -174,8 +177,8 @@ describe('Users Module - Integration Tests', () => {
         email: 'bob@example.com',
         password: 'hashed',
         phone: '09222222222',
-        role: 'user',
-        status: 'active',
+        role: USER_ROLE.USER,
+        status: USER_STATUS.ACTIVE,
       });
 
       const res = await request(app)
@@ -194,16 +197,16 @@ describe('Users Module - Integration Tests', () => {
           email: 'u1@ex.com',
           password: 'h',
           phone: '09111111111',
-          role: 'user',
-          status: 'active',
+          role: USER_ROLE.USER,
+          status: USER_STATUS.ACTIVE,
         },
         {
           name: 'U2',
           email: 'u2@ex.com',
           password: 'h',
           phone: '09222222222',
-          role: 'user',
-          status: 'active',
+          role: USER_ROLE.USER,
+          status: USER_STATUS.ACTIVE,
         },
       ]);
 
@@ -220,6 +223,58 @@ describe('Users Module - Integration Tests', () => {
         expect(u.__v).toBeUndefined();
       });
     });
+
+    it('6. Search by Keyword - keyword="John" returns only matching users', async () => {
+      await UserModel.create([
+        {
+          name: 'John Doe',
+          email: 'john@ex.com',
+          password: 'h',
+          role: USER_ROLE.USER,
+          status: USER_STATUS.ACTIVE,
+        },
+        {
+          name: 'Jane Smith',
+          email: 'jane@ex.com',
+          password: 'h',
+          role: USER_ROLE.USER,
+          status: USER_STATUS.ACTIVE,
+        },
+      ]);
+
+      const res = await request(app)
+        .get(`${BASE_PATH}/users?keyword=John`)
+        .expect(200);
+
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].name).toBe('John Doe');
+    });
+
+    it('7. Filter by Role - role="ADMIN" returns only admins', async () => {
+      await UserModel.create([
+        {
+          name: 'Admin',
+          email: 'admin@ex.com',
+          password: 'h',
+          role: USER_ROLE.ADMIN,
+          status: USER_STATUS.ACTIVE,
+        },
+        {
+          name: 'User',
+          email: 'user@ex.com',
+          password: 'h',
+          role: USER_ROLE.USER,
+          status: USER_STATUS.ACTIVE,
+        },
+      ]);
+
+      const res = await request(app)
+        .get(`${BASE_PATH}/users?role=ADMIN`) // Query param is usually string
+        .expect(200);
+
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].role).toBe(USER_ROLE.ADMIN);
+    });
   });
 
   // ==================== EDGE CASES ====================
@@ -230,8 +285,8 @@ describe('Users Module - Integration Tests', () => {
         name: 'Existing',
         email: 'existing@example.com',
         password: 'hashed',
-        role: 'user',
-        status: 'active',
+        role: USER_ROLE.USER,
+        status: USER_STATUS.ACTIVE,
       });
 
       const res = await request(app)
@@ -240,7 +295,7 @@ describe('Users Module - Integration Tests', () => {
           name: 'New User',
           email: 'existing@example.com',
           password: 'password123',
-          role: 'user',
+          role: USER_ROLE.USER,
         })
         .expect(409);
 
@@ -253,18 +308,27 @@ describe('Users Module - Integration Tests', () => {
         email: 'existing@example.com',
         password: 'hashed',
         phone: '09333333333',
-        role: 'user',
-        status: 'active',
+        role: USER_ROLE.USER,
+        status: USER_STATUS.ACTIVE,
+      });
+
+      await UserModel.create({
+        name: 'Existing',
+        email: 'unique_email_for_phone_test@example.com',
+        password: 'hashed',
+        phone: '09888888888',
+        role: USER_ROLE.USER,
+        status: USER_STATUS.ACTIVE,
       });
 
       const res = await request(app)
         .post(`${BASE_PATH}/users`)
         .send({
-          name: 'New User',
-          email: 'new@example.com',
+          name: 'Existing',
+          email: 'newemail@example.com',
           password: 'password123',
-          phone: '09333333333',
-          role: 'user',
+          phone: '09888888888', // Duplicate phone
+          role: USER_ROLE.USER,
         })
         .expect(409);
 
@@ -353,6 +417,26 @@ describe('Users Module - Integration Tests', () => {
           (e: { message: string }) =>
             e.message === ErrorUserCodes.INVALID_NAME_FORMAT ||
             e.message?.includes('NAME'),
+        ),
+      ).toBeTruthy();
+    });
+
+    it('10. Missing Address - Street missing returns 400', async () => {
+      const res = await request(app)
+        .post(`${BASE_PATH}/users`)
+        .send({
+          name: 'Jane Doe',
+          email: 'jane.address@example.com',
+          password: 'password123',
+          addresses: [{ city: 'HCM' }], // street missing
+        })
+        .expect(400);
+
+      expect(
+        res.body.errors?.some(
+          (e: { message: string; field: string }) =>
+            e.field === 'body.addresses.0.street' || // Specific field path
+            e.message.includes('EXPECTED_STRING'), // General message
         ),
       ).toBeTruthy();
     });

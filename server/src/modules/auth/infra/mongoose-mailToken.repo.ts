@@ -1,5 +1,5 @@
 import type { IMailTokenRepo } from '@modules/auth/domain/IMailToken.repo.js';
-import { MailTokenModel } from './mongoose-mailToken.model.js';
+import { MailTokenModel } from '@modules/auth/infra/mongoose-mailToken.model.js';
 import type { MailTokenEntity } from '@modules/auth/domain/mailToken.entity.js';
 
 export class MongooseMailTokenRepo implements IMailTokenRepo {
@@ -7,6 +7,7 @@ export class MongooseMailTokenRepo implements IMailTokenRepo {
    * Create a new mail token record in the database
    */
   public async create(mailTokenEntity: MailTokenEntity): Promise<void> {
+    console.log('Repo creating token:', mailTokenEntity);
     await MailTokenModel.create({
       userId: mailTokenEntity.userId,
       email: mailTokenEntity.email,

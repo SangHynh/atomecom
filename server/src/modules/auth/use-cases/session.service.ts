@@ -1,7 +1,14 @@
-import type { AuthSession } from '@modules/auth/domain/authSession.model.js';
 import { ErrorAuthCodes } from '@shared/core/error.enum.js';
 import { UnauthorizedError } from '@shared/core/error.response.js';
 import type { ICacheRepo } from '@shared/interfaces/ICache.repo.js';
+
+export interface AuthSession {
+  sessionId: string;
+  userId: string;
+  refreshToken: string;
+  refreshTokensUsed: string[];
+  expiresAt: number;
+}
 
 export class SessionService {
   constructor(private readonly _cache: ICacheRepo) {}

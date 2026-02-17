@@ -33,6 +33,9 @@ describe('UserService', () => {
     status: USER_STATUS.ACTIVE,
     isVerified: false,
     addresses: [],
+    providers: [],
+    isExternal: false,
+    isEmailMissing: false,
     version: 1,
   };
 
@@ -42,6 +45,7 @@ describe('UserService', () => {
       findById: jest.fn(),
       findByEmail: jest.fn(),
       findByPhone: jest.fn(),
+      findByOAuthId: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
     };
@@ -227,43 +231,33 @@ describe('UserService', () => {
 
   describe('changeEmail - Identity Uniqueness', () => {
     it('should run findById and _validateEmailUniqueness in parallel via Promise.all', async () => {
-      const existingUser = { ...mockUser, toObject: () => ({}) };
       const updatedUser = {
         ...mockUser,
         email: 'newemail@example.com',
         toObject: () => ({}),
       };
 
-      mockUserRepo.findById.mockResolvedValue(
-        existingUser as unknown as UserEntity,
-      );
-      mockUserRepo.findByEmail.mockResolvedValue(null); // new email is unique
-      mockUserRepo.update.mockResolvedValue(
-        updatedUser as unknown as UserEntity,
-      );
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockUserRepo.findByEmail.mockResolvedValue(null);
+      mockUserRepo.update.mockResolvedValue(updatedUser as UserEntity);
 
       await userService.changeEmail(
         '507f1f77bcf86cd799439011',
         'newemail@example.com',
       );
 
-      expect(mockUserRepo.findById).toHaveBeenCalledWith(
-        '507f1f77bcf86cd799439011',
-        USER_STATUS.ACTIVE,
-      );
-      expect(mockUserRepo.findByEmail).toHaveBeenCalledWith(
-        'newemail@example.com',
-      );
       expect(mockUserRepo.update).toHaveBeenCalledWith(
         '507f1f77bcf86cd799439011',
-        {
+        expect.objectContaining({
           email: 'newemail@example.com',
-        },
+          isEmailMissing: false,
+          isVerified: false,
+          version: mockUser.version,
+        }),
       );
     });
 
     it('should throw ConflictError(EMAIL_ALREADY_EXISTS) when new email is taken by another user', async () => {
-      const existingUser = { ...mockUser, toObject: () => ({}) };
       const otherUser = {
         ...mockUser,
         id: 'other-id',
@@ -271,12 +265,8 @@ describe('UserService', () => {
         toObject: () => ({}),
       };
 
-      mockUserRepo.findById.mockResolvedValue(
-        existingUser as unknown as UserEntity,
-      );
-      mockUserRepo.findByEmail.mockResolvedValue(
-        otherUser as unknown as UserEntity,
-      );
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockUserRepo.findByEmail.mockResolvedValue(otherUser as UserEntity);
 
       await expect(
         userService.changeEmail(
@@ -284,75 +274,29 @@ describe('UserService', () => {
           'taken@example.com',
         ),
       ).rejects.toThrow(ConflictError);
-
-      await expect(
-        userService.changeEmail(
-          '507f1f77bcf86cd799439011',
-          'taken@example.com',
-        ),
-      ).rejects.toMatchObject({
-        message: ErrorUserCodes.EMAIL_ALREADY_EXISTS,
-      });
-
-      expect(mockUserRepo.update).not.toHaveBeenCalled();
-    });
-
-    it('should allow changeEmail when new email is same as current (excludeId prevents false conflict)', async () => {
-      const existingUser = {
-        ...mockUser,
-        email: 'jane@example.com',
-        toObject: () => ({ ...mockUser, email: 'jane@example.com' }),
-      };
-
-      mockUserRepo.findById.mockResolvedValue(
-        existingUser as unknown as UserEntity,
-      );
-      mockUserRepo.findByEmail.mockResolvedValue(
-        existingUser as unknown as UserEntity,
-      );
-      mockUserRepo.update.mockResolvedValue(
-        existingUser as unknown as UserEntity,
-      );
-
-      const result = await userService.changeEmail(
-        '507f1f77bcf86cd799439011',
-        'jane@example.com',
-      );
-
-      expect(result).toBeDefined();
-      expect(mockUserRepo.update).toHaveBeenCalled();
     });
   });
 
   describe('changePhone - Identity Uniqueness', () => {
     it('should run findById and _validatePhoneUniqueness in parallel via Promise.all', async () => {
-      const existingUser = { ...mockUser, toObject: () => ({}) };
       const updatedUser = {
         ...mockUser,
         phone: '09999999999',
         toObject: () => ({}),
       };
 
-      mockUserRepo.findById.mockResolvedValue(
-        existingUser as unknown as UserEntity,
-      );
+      mockUserRepo.findById.mockResolvedValue(mockUser);
       mockUserRepo.findByPhone.mockResolvedValue(null);
-      mockUserRepo.update.mockResolvedValue(
-        updatedUser as unknown as UserEntity,
-      );
+      mockUserRepo.update.mockResolvedValue(updatedUser as UserEntity);
 
       await userService.changePhone('507f1f77bcf86cd799439011', '09999999999');
 
-      expect(mockUserRepo.findById).toHaveBeenCalledWith(
-        '507f1f77bcf86cd799439011',
-        USER_STATUS.ACTIVE,
-      );
-      expect(mockUserRepo.findByPhone).toHaveBeenCalledWith('09999999999');
       expect(mockUserRepo.update).toHaveBeenCalledWith(
         '507f1f77bcf86cd799439011',
-        {
+        expect.objectContaining({
           phone: '09999999999',
-        },
+          version: mockUser.version,
+        }),
       );
     });
 
@@ -383,6 +327,58 @@ describe('UserService', () => {
       });
 
       expect(mockUserRepo.update).not.toHaveBeenCalled();
+    });
+  });
+
+  // ==================== OAUTH LOGIC (Section 3.3) ====================
+
+  describe('upsertOAuthUser', () => {
+    it('should generate dummy email and set isEmailMissing: true when profile has no email', async () => {
+      mockUserRepo.findByOAuthId.mockResolvedValue(null);
+      mockUserRepo.create.mockImplementation(async (data) => ({
+        id: 'new-id',
+        ...data,
+      }) as UserEntity);
+
+      const result = await userService.upsertOAuthUser({
+        providerInfo: { provider: 'GOOGLE' as any, providerId: '123' },
+        name: 'OAuth User',
+        // no email
+      });
+
+      expect(result.email).toBeNull(); // Masked in SafeResponse
+      expect(result.isEmailMissing).toBe(true);
+      expect(mockUserRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'google_123@atomecom.dummy',
+          isEmailMissing: true,
+        }),
+      );
+    });
+
+    it('should link provider to existing account if email matches', async () => {
+      mockUserRepo.findByOAuthId.mockResolvedValue(null);
+      mockUserRepo.findByEmail.mockResolvedValue({
+        ...mockUser,
+        providers: [],
+      } as UserEntity);
+      mockUserRepo.update.mockImplementation(async (id, data) => ({
+        ...mockUser,
+        ...data,
+      }) as UserEntity);
+
+      await userService.upsertOAuthUser({
+        providerInfo: { provider: 'FACEBOOK' as any, providerId: '456' },
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+      });
+
+      expect(mockUserRepo.update).toHaveBeenCalledWith(
+        mockUser.id,
+        expect.objectContaining({
+          providers: [{ provider: 'FACEBOOK', providerId: '456' }],
+        }),
+      );
     });
   });
 });

@@ -1,4 +1,6 @@
 node_modules/
 logs/
 .env
-plans
+plans/
+coverage/
+test_out.txt
