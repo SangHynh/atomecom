@@ -1,5 +1,4 @@
 import express from 'express';
-import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
 import router from './shared/index.route.js';
@@ -8,6 +7,7 @@ import { requestIdMiddleware } from '@shared/middlewares/requestID.middleware.js
 import { performanceMiddleware } from '@shared/middlewares/perfomance.middleware.js';
 import { globalRateLimiter } from '@shared/middlewares/ratelimit.middleware.js';
 import { errorHandler } from '@shared/middlewares/error.middleware.js';
+import { helmetMiddleware } from '@shared/middlewares/helmet.middleware.js';
 
 const app = express();
 
@@ -16,11 +16,13 @@ app.use(express.json());
 app.use(requestIdMiddleware);
 app.use(performanceMiddleware);
 app.use(express.urlencoded({ extended: true }));
-app.use(helmet());
+app.use(helmetMiddleware);
 app.use(cors());
 app.use(httpLogger);
 app.use(compression());
 app.use(globalRateLimiter);
+app.set('view engine', 'hbs');
+
 
 // routes
 app.use(router);

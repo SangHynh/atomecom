@@ -6,6 +6,17 @@ info:
     API system for the Atomecom E-commerce project.
     Built with Express, TypeScript, and MongoDB.
 
+    ### ⚠️ Error Handling Policy
+    * **Production Mode:** To ensure system security, internal Throw Errors (500) will only return a generic message: `Internal Throw Error`. No technical details or stack traces are exposed.
+    * **Development Mode:** Detailed error information, including stack traces and specific error types, will be included in the response to assist in debugging.
+    * **Common Status Codes:**
+        * `400`: Validation error or bad request.
+        * `401`: Unauthorized (missing or invalid tokens).
+        * `403`: Forbidden (insufficient permissions).
+        * `404`: Resource not found.
+        * `409`: Conflict data.
+        * `500`: System-level failure.
+
 servers:
   - url: http://localhost:3636/v1/api
     description: Development server
@@ -17,11 +28,11 @@ tags:
     description: Operations about user profile management
 
 paths:
+  # ================= AUTH MODULE =================
   /auth/register:
     post:
       summary: Register a new account
-      tags:
-        - Auth
+      tags: [Auth]
       requestBody:
         required: true
         content:
@@ -35,16 +46,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
-        '400':
-          description: Invalid input data
-        '409':
-          description: Email already exists
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
 
   /auth/login:
     post:
       summary: Login to the system
-      tags:
-        - Auth
+      tags: [Auth]
       requestBody:
         required: true
         content:
@@ -58,8 +69,302 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
-        '401':
-          description: Invalid email or password
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /auth/refresh:
+    post:
+      summary: Refresh authentication tokens
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenInput'
+      responses:
+        '200':
+          description: Tokens refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /auth/logout:
+    post:
+      summary: Logout of the system
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutInput'
+      responses:
+        '204':
+          description: Successfully logged out
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /auth/verify-email:
+    get:
+      summary: Verify user email address
+      tags: [Auth]
+      parameters:
+        - in: query
+          name: token
+          schema:
+            type: string
+          required: true
+          description: Verification token sent via email
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /auth/resend-verification:
+    post:
+      summary: Resend verification email
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendVerificationInput'
+      responses:
+        '200':
+          description: Verification email sent
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /auth/forgot-password:
+    post:
+      summary: Request password reset link
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordInput'
+      responses:
+        '200':
+          description: Password reset email sent (if account exists)
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /auth/reset-password:
+    post:
+      summary: Reset password with token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordInput'
+      responses:
+        '200':
+          description: Password successfully reset
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /auth/{provider}/login:
+    post:
+      summary: Social Login (Google/Facebook)
+      tags: [Auth]
+      description: |
+        Authenticates a user via a social provider.
+        
+        **Developer Tools (Local Only):**
+        To get a valid social token for testing, use our local Test UI:
+        * **Google:** [http://localhost:3636/test-ui/google](http://localhost:3636/test-ui/google)
+        * **Facebook:** [http://localhost:3636/test-ui/facebook](http://localhost:3636/test-ui/facebook)
+      parameters:
+        - in: path
+          name: provider
+          schema:
+            type: string
+            enum: [google, facebook]
+          required: true
+          description: OAuth provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialLoginInput'
+      responses:
+        '200':
+          description: Successfully authenticated via social provider
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  # ================= USER MODULE =================
+  /users:
+    get:
+      summary: Get all users (paginated)
+      tags: [User]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: keyword
+          schema:
+            type: string
+            description: Search by name or email
+        - in: query
+          name: role
+          schema:
+            type: string
+            enum: [USER, ADMIN]
+      responses:
+        '200':
+          description: List of users retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+    post:
+      summary: Create a new user (Admin)
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserInput'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /users/{id}:
+    get:
+      summary: Get user by ID
+      tags: [User]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /users/email/{email}:
+    get:
+      summary: Get user by Email
+      tags: [User]
+      parameters:
+        - in: path
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /users/phone/{phone}:
+    get:
+      summary: Get user by Phone
+      tags: [User]
+      parameters:
+        - in: path
+          name: phone
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
 
 components:
   securitySchemes:
@@ -69,77 +374,176 @@ components:
       bearerFormat: JWT
 
   schemas:
-    # Input schemas
+    # --- AUTH INPUTS ---
     SignUpInput:
       type: object
-      required:
-        - email
-        - password
-        - name
+      required: [email, password, name]
       properties:
-        name:
-          type: string
-          example: "John Doe"
-        email:
-          type: string
-          format: email
-          example: "johndoe@example.com"
-        password:
-          type: string
-          format: password
-          minLength: 6
-          example: "securePassword123"
+        name: { type: string, example: "John Doe" }
+        email: { type: string, format: email, example: "john@example.com" }
+        password: { type: string, format: password, minLength: 6, example: "secret123" }
 
     LoginInput:
       type: object
-      required:
-        - email
-        - password
+      required: [email, password]
       properties:
-        email:
-          type: string
-          format: email
-          example: "johndoe@example.com"
-        password:
-          type: string
-          format: password
-          example: "securePassword123"
+        email: { type: string, format: email, example: "john@example.com" }
+        password: { type: string, format: password, example: "secret123" }
 
-    # Response schemas
-    AuthResponse:
+    RefreshTokenInput:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string, example: "eyJhbGciOiJIUz..." }
+
+    LogoutInput:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string, example: "eyJhbGciOiJIUz..." }
+
+    ResendVerificationInput:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email, example: "john@example.com" }
+
+    ForgotPasswordInput:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email, example: "john@example.com" }
+
+    ResetPasswordInput:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token: { type: string, example: "abc123token..." }
+        newPassword: { type: string, format: password, minLength: 6, example: "newSecret123" }
+
+    SocialLoginInput:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string, description: "Provider access token/ID token" }
+
+    # --- USER INPUTS ---
+    CreateUserInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: { type: string, example: "Alice" }
+        email: { type: string, format: email, example: "alice@example.com" }
+        password: { type: string, example: "password123" }
+        phone: { type: string, example: "0912345678" }
+        role: { type: string, enum: [USER, ADMIN], default: "USER" }
+        addresses:
+          type: array
+          items:
+            type: object
+            properties:
+              street: { type: string }
+              city: { type: string }
+              isDefault: { type: boolean }
+
+    # --- BASE RESPONSES ---
+    MetaData:
       type: object
       properties:
-        message:
-          type: string
-          example: "Success"
-        data:
+        timestamp: { type: string, example: "2024-02-15T10:00:00.000Z" }
+        version: { type: string, example: "1.0.0" }
+        trace_id: { type: string, nullable: true, example: "12345-abcde" }
+        execution_time: { type: string, nullable: true, example: "15.23ms" }
+        pagination:
           type: object
           properties:
-            user:
-              $ref: '#/components/schemas/User'
-            tokens:
+            total_items: { type: integer }
+            total_pages: { type: integer }
+            page: { type: integer }
+            limit: { type: integer }
+
+    SuccessResponse:
+      type: object
+      properties:
+        status: { type: string, example: "success" }
+        code: { type: integer, example: 200 }
+        message: { type: string, example: "SUCCESS" }
+        metadata: { $ref: '#/components/schemas/MetaData' }
+        data: { type: object, nullable: true }
+
+    ErrorResponse:
+      type: object
+      properties:
+        status: { type: string, example: "error" }
+        statusCode: 
+          oneOf:
+            - type: integer
+            - type: string
+          example: "400, 401, 403, 404, 409, 500"
+        message: { type: string, example: "ERROR_MESSAGE_HERE" }
+        errors:
+          type: array
+          items: 
+            type: object
+            additionalProperties: true
+
+    # --- SPECIFIC RESPONSES ---
+    AuthResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
               type: object
               properties:
-                accessToken:
-                  type: string
-                  example: "eyJhbGciOiJIUzI1..."
-                refreshToken:
-                  type: string
-                  example: "eyJhbGciOiJIUzI1..."
+                user: { $ref: '#/components/schemas/User' }
+                tokens:
+                  type: object
+                  properties:
+                    accessToken: { type: string }
+                    refreshToken: { type: string }
+
+    UserResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/User' }
+
+    UserListResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/User' }
+            metadata:
+              type: object
+              properties:
+                pagination:
+                  type: object
+                  properties:
+                    total_items: { type: integer }
+                    total_pages: { type: integer }
+                    page: { type: integer }
+                    limit: { type: integer }
 
     User:
       type: object
       properties:
-        id:
-          type: string
-          example: "65c3b1e..."
-        name:
-          type: string
-          example: "John Doe"
-        email:
-          type: string
-          example: "johndoe@example.com"
-        role:
-          type: string
-          enum: [USER, ADMIN]
-          example: "USER"
+        id: { type: string, example: "65c3b1e..." }
+        name: { type: string, example: "John Doe" }
+        email: { type: string, example: "john@example.com" }
+        phone: { type: string, example: "0912345678" }
+        role: { type: string, enum: [USER, ADMIN], example: "USER" }
+        status: { type: string, enum: [active, deactive, banned], example: "active" }
+        isVerified: { type: boolean, example: true }
+        addresses:
+          type: array
+          items:
+            type: object
+            properties:
+              street: { type: string }
+              city: { type: string }
+              isDefault: { type: boolean }

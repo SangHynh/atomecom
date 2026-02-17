@@ -1,0 +1,166 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <title>Atomecom OAuth Google Test</title>
+    <script src='https://accounts.google.com/gsi/client' async defer></script>
+    <style>
+      :root {
+        --google-blue: #4285F4;
+        --google-blue-light: #e8f0fe;
+        --text-dark: #2d3436;
+        --text-muted: #636e72;
+      }
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: #eef2f5;
+        margin: 0;
+      }
+      .card {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        width: 100%;
+        max-width: 500px;
+        color: var(--text-dark);
+      }
+      h1 {
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+        font-size: 24px;
+      }
+      p {
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+      }
+
+      /* Đồng bộ style "viên thuốc" với bên Facebook */
+      .guide-link {
+        display: inline-block;
+        margin-bottom: 2rem;
+        font-size: 13px;
+        color: var(--google-blue);
+        text-decoration: none;
+        font-weight: 500;
+        padding: 8px 16px;
+        background: var(--google-blue-light);
+        border-radius: 20px;
+        transition: 0.3s;
+      }
+      .guide-link:hover {
+        background: #d2e3fc;
+        text-decoration: none;
+      }
+
+      .signin-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+      }
+      .token-box {
+        margin-top: 20px;
+        padding: 15px;
+        background: #2d3436;
+        color: #fab1a0;
+        border-radius: 6px;
+        word-break: break-all;
+        text-align: left;
+        font-family: 'Fira Code', monospace;
+        font-size: 12px;
+        max-height: 200px;
+        overflow-y: auto;
+        display: none;
+        border: 1px solid #444;
+      }
+      .copy-btn {
+        margin-top: 15px;
+        background: #00b894;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: none;
+        font-weight: bold;
+        width: 100%;
+        transition: background 0.2s;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='card'>
+      <h1>Atomecom Google Auth</h1>
+      <p>Login to get <b>ID Token</b> for API testing</p>
+
+      <a href='/test-ui/guide-google' class='guide-link'>
+        📘 Google OAuth Setup Guide ↗
+      </a>
+
+      <div class='signin-wrapper'>
+        <div
+          id='g_id_onload'
+          data-client_id='{{googleClientId}}'
+          data-callback='handleCredentialResponse'
+          data-auto_prompt='false'
+        >
+        </div>
+        <div
+          class='g_id_signin'
+          data-type='standard'
+          data-shape='rectangular'
+          data-theme='outline'
+          data-text='signin_with'
+          data-size='large'
+          data-logo_alignment='left'
+        >
+        </div>
+      </div>
+
+      <div id='tokenResult' class='token-box'></div>
+      <button id='copyBtn' class='copy-btn' onclick='copyToken()'>Copy ID Token</button>
+    </div>
+
+    <script>
+      function handleCredentialResponse(response) {
+        const token = response.credential;
+        console.log("Google ID Token received successfully.");
+
+        const tokenBox = document.getElementById('tokenResult');
+        const copyBtn = document.getElementById('copyBtn');
+
+        if (tokenBox && copyBtn) {
+          tokenBox.innerText = token;
+          tokenBox.style.display = 'block';
+          copyBtn.style.display = 'inline-block';
+        }
+      }
+
+      function copyToken() {
+        const tokenBox = document.getElementById('tokenResult');
+        const token = tokenBox ? tokenBox.innerText : '';
+        
+        if (!token) return;
+
+        navigator.clipboard.writeText(token).then(() => {
+          const btn = document.getElementById('copyBtn');
+          const originalText = btn.innerText;
+          
+          btn.innerText = "Copied!";
+          btn.style.background = "#0984e3";
+          
+          setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.background = "#00b894";
+          }, 2000);
+        }).catch(err => {
+          console.error('Failed to copy token: ', err);
+        });
+      }
+    </script>
+  </body>
+</html>

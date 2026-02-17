@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Atomecom OAuth Facebook Test</title>
+    <style>
+        :root {
+            --fb-blue: #1877F2;
+            --fb-blue-light: #e7f3ff;
+            --text-dark: #2d3436;
+            --text-muted: #636e72;
+        }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            background: #f0f2f5; /* Màu nền Facebook dịu nhẹ */
+            margin: 0; 
+        }
+        .card { 
+            background: white; 
+            padding: 2.5rem; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            text-align: center; 
+            width: 100%; 
+            max-width: 500px; 
+            color: var(--text-dark); 
+        }
+        h1 { font-size: 24px; margin-bottom: 0.5rem; color: var(--fb-blue); }
+        p { color: var(--text-muted); margin-bottom: 1.5rem; }
+
+        .guide-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            font-size: 13px;
+            color: var(--fb-blue);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            background: var(--fb-blue-light);
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+        .guide-link:hover { background: #d0e7ff; }
+
+        .fb-btn { 
+            background: var(--fb-blue); 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: bold; 
+            transition: 0.3s;
+            width: 100%;
+        }
+        .fb-btn:hover { background: #145dbf; transform: translateY(-1px); }
+
+        .token-box { 
+            margin-top: 20px; 
+            padding: 15px; 
+            background: #2d3436; 
+            color: #74b9ff; 
+            border-radius: 6px; 
+            word-break: break-all; 
+            text-align: left; 
+            font-family: 'Fira Code', monospace; 
+            font-size: 12px; 
+            max-height: 200px; 
+            overflow-y: auto; 
+            display: none;
+            border: 1px solid #444;
+        }
+        .copy-btn { 
+            margin-top: 15px; 
+            background: #00b894; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            display: none;
+            font-weight: bold;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>Atomecom Facebook Auth</h1>
+        <p>Login to get <b>Access Token</b> for API testing</p>
+        
+        <a href="/test-ui/guide-facebook" class="guide-link">
+            📘 Facebook App Setup Guide ↗
+        </a>
+        
+        <div class="signin-wrapper">
+            <button class="fb-btn" onclick="checkLoginState()">
+                Login with Facebook
+            </button>
+        </div>
+
+        <div id="tokenResult" class="token-box"></div>
+        <button id="copyBtn" class="copy-btn" onclick="copyToken()">Copy Access Token</button>
+    </div>
+
+    <script>
+        window.fbAsyncInit = function() {
+            FB.init({
+                appId      : '{{facebookAppId}}',
+                cookie     : true,
+                xfbml      : true,
+                version    : 'v18.0'
+            });
+        };
+
+        function checkLoginState() {
+            FB.login(function(response) {
+                if (response.status === 'connected') {
+                    const token = response.authResponse.accessToken;
+                    displayToken(token);
+                } else {
+                    console.warn('User cancelled login or did not fully authorize.');
+                }
+            }, {scope: 'public_profile,email'});
+        }
+
+        function displayToken(token) {
+            const tokenBox = document.getElementById('tokenResult');
+            const copyBtn = document.getElementById('copyBtn');
+            tokenBox.innerText = token;
+            tokenBox.style.display = 'block';
+            copyBtn.style.display = 'inline-block';
+        }
+
+        function copyToken() {
+            const token = document.getElementById('tokenResult').innerText;
+            if (!token) return;
+
+            navigator.clipboard.writeText(token).then(() => {
+                const btn = document.getElementById('copyBtn');
+                const originalText = btn.innerText;
+                btn.innerText = "Copied!";
+                btn.style.background = "#0984e3";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = "#00b894";
+                }, 2000);
+            });
+        }
+    </script>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+</body>
+</html>
