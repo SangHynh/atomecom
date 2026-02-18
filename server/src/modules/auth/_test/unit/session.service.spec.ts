@@ -1,7 +1,7 @@
 import { SessionService, type AuthSession } from '@modules/auth/use-cases/session.service.js';
 import type { ICacheRepo } from '@shared/interfaces/ICache.repo.js';
 import { UnauthorizedError } from '@shared/core/error.response.js';
-import { ErrorAuthCodes } from '@shared/core/error.enum.js';
+import { ErrorAuthCodes } from '@atomecom/shared';
 
 describe('SessionService', () => {
   let sessionService: SessionService;

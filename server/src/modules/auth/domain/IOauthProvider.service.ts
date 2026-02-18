@@ -1,4 +1,4 @@
-import type { OauthProvider } from '@shared/enum/oauthProvider.enum.js';
+import type { OauthProvider } from '@atomecom/shared';
 
 export interface ExternalProfile {
   provider: OauthProvider;

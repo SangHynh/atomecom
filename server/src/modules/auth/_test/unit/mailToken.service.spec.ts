@@ -1,7 +1,7 @@
 import { MailTokenService } from '@modules/auth/use-cases/mailToken.service.js';
 import type { IMailTokenRepo } from '@modules/auth/domain/IMailToken.repo.js';
 import { BadRequestError, ConflictError } from '@shared/core/error.response.js';
-import { ErrorAuthCodes } from '@shared/core/error.enum.js';
+import { ErrorAuthCodes } from '@atomecom/shared';
 
 describe('MailTokenService', () => {
   let mailTokenService: MailTokenService;

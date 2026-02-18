@@ -1,9 +1,8 @@
 import type { Express } from 'express';
 import express from 'express';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import request from 'supertest';
 import mongoose from 'mongoose';
-import { ErrorAuthCodes } from '@shared/core/error.enum.js';
+import { ErrorAuthCodes, ErrorUserCodes } from '@atomecom/shared';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
 import { MongooseUserRepo } from '@modules/users/infra/mongoose-user.repo.js';
 import { BcryptHashAdapter } from '@modules/users/infra/bcryptHash.adapter.js';
@@ -18,12 +17,14 @@ import { AuthController } from '@modules/auth/presentation/auth.controller.js';
 import { asyncHandler } from '@shared/core/asyncHandler.js';
 import { validate } from '@shared/middlewares/validate.middleware.js';
 import {
-  RegisterRequestSchema,
+  EmailOnlyRequestSchema,
   LoginRequestSchema,
+  RegisterRequestSchema,
+  ResetPasswordRequestSchema,
+  SocialLoginRequestSchema,
   TokenRequestSchema,
   VerifyEmailRequestSchema,
-  EmailOnlyRequestSchema,
-} from '@modules/auth/presentation/auth.validator.js';
+} from '@atomecom/shared';
 import { errorHandler } from '@shared/middlewares/error.middleware.js';
 import type { ICacheRepo } from '@shared/interfaces/ICache.repo.js';
 import type { IEmailService } from '@shared/interfaces/IEmail.service.js';
@@ -99,24 +100,24 @@ function createTestApp(): Express {
   return app;
 }
 
+import { connect, closeDatabase, clearDatabase } from '@shared/test/db-helper.js';
+
+// ... (previous imports)
+
 describe('Auth Module - Integration Tests', () => {
   let app: Express;
-  let mongoServer: MongoMemoryServer;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    await connect();
     app = createTestApp();
   }, 120000);
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await closeDatabase();
   });
 
   beforeEach(async () => {
-    await UserModel.deleteMany({});
-    await MailTokenModel.deleteMany({});
+    await clearDatabase();
     jest.clearAllMocks();
   });
 

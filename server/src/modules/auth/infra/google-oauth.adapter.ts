@@ -4,7 +4,7 @@ import {
   UnauthorizedError,
   InternalServerError,
 } from '@shared/core/error.response.js';
-import { OauthProvider } from '@shared/enum/oauthProvider.enum.js';
+import { OauthProvider } from '@atomecom/shared';
 import logger from '@shared/utils/logger.js';
 import { OAuth2Client } from 'google-auth-library';
 

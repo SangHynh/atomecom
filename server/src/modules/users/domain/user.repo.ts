@@ -1,4 +1,4 @@
-import type { USER_STATUS } from '@enum/userStatus.enum.js';
+import { USER_STATUS } from '@atomecom/shared';
 import type { UserEntity } from './user.entity.js';
 
 export interface IUserRepository {

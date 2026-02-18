@@ -1,6 +1,6 @@
 import { isDev } from '@shared/utils/common.js';
 import { type Request, type Response, type NextFunction } from 'express';
-import { ZodError } from 'zod';
+import { ZodError, type ZodIssue } from 'zod';
 
 export const errorHandler = (
   err: any,
@@ -11,14 +11,14 @@ export const errorHandler = (
   const statusCode = err.status || 500;
 
   // St1: Validation error
-  if (err instanceof ZodError) {
+  if (err instanceof ZodError || err.name === 'ZodError') {
     return res.status(400).json({
       status: 'error',
       statusCode: 400,
       module: 'VALIDATION',
       layer: 'INTERFACE',
       message: 'VALIDATION_ERROR',
-      errors: err.issues.map((e) => ({
+      errors: err.issues.map((e: ZodIssue) => ({
         field: e.path.join('.'),
         message: e.message.toUpperCase().replace(/ /g, '_'),
       })),

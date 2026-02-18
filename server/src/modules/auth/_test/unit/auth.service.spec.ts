@@ -5,8 +5,8 @@ import { SessionService } from '@modules/auth/use-cases/session.service.js';
 import { MailTokenService } from '@modules/auth/use-cases/mailToken.service.js';
 import type { IEmailService } from '@shared/interfaces/IEmail.service.js';
 import type { OauthFactory } from '@modules/auth/use-cases/oauth.factory.js';
-import { USER_ROLE } from '@shared/enum/userRole.enum.js';
-import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
+import { USER_ROLE } from '@atomecom/shared';
+import { USER_STATUS } from '@atomecom/shared';
 
 jest.mock('@shared/utils/logger.js', () => ({
   __esModule: true,

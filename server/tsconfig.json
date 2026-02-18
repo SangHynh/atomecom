@@ -60,7 +60,9 @@
       "@config/*": ["src/shared/configs/*"],
       "@core/*": ["src/shared/core/*"],
       "@interfaces/*": ["src/shared/interfaces/*"],
-      "@enum/*": ["src/shared/enum/*"]
+      "@enum/*": ["src/shared/enum/*"],
+      "@atomecom/shared": ["../shared/src/index.ts"],
+      "@atomecom/shared/*": ["../shared/src/*"]
     }
   },
   "include": ["src/**/*", "test/**/*", "src/**/*.spec.ts"]

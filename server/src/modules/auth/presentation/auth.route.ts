@@ -3,14 +3,14 @@ import { asyncHandler } from '@shared/core/asyncHandler.js';
 import { Router } from 'express';
 import { validate } from '@shared/middlewares/validate.middleware.js';
 import {
-  RegisterRequestSchema,
-  LoginRequestSchema,
-  TokenRequestSchema,
-  VerifyEmailRequestSchema,
   EmailOnlyRequestSchema,
+  LoginRequestSchema,
+  RegisterRequestSchema,
   ResetPasswordRequestSchema,
   SocialLoginRequestSchema,
-} from '@modules/auth/presentation/auth.validator.js';
+  TokenRequestSchema,
+  VerifyEmailRequestSchema,
+} from '@atomecom/shared';
 
 const authRouter = Router();
 

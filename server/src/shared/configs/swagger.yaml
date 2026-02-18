@@ -207,8 +207,8 @@ paths:
         
         **Developer Tools (Local Only):**
         To get a valid social token for testing, use our local Test UI:
-        * **Google:** [http://localhost:3636/test-ui/google](http://localhost:3636/test-ui/google)
-        * **Facebook:** [http://localhost:3636/test-ui/facebook](http://localhost:3636/test-ui/facebook)
+        * **Google:** [http://localhost:3636/tools/google](http://localhost:3636/tools/google)
+        * **Facebook:** [http://localhost:3636/tools/facebook](http://localhost:3636/tools/facebook)
       parameters:
         - in: path
           name: provider

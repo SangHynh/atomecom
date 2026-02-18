@@ -9,14 +9,17 @@ import type { MailTokenService } from '@modules/auth/use-cases/mailToken.service
 import type { SessionService } from '@modules/auth/use-cases/session.service.js';
 import type { SafeUserResponseDTO } from '@modules/users/use-cases/user.dtos.js';
 import type { UserService } from '@modules/users/use-cases/user.service.js';
-import { ErrorAuthCodes, ErrorUserCodes } from '@shared/core/error.enum.js';
+import {
+  ErrorAuthCodes,
+  ErrorUserCodes,
+} from '@atomecom/shared';
 import {
   ForbiddenError,
   InternalServerError,
   UnauthorizedError,
 } from '@shared/core/error.response.js';
-import type { OauthProvider } from '@shared/enum/oauthProvider.enum.js';
-import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
+import { OauthProvider } from '@atomecom/shared';
+import { USER_STATUS } from '@atomecom/shared';
 import type { IEmailService } from '@shared/interfaces/IEmail.service.js';
 import logger from '@shared/utils/logger.js';
 import { getExpiresAt, getExpiresInSeconds } from '@shared/utils/time.js';

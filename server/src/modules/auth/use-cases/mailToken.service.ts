@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { BadRequestError, ConflictError } from '@shared/core/error.response.js';
 import type { IMailTokenRepo } from '@modules/auth/domain/IMailToken.repo.js';
-import { ErrorAuthCodes } from '@shared/core/error.enum.js';
+import { ErrorAuthCodes } from '@atomecom/shared';
 
 export class MailTokenService {
   constructor(private readonly _mailTokenRepo: IMailTokenRepo) {}

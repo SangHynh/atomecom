@@ -1,6 +1,6 @@
 import type { AuthService } from '@modules/auth/use-cases/auth.service.js';
 import { Created, NoContent, OK } from '@shared/core/success.response.js';
-import type { OauthProvider } from '@shared/enum/oauthProvider.enum.js';
+import { OauthProvider } from '@atomecom/shared';
 import type { Request, Response } from 'express';
 
 export class AuthController {

@@ -7,7 +7,7 @@ import {
   FindUserByEmailSchema,
   FindUserByIdSchema,
   FindUserByPhoneSchema,
-} from '@modules/users/presentation/user.validator.js';
+} from '@atomecom/shared';
 
 const userRouter = Router();
 

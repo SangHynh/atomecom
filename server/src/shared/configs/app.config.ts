@@ -53,7 +53,7 @@ const production: Config = {
 // Test environment (uses same as development; DEV_DB_URI overridden by tests)
 const test: Config = {
   ...development,
-  db: { uri: process.env.DEV_DB_URI || 'mongodb://localhost:27017/test_db' },
+  db: { uri: process.env.TEST_DB_URI || 'mongodb://localhost:27017/test_db' },
 };
 
 // Map configurations to environment names

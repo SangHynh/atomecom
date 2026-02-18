@@ -1,6 +1,0 @@
-node_modules/
-logs/
-.env
-plans/
-coverage/
-test_out.txt

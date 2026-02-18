@@ -8,15 +8,15 @@
 import { UserService } from '@modules/users/use-cases/user.service.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import type { IHashService } from '@modules/users/domain/IHash.service.js';
-import { ErrorUserCodes } from '@shared/core/error.enum.js';
+import { ErrorUserCodes } from '@atomecom/shared';
 import {
   ConflictError,
   NotFoundError,
   UnauthorizedError,
 } from '@shared/core/error.response.js';
-import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
+import { USER_STATUS } from '@atomecom/shared';
 import type { UserEntity } from '@modules/users/domain/user.entity.js';
-import { USER_ROLE } from '@shared/enum/userRole.enum.js';
+import { USER_ROLE } from '@atomecom/shared';
 
 describe('UserService', () => {
   let userService: UserService;

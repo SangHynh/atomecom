@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { USER_ROLE } from '@enum/userRole.enum.js';
-import { ErrorUserCodes } from '@shared/core/error.enum.js';
+import { USER_ROLE } from '../enums/userRole.enum.js';
+import { ErrorUserCodes } from '../constants/error.constants.js';
 
-const UserAddressSchema = z.object({
+export const UserAddressSchema = z.object({
   street: z.string().min(1, ErrorUserCodes.INVALID_STREET_FORMAT),
   city: z.string().min(1, ErrorUserCodes.INVALID_CITY_FORMAT),
   isDefault: z.boolean().default(false),
@@ -41,7 +41,7 @@ export const CreateUserRequestSchema = z.object({
   }),
 });
 
-// Update user  validation
+// Update user validation
 export const UpdateUserRequestSchema = z.object({
   body: CreateUserRequestSchema.shape.body.partial(),
 });

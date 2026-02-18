@@ -1,5 +1,6 @@
 // @modules/auth/infra/oauth.factory.ts (Hoặc domain/use-cases nếu ông muốn trừu tượng hoàn toàn)
 import type { IOAuthProvider } from '@modules/auth/domain/IOauthProvider.service.js';
+import { OauthProvider } from '@atomecom/shared';
 import { InternalServerError } from '@shared/core/error.response.js';
 
 export class OauthFactory {

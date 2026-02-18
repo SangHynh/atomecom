@@ -1,7 +1,7 @@
 import type { UserEntity } from '@modules/users/domain/user.entity.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
-import { ErrorUserCodes } from '@shared/core/error.enum.js';
+import { ErrorUserCodes } from '@atomecom/shared';
 import {
   ConflictError,
   InternalServerError,

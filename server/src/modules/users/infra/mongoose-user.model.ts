@@ -2,9 +2,9 @@ import type {
   UserEntity,
   UserAddress,
 } from '@modules/users/domain/user.entity.js';
-import { USER_ROLE } from '@shared/enum/userRole.enum.js';
-import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
-import { OauthProvider } from '@shared/enum/oauthProvider.enum.js';
+import { USER_ROLE } from '@atomecom/shared';
+import { USER_STATUS } from '@atomecom/shared';
+import { OauthProvider } from '@atomecom/shared';
 import mongoose, { Schema, Document } from 'mongoose';
 
 // 1. Address Sub-schema

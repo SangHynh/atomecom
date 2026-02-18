@@ -7,6 +7,7 @@ export default {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   moduleNameMapper: {
     '^@shared/utils/logger\\.js$': '<rootDir>/src/shared/utils/__mocks__/logger.ts',
+    '^(\\.\\.?/.+)\\.js$': '$1',
     '^(\\.\\./)+app$': '<rootDir>/src/app.ts',
     '^(\\.\\./)+container$': '<rootDir>/src/container.ts',
     '^\\./shared/(.*)\\.js$': '<rootDir>/src/shared/$1.ts',
@@ -26,6 +27,9 @@ export default {
     '^@auth/(.*)$': '<rootDir>/src/modules/auth/$1',
     '^@monitoring/(.*)\\.js$': '<rootDir>/src/modules/monitoring/$1.ts',
     '^@monitoring/(.*)$': '<rootDir>/src/modules/monitoring/$1',
+    '^@atomecom/shared$': '<rootDir>/../shared/src/index.ts',
+    '^@atomecom/shared/(.*)\\.js$': '<rootDir>/../shared/src/$1.ts',
+    '^@atomecom/shared/(.*)$': '<rootDir>/../shared/src/$1',
     '^chalk$': '<rootDir>/src/shared/utils/__mocks__/logger.ts',
     '^morgan$': '<rootDir>/src/shared/utils/__mocks__/logger.ts',
     '^winston$': '<rootDir>/src/shared/utils/__mocks__/logger.ts',
@@ -33,7 +37,7 @@ export default {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
   },
-  transformIgnorePatterns: ['/node_modules/(?!(.*\\.mjs$|mongodb-memory-server|@shared)/)'],
+  transformIgnorePatterns: ['/node_modules/(?!(.*\\.mjs$|@shared|@atomecom)/)'],
   testTimeout: 30000,
   verbose: false,
   collectCoverage: true,

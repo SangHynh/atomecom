@@ -1,6 +1,6 @@
-import type { USER_ROLE } from '@enum/userRole.enum.js';
-import type { USER_STATUS } from '@enum/userStatus.enum.js';
-import type { OauthProvider } from '@shared/enum/oauthProvider.enum.js';
+import type { USER_ROLE } from '@atomecom/shared';
+import type { USER_STATUS } from '@atomecom/shared';
+import { OauthProvider } from '@atomecom/shared';
 
 export interface UserAddress {
   isDefault: boolean;

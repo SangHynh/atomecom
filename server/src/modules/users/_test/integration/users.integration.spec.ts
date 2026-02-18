@@ -8,14 +8,13 @@
  */
 import type { Express } from 'express';
 import express from 'express';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import request from 'supertest';
 import mongoose from 'mongoose';
-import { ErrorUserCodes } from '@shared/core/error.enum.js';
+import { ErrorUserCodes } from '@atomecom/shared';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
 import type { CreateUserDTO } from '@modules/users/use-cases/user.dtos.js';
-import { USER_ROLE } from '@shared/enum/userRole.enum.js';
-import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
+import { USER_ROLE } from '@atomecom/shared';
+import { USER_STATUS } from '@atomecom/shared';
 import { MongooseUserRepo } from '@modules/users/infra/mongoose-user.repo.js';
 import { BcryptHashAdapter } from '@modules/users/infra/bcryptHash.adapter.js';
 import { UserService } from '@modules/users/use-cases/user.service.js';
@@ -27,8 +26,9 @@ import {
   FindUserByEmailSchema,
   FindUserByIdSchema,
   FindUserByPhoneSchema,
-} from '@modules/users/presentation/user.validator.js';
+} from '@atomecom/shared';
 import { errorHandler } from '@shared/middlewares/error.middleware.js';
+import { connect, closeDatabase, clearDatabase } from '@shared/test/db-helper.js';
 
 const BASE_PATH = '/v1/api';
 
@@ -73,22 +73,18 @@ function createTestApp(): Express {
 
 describe('Users Module - Integration Tests', () => {
   let app: Express;
-  let mongoServer: MongoMemoryServer;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const uri = mongoServer.getUri();
-    await mongoose.connect(uri);
+    await connect();
     app = createTestApp();
   }, 60000);
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await closeDatabase();
   });
 
   beforeEach(async () => {
-    await UserModel.deleteMany({});
+    await clearDatabase();
   });
 
   // ==================== HAPPY PATH ====================

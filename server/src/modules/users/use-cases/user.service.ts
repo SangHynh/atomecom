@@ -10,15 +10,15 @@ import type {
   FindAllQueryUserDTO,
   SafeUserResponseDTO,
 } from '@modules/users/use-cases/user.dtos.js';
-import { ErrorUserCodes } from '@shared/core/error.enum.js';
+import { ErrorUserCodes } from '@atomecom/shared';
 import {
   ConflictError,
   NotFoundError,
   UnauthorizedError,
 } from '@shared/core/error.response.js';
-import type { OauthProvider } from '@shared/enum/oauthProvider.enum.js';
-import { USER_ROLE } from '@shared/enum/userRole.enum.js';
-import { USER_STATUS } from '@shared/enum/userStatus.enum.js';
+import { OauthProvider } from '@atomecom/shared';
+import { USER_ROLE } from '@atomecom/shared';
+import { USER_STATUS } from '@atomecom/shared';
 import type { PaginatedResult } from '@shared/interfaces/pagination.model.js';
 
 const LAYER = 'Service';

@@ -1,11 +1,11 @@
 import express from 'express';
 import path from 'path';
 
-const router = express.Router();
+const toolRouter = express.Router();
 
 const templatePath = path.join(process.cwd(), 'src/shared/templates');
 
-router.get('/google', (req, res) => {
+toolRouter.get('/google', (req, res) => {
   req.app.set('views', templatePath);
   
   res.render('test-google-oauth', { 
@@ -14,7 +14,7 @@ router.get('/google', (req, res) => {
   });
 });
 
-router.get('/guide-google', (req, res) => {
+toolRouter.get('/guide-google', (req, res) => {
   req.app.set('views', path.join(process.cwd(), 'src/shared/templates'));
   
   res.render('guide-google', { 
@@ -22,7 +22,7 @@ router.get('/guide-google', (req, res) => {
   });
 });
 
-router.get('/facebook', (req, res) => {
+toolRouter.get('/facebook', (req, res) => {
   req.app.set('views', templatePath);
   
   res.render('test-facebook-oauth', { 
@@ -31,7 +31,7 @@ router.get('/facebook', (req, res) => {
   });
 });
 
-router.get('/guide-facebook', (req, res) => {
+toolRouter.get('/guide-facebook', (req, res) => {
   req.app.set('views', path.join(process.cwd(), 'src/shared/templates'));
   
   res.render('guide-facebook', { 
@@ -39,4 +39,4 @@ router.get('/guide-facebook', (req, res) => {
   });
 });
 
-export default router;
+export default toolRouter;
