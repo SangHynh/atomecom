@@ -7,8 +7,11 @@
       "dev": "concurrently --kill-others-on-fail --raw \"npm run dev -w server\" \"npm run dev -w client\"",
       "dev:server": "npm run dev -w server",
       "dev:client": "npm run dev -w client",
+      "build:shared": "npm run build -w shared",
       "clean": "node scripts/clean.js",
-      "test:server": "cd server && npm run test"
+      "test:server": "cd server && npm run test",
+      "lint": "concurrently \"npm run lint -w server\" \"npm run lint -w client\" \"npm run lint -w shared\"",
+      "format": "concurrently \"npm run format -w server\" \"npm run format -w client\" \"npm run format -w shared\""
     },
     "devDependencies": {
       "@babel/helper-string-parser": "^7.27.1",

@@ -13,9 +13,11 @@ export interface RegisterInputDTO {
   email: string;
   password: string;
   phone?: string;
+  honey_pot?: string;
 }
 
 export interface LoginInputDTO {
   email: string;
   password: string;
+  honey_pot?: string;
 }

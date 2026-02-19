@@ -99,18 +99,21 @@ export class RedisCache implements ICache, ICacheRepo {
   }
 
   public async del(key: string): Promise<void> {
-    if (!this._client) throw new InternalServerError(ErrorInfraCodes.REDIS_NOT_CONNECTED);
+    if (!this._client)
+      throw new InternalServerError(ErrorInfraCodes.REDIS_NOT_CONNECTED);
     await this._client.del(key);
   }
 
   public async has(key: string): Promise<boolean> {
-    if (!this._client) throw new InternalServerError(ErrorInfraCodes.REDIS_NOT_CONNECTED);
+    if (!this._client)
+      throw new InternalServerError(ErrorInfraCodes.REDIS_NOT_CONNECTED);
     const result = await this._client.exists(key);
     return result === 1;
   }
 
   public async flushAll(): Promise<void> {
-    if (!this._client) throw new InternalServerError(ErrorInfraCodes.REDIS_NOT_CONNECTED);
+    if (!this._client)
+      throw new InternalServerError(ErrorInfraCodes.REDIS_NOT_CONNECTED);
     await this._client.flushall();
   }
 

@@ -12,6 +12,7 @@ The **Auth** module handles authentication, session management, and identity ver
 | **Identity Verification** | Handle Email Verification via unique opaque tokens |
 | **Account Recovery** | Manage Forgot/Reset Password flows securely |
 | **Security Enforcement** | Prevent Refresh Token reuse and handle session hijacking detection |
+| **IP Protection** | Implement honeypot-triggered IP blacklisting and escalation/throttling |
 
 ---
 
@@ -50,6 +51,7 @@ flowchart TD
         AC[AuthController]
         AS[AuthService]
         SS[SessionService]
+        BS[BlacklistService]
         MTS[MailTokenService]
         OF[OauthFactory]
         EB((EventBus))
@@ -80,6 +82,7 @@ flowchart TD
 
     %% Main business flow
     AC --> AS
+    AC --> BS
     AS --> SS
     AS --> MTS
     AS --> ITK
@@ -89,9 +92,13 @@ flowchart TD
     
     %% Service usage
     SS --> ICR
+    BS --> ICR
     MTS --> IMR
     OF --> IOP
     EB -. "notifies" .-> EM[Email Module]
+
+    %% Middleware Interception
+    Middleware -. "uses" .-> BS
 
     %% Dependency Inversion (Realization)
     JTA -. "implements" .-> ITK
@@ -317,6 +324,17 @@ Tracks active sessions and used refresh tokens for security rotation. Based on `
 | `refreshTokensUsed` | String[] | Yes | History of used tokens in this session (Max 5) |
 | `expiresAt` | Number | Yes | Absolute expiration timestamp (ms) |
 
+#### IP Blacklist (Redis)
+Tracks violation counts and ban status for IP addresses. Based on `blacklist.service.ts`.
+
+| Field | Type | Required | Description |
+|-------|------|:---:|-------------|
+| `ip` | String | Yes | Client IP address |
+| `violationCount` | Number | Yes | Number of honeypot triggers |
+| `lastViolationAt` | Number | Yes | Timestamp of last violation |
+| `isBanned` | Boolean| Yes | Whether the IP is currently banned |
+| `bannedUntil` | Number | No | Optional timestamp until the ban is lifted |
+
 ### 4.2 Validation Rules
 Based on `auth.validator.ts`. Error codes match Section 5.
 
@@ -392,6 +410,16 @@ To ensure robust **Token Rotation** and prevent collisions in high-concurrency s
 2.  **Solution:** Every token generation includes a random UUID (`nonce: crypto.randomUUID()`).
 3.  **Result:** Every single token string is mathematically unique, even if issued at the exact same millisecond.
 
+#### VI. IP Protection (Reactive Throttling)
+
+The system implements a reactive defense mechanism against automated scanning:
+1. **Honeypot Trigger**: When an IP triggers a server-side honeypot (route or form field), the `recordViolation` method is called.
+2. **Escalation**:
+   - **1st Violation**: Throttled to 5 requests per minute.
+   - **2nd Violation**: Throttled to 1 request per minute.
+   - **3rd Violation**: Fully banned for 24 hours.
+3. **Internal Storage**: Managed in Redis via a unified cache repository.
+
 ---
 
 ## 5. Business Exceptions
@@ -422,11 +450,13 @@ Error codes from `ErrorAuthCodes` and `ErrorUserCodes` enums.
 | 1 | Register | Valid Email/Pass | 201, Return User+Tokens, background mail sent |
 | 2 | Login | Correct Credentials | 200, Return User+Tokens, session in Redis |
 | 3 | Social Login | Valid OAuth Token | 200, Sync Profile, Return User+Tokens |
-| 4 | Token Refresh | Valid RT | 200, ROTATE tokens, Revoke old, Issue new pair |
-| 5 | Verify Email | Valid Link | 200, Update `isVerified: true`, Auto-login |
-| 6 | Forgot Password | Active Email | 200, Send Mail, Create Token in MongoDB |
-| 7 | Reset Password | Valid Token+Pass | 200, Update Password, Invalidate Token |
-| 8 | Logout | Valid RT | 204, Delete Redis session |
+| 4 | Social Login (New) | No Email (Dummy) | 200, Create User, `isVerified: false` |
+| 5 | Social Login (Merged)| Existing Unverified + Email | 200, Update User, Auto-verify (`isVerified: true`) |
+| 6 | Token Refresh | Valid RT | 200, ROTATE tokens, Revoke old, Issue new pair |
+| 7 | Verify Email | Valid Link | 200, Update `isVerified: true`, Auto-login |
+| 8 | Forgot Password | Active Email | 200, Send Mail, Create Token in MongoDB |
+| 9 | Reset Password | Valid Token+Pass | 200, Update Password, Invalidate Token |
+| 10 | Logout | Valid RT | 204, Delete Redis session |
 
 ### Edge Cases & Security
 | # | Case | Input | Expected |

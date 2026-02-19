@@ -1,4 +1,7 @@
-import { SessionService, type AuthSession } from '@modules/auth/use-cases/session.service.js';
+import {
+  SessionService,
+  type AuthSession,
+} from '@modules/auth/use-cases/session.service.js';
 import type { ICacheRepo } from '@shared/interfaces/ICache.repo.js';
 import { UnauthorizedError } from '@shared/core/error.response.js';
 import { ErrorAuthCodes } from '@atomecom/shared';
@@ -28,14 +31,27 @@ describe('SessionService', () => {
   describe('handleRefreshToken', () => {
     it('should rotate token if valid', async () => {
       mockCache.get.mockResolvedValue(mockSession);
-      await sessionService.handleRefreshToken('user-456', 'session-123', 'current-rt', 'new-rt', mockSession.expiresAt);
+      await sessionService.handleRefreshToken(
+        'user-456',
+        'session-123',
+        'current-rt',
+        'new-rt',
+        mockSession.expiresAt,
+      );
       expect(mockCache.set).toHaveBeenCalled();
     });
 
     it('should detect reuse and revoke sessions', async () => {
       mockCache.get.mockResolvedValue(mockSession);
-      await expect(sessionService.handleRefreshToken('user-456', 'session-123', 'old-rt-1', 'attack', mockSession.expiresAt))
-        .rejects.toThrow(UnauthorizedError);
+      await expect(
+        sessionService.handleRefreshToken(
+          'user-456',
+          'session-123',
+          'old-rt-1',
+          'attack',
+          mockSession.expiresAt,
+        ),
+      ).rejects.toThrow(UnauthorizedError);
       expect(mockCache.deleteByPattern).toHaveBeenCalled();
     });
   });

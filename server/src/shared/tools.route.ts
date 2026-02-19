@@ -7,35 +7,35 @@ const templatePath = path.join(process.cwd(), 'src/shared/templates');
 
 toolRouter.get('/google', (req, res) => {
   req.app.set('views', templatePath);
-  
-  res.render('test-google-oauth', { 
+
+  res.render('test-google-oauth', {
     googleClientId: process.env.GOOGLE_CLIENT_ID,
-    layout: false 
+    layout: false,
   });
 });
 
 toolRouter.get('/guide-google', (req, res) => {
   req.app.set('views', path.join(process.cwd(), 'src/shared/templates'));
-  
-  res.render('guide-google', { 
-    layout: false 
+
+  res.render('guide-google', {
+    layout: false,
   });
 });
 
 toolRouter.get('/facebook', (req, res) => {
   req.app.set('views', templatePath);
-  
-  res.render('test-facebook-oauth', { 
+
+  res.render('test-facebook-oauth', {
     facebookAppId: process.env.FACEBOOK_APP_ID,
-    layout: false 
+    layout: false,
   });
 });
 
 toolRouter.get('/guide-facebook', (req, res) => {
   req.app.set('views', path.join(process.cwd(), 'src/shared/templates'));
-  
-  res.render('guide-facebook', { 
-    layout: false 
+
+  res.render('guide-facebook', {
+    layout: false,
   });
 });
 

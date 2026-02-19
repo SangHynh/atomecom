@@ -5,7 +5,6 @@ import type {
 import { OauthProvider } from '@atomecom/shared';
 import { USER_ROLE } from '@atomecom/shared';
 import { USER_STATUS } from '@atomecom/shared';
-import type { is } from 'zod/locales';
 
 export interface FindAllQueryUserDTO {
   page?: number;
@@ -14,6 +13,7 @@ export interface FindAllQueryUserDTO {
   keyword?: string;
   role?: USER_ROLE;
 }
+
 export interface CreateUserDTO {
   name: string;
   email: string;
@@ -52,6 +52,7 @@ export interface SafeUserResponseDTO {
   createdAt: Date;
   updatedAt: Date;
   isEmailMissing: boolean;
+  avatar?: string;
 }
 
 export interface SafeOAuthResponseDTO extends Omit<

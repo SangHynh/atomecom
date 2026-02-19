@@ -18,16 +18,14 @@ const resources = {
 };
 
 // Initialize i18n instance
-i18n
-  .use(initReactI18next)
-  .init({
-    resources,
-    fallbackLng: 'vi',
-    lng: 'vi', // Default to Vietnamese on server
-    interpolation: {
-      escapeValue: false,
-    },
-  });
+i18n.use(initReactI18next).init({
+  resources,
+  fallbackLng: 'vi',
+  lng: 'vi', // Default to Vietnamese on server
+  interpolation: {
+    escapeValue: false,
+  },
+});
 
 // Setup language detector ONLY in the browser
 if (typeof window !== 'undefined') {

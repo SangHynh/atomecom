@@ -1,17 +1,19 @@
 {
-    "name": "@atomecom/shared",
-    "version": "1.0.0",
-    "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "scripts": {
-        "build": "tsc",
-        "watch": "tsc -w"
-    },
-    "devDependencies": {
-        "typescript": "^5.7.3"
-    },
-    "dependencies": {
-        "zod": "^3.24.1"
-    }
+  "name": "@atomecom/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "lint": "tsc --noEmit",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  }
 }

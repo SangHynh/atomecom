@@ -1,4 +1,7 @@
-import type { ITokenService, TokenPayload } from '@modules/auth/domain/IToken.service.js';
+import type {
+  ITokenService,
+  TokenPayload,
+} from '@modules/auth/domain/IToken.service.js';
 import { DomainEvents } from '@shared/constants/event.constants.js';
 import type { EventBus } from '@shared/infra/event-bus.js';
 import type { OauthFactory } from '@modules/auth/use-cases/oauth.factory.js';
@@ -11,10 +14,7 @@ import type { MailTokenService } from '@modules/auth/use-cases/mailToken.service
 import type { SessionService } from '@modules/auth/use-cases/session.service.js';
 import type { SafeUserResponseDTO } from '@modules/users/use-cases/user.dtos.js';
 import type { UserService } from '@modules/users/use-cases/user.service.js';
-import {
-  ErrorAuthCodes,
-  ErrorUserCodes,
-} from '@atomecom/shared';
+import { ErrorAuthCodes, ErrorUserCodes } from '@atomecom/shared';
 import {
   ForbiddenError,
   InternalServerError,

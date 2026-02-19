@@ -15,12 +15,16 @@ jest.mock('resend', () => {
 
 // Mock fs/promises
 jest.mock('fs/promises', () => ({
-  readFile: jest.fn().mockResolvedValue('<html>{{userName}} {{url}} {{projectName}}</html>'),
+  readFile: jest
+    .fn()
+    .mockResolvedValue('<html>{{userName}} {{url}} {{projectName}}</html>'),
 }));
 
 // Mock Handlebars
 jest.mock('handlebars', () => ({
-  compile: jest.fn().mockImplementation(() => jest.fn().mockReturnValue('rendered-html')),
+  compile: jest
+    .fn()
+    .mockImplementation(() => jest.fn().mockReturnValue('rendered-html')),
 }));
 
 // Mock logger
@@ -53,34 +57,47 @@ describe('ResendMailService', () => {
   });
 
   it('should send verification email successfully', async () => {
-    mockResendInstance.emails.send.mockResolvedValue({ data: { id: 'msg-1' }, error: null });
+    mockResendInstance.emails.send.mockResolvedValue({
+      data: { id: 'msg-1' },
+      error: null,
+    });
 
     await mailService.sendVerificationEmail('test@example.com', 'token-123');
 
     expect(mockResendInstance.emails.send).toHaveBeenCalledWith(
       expect.objectContaining({
         to: ['test@example.com'],
-        subject: expect.stringContaining('WELCOME: VERIFY YOUR ATOMECOM ACCOUNT'),
-        html: 'rendered-html'
-      })
+        subject: expect.stringContaining(
+          'WELCOME: VERIFY YOUR ATOMECOM ACCOUNT',
+        ),
+        html: 'rendered-html',
+      }),
     );
   });
 
   it('should resend verification email successfully', async () => {
-    mockResendInstance.emails.send.mockResolvedValue({ data: { id: 'msg-1-retry' }, error: null });
+    mockResendInstance.emails.send.mockResolvedValue({
+      data: { id: 'msg-1-retry' },
+      error: null,
+    });
 
     await mailService.resendVerificationEmail('test@example.com', 'token-123');
 
     expect(mockResendInstance.emails.send).toHaveBeenCalledWith(
       expect.objectContaining({
         to: ['test@example.com'],
-        subject: expect.stringContaining('NEW LINK: VERIFY YOUR ATOMECOM ACCOUNT'),
-      })
+        subject: expect.stringContaining(
+          'NEW LINK: VERIFY YOUR ATOMECOM ACCOUNT',
+        ),
+      }),
     );
   });
 
   it('should send reset password email successfully', async () => {
-    mockResendInstance.emails.send.mockResolvedValue({ data: { id: 'msg-2' }, error: null });
+    mockResendInstance.emails.send.mockResolvedValue({
+      data: { id: 'msg-2' },
+      error: null,
+    });
 
     await mailService.sendResetPasswordEmail('test@example.com', 'token-456');
 
@@ -88,33 +105,37 @@ describe('ResendMailService', () => {
       expect.objectContaining({
         to: ['test@example.com'],
         subject: expect.stringContaining('RESET YOUR PASSWORD'),
-      })
+      }),
     );
   });
 
   it('should throw InternalServerError when sending fails', async () => {
-    mockResendInstance.emails.send.mockResolvedValue({ 
-      data: null, 
-      error: { message: 'Api Error', name: 'error' } 
+    mockResendInstance.emails.send.mockResolvedValue({
+      data: null,
+      error: { message: 'Api Error', name: 'error' },
     });
 
-    await expect(mailService.sendVerificationEmail('test@example.com', 'token-123'))
-      .rejects.toThrow();
+    await expect(
+      mailService.sendVerificationEmail('test@example.com', 'token-123'),
+    ).rejects.toThrow();
   });
 
   describe('Validation & Errors', () => {
     it('should throw error if EMAIL_API_KEY is missing', () => {
       delete process.env.EMAIL_API_KEY;
-      expect(() => new ResendMailService()).toThrow('MISSING_EMAIL_API_KEY_IN_ENV');
+      expect(() => new ResendMailService()).toThrow(
+        'MISSING_EMAIL_API_KEY_IN_ENV',
+      );
     });
 
     it('should throw error if required config is missing during send', async () => {
       delete process.env.RESEND_FROM_EMAIL;
       // We need to re-instantiate because these are read in constructor/fields
       mailService = new ResendMailService();
-      
-      await expect(mailService.sendVerificationEmail('test@example.com', 'token-123'))
-        .rejects.toThrow('MISSING_REQUIRED_EMAIL_CONFIG_IN_ENV');
+
+      await expect(
+        mailService.sendVerificationEmail('test@example.com', 'token-123'),
+      ).rejects.toThrow('MISSING_REQUIRED_EMAIL_CONFIG_IN_ENV');
     });
   });
 });

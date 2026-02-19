@@ -340,10 +340,13 @@ describe('UserService', () => {
   describe('upsertOAuthUser', () => {
     it('should generate dummy email and set isEmailMissing: true when profile has no email', async () => {
       mockUserRepo.findByOAuthId.mockResolvedValue(null);
-      mockUserRepo.create.mockImplementation(async (data) => ({
-        id: 'new-id',
-        ...data,
-      }) as UserEntity);
+      mockUserRepo.create.mockImplementation(
+        async (data) =>
+          ({
+            id: 'new-id',
+            ...data,
+          }) as UserEntity,
+      );
 
       const result = await userService.upsertOAuthUser({
         providerInfo: { provider: 'GOOGLE' as any, providerId: '123' },
@@ -367,10 +370,13 @@ describe('UserService', () => {
         ...mockUser,
         providers: [],
       } as UserEntity);
-      mockUserRepo.update.mockImplementation(async (id, data) => ({
-        ...mockUser,
-        ...data,
-      }) as UserEntity);
+      mockUserRepo.update.mockImplementation(
+        async (id, data) =>
+          ({
+            ...mockUser,
+            ...data,
+          }) as UserEntity,
+      );
 
       await userService.upsertOAuthUser({
         providerInfo: { provider: 'FACEBOOK' as any, providerId: '456' },

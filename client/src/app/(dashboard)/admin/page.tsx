@@ -30,13 +30,19 @@ export default function AdminDashboard() {
                   You have full access to manage the system.
                 </p>
                 <div className="mt-4">
-                  <p><strong>Role:</strong> {user?.role}</p>
-                  <p><strong>Email:</strong> {user?.email}</p>
-                  <p><strong>Status:</strong> {user?.status}</p>
+                  <p>
+                    <strong>Role:</strong> {user?.role}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {user?.email}
+                  </p>
+                  <p>
+                    <strong>Status:</strong> {user?.status}
+                  </p>
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>System Stats</CardTitle>

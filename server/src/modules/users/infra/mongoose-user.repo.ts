@@ -125,7 +125,7 @@ export class MongooseUserRepo implements IUserRepository {
         $set: updateData,
         $inc: { version: 1 },
       },
-      { new: true },
+      { returnDocument: 'after' },
     ).lean();
     // Another user has modified the data at the same time
     if (!updatedUser) {

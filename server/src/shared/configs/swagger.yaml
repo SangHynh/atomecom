@@ -425,7 +425,7 @@ components:
       type: object
       required: [token]
       properties:
-        token: { type: string, description: "Provider access token/ID token" }
+        token: { type: string, description: "Provider ID Token (Legacy) or Access Token (OAuth2 - Recommended)" }
 
     # --- USER INPUTS ---
     CreateUserInput:

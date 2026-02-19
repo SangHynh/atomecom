@@ -17,7 +17,11 @@ describe('MailTokenService', () => {
   });
 
   it('should create mail token', async () => {
-    const token = await mailTokenService.createMailToken('u', 'e', 'EMAIL_VERIFICATION');
+    const token = await mailTokenService.createMailToken(
+      'u',
+      'e',
+      'EMAIL_VERIFICATION',
+    );
     expect(token).toBeDefined();
     expect(mockMailTokenRepo.create).toHaveBeenCalled();
   });
@@ -29,7 +33,10 @@ describe('MailTokenService', () => {
       expiresAt: new Date(Date.now() + 10000),
     } as any);
 
-    const res = await mailTokenService.verifyMailToken('t', 'EMAIL_VERIFICATION');
+    const res = await mailTokenService.verifyMailToken(
+      't',
+      'EMAIL_VERIFICATION',
+    );
     expect(res).toBe('u');
     expect(mockMailTokenRepo.markAsUsed).toHaveBeenCalled();
   });

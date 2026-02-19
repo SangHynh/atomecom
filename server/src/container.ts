@@ -21,6 +21,8 @@ import { GoogleProvider } from '@modules/auth/infra/google-oauth.adapter.js';
 import { FacebookProvider } from '@modules/auth/infra/facebook-oauth.adapter.js';
 import { OauthFactory } from '@modules/auth/use-cases/oauth.factory.js';
 import type { IOAuthProvider } from '@modules/auth/domain/IOauthProvider.service.js';
+import { BlacklistService } from '@modules/auth/use-cases/blacklist.service.js';
+import { blacklistMiddleware } from '@shared/middlewares/blacklist.middleware.js';
 
 // 1. INFRA LAYER
 export const db = new MongoDatabase(appConfig!.db.uri);
@@ -41,6 +43,7 @@ const oauthFactory = new OauthFactory(providers);
 const healthService = new HealthService(db, cache);
 const userService = new UserService({ userRepo, hashService, eventBus });
 const sessionService = new SessionService(cache);
+export const blacklistService = new BlacklistService(cache);
 const mailTokenService = new MailTokenService(mailTokenRepo);
 const authService = new AuthService({
   tokenService,
@@ -57,5 +60,9 @@ new EmailListener({ eventBus, emailService, mailTokenService });
 // 3. PRESENTATION LAYER
 export const healthControllerImpl = new HealthController(healthService);
 export const userControllerImpl = new UserController(userService);
-export const authControllerImpl = new AuthController(authService);
+export const authControllerImpl = new AuthController(
+  authService,
+  blacklistService,
+);
 export const authMiddlewareImpl = authMiddleware(tokenService);
+export const blacklistMiddlewareImpl = blacklistMiddleware(blacklistService);

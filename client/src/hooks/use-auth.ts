@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { AuthService } from '@/services/auth.service';
 import { useStore } from '@/store/useStore';
+import { setAccessToken } from '@/lib/axios';
 import { LoginInput, SignUpInput, USER_ROLE } from '@atomecom/shared';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -12,10 +13,16 @@ export const useAuth = () => {
   const { setUser, logout: clearStore, user, isAuthenticated } = useStore();
   const { t } = useTranslation();
 
-  const handleAuthError = (error: AxiosError<{ message: string }>, defaultKey: string) => {
+  const handleAuthError = (
+    error: AxiosError<{ message: string }>,
+    defaultKey: string,
+  ) => {
     const errorCode = error.response?.data?.message;
-    
-    if (errorCode && t(`errors.${errorCode}`, { ns: 'errors', defaultValue: '' })) {
+
+    if (
+      errorCode &&
+      t(`errors.${errorCode}`, { ns: 'errors', defaultValue: '' })
+    ) {
       toast.error(t(`errors.${errorCode}`, { ns: 'errors' }));
     } else if (error.response?.status === 500) {
       toast.error(t('generic', { ns: 'errors' }));
@@ -25,14 +32,16 @@ export const useAuth = () => {
   };
 
   const loginMutation = useMutation({
-    mutationFn: (data: LoginInput) => AuthService.login(data),
+    mutationFn: (data: LoginInput & { honey_pot?: string }) =>
+      AuthService.login(data),
     onSuccess: (response) => {
       const { user, tokens } = response.data;
-      localStorage.setItem('accessToken', tokens.accessToken);
-      localStorage.setItem('refreshToken', tokens.refreshToken);
+      setAccessToken(tokens.accessToken);
       setUser(user);
-      toast.success(t('auth.login_success', { defaultValue: 'Logged in successfully' }));
-      
+      toast.success(
+        t('auth.login_success', { defaultValue: 'Logged in successfully' }),
+      );
+
       if (user.role === USER_ROLE.ADMIN) {
         router.push('/admin');
       } else {
@@ -40,38 +49,56 @@ export const useAuth = () => {
       }
     },
     onError: (error: AxiosError<{ message: string }>) => {
-        handleAuthError(error, 'auth.login_failed');
-    }
+      handleAuthError(error, 'auth.login_failed');
+    },
   });
 
   const registerMutation = useMutation({
-    mutationFn: (data: SignUpInput) => AuthService.register(data),
+    mutationFn: (data: SignUpInput & { honey_pot?: string }) =>
+      AuthService.register(data),
     onSuccess: (response) => {
-       const { user, tokens } = response.data;
-       localStorage.setItem('accessToken', tokens.accessToken);
-       localStorage.setItem('refreshToken', tokens.refreshToken);
-       setUser(user);
-       toast.success(t('auth.register_success', { defaultValue: 'Account created successfully' }));
-       router.push('/');
+      const { user, tokens } = response.data;
+      setAccessToken(tokens.accessToken);
+      setUser(user);
+      toast.success(
+        t('auth.register_success', {
+          defaultValue: 'Account created successfully',
+        }),
+      );
+      router.push('/');
     },
     onError: (error: AxiosError<{ message: string }>) => {
-        handleAuthError(error, 'auth.register_failed');
-    }
+      handleAuthError(error, 'auth.register_failed');
+    },
   });
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if(refreshToken) {
-            await AuthService.logout({ refreshToken });
-        }
+      await AuthService.logout();
     },
     onSettled: () => {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      setAccessToken(null);
+      localStorage.removeItem('accessToken'); // Cleanup legacy
       clearStore();
       router.push('/login');
       toast.success(t('auth.logout_success', { defaultValue: 'Logged out' }));
+    },
+  });
+
+  const socialLoginMutation = useMutation({
+    mutationFn: ({ provider, token }: { provider: string; token: string }) =>
+      AuthService.socialLogin(provider, token),
+    onSuccess: (response) => {
+      const { user, tokens } = response.data;
+      setAccessToken(tokens.accessToken);
+      setUser(user);
+      toast.success(
+        t('auth.login_success', { defaultValue: 'Logged in successfully' }),
+      );
+      router.push('/');
+    },
+    onError: (error: AxiosError<{ message: string }>) => {
+      handleAuthError(error, 'auth.social_login_failed');
     },
   });
 
@@ -84,5 +111,7 @@ export const useAuth = () => {
     isRegistering: registerMutation.isPending,
     logout: logoutMutation.mutate,
     isLoggingOut: logoutMutation.isPending,
+    socialLogin: socialLoginMutation.mutate,
+    isSocialLoggingIn: socialLoginMutation.isPending,
   };
 };

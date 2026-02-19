@@ -18,7 +18,9 @@ export const requireRole = (allowedRoles: USER_ROLE[]) => {
       const hasPermission = allowedRoles.includes(user.role as USER_ROLE);
 
       if (!hasPermission) {
-        throw new ForbiddenError(ErrorRBACCodes.ACCESS_DENIED_INSUFFICIENT_PERMISSIONS);
+        throw new ForbiddenError(
+          ErrorRBACCodes.ACCESS_DENIED_INSUFFICIENT_PERMISSIONS,
+        );
       }
 
       next();

@@ -20,7 +20,8 @@ export function LanguageSelector() {
     { code: 'en', name: 'English' },
   ];
 
-  const currentLanguage = languages.find((lang) => lang.code === i18n.language) || languages[0];
+  const currentLanguage =
+    languages.find((lang) => lang.code === i18n.language) || languages[0];
 
   const changeLanguage = (code: string) => {
     i18n.changeLanguage(code);

@@ -1,0 +1,10 @@
+node_modules
+dist
+.next
+.turbo
+out
+build
+coverage
+*.log
+package-lock.json
+public

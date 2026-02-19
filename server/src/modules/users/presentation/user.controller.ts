@@ -48,12 +48,19 @@ export class UserController {
 
     // 1. Prevent creation of SUPER_ADMIN via API
     if (targetRole === USER_ROLE.SUPER_ADMIN) {
-      throw new ForbiddenError(ErrorRBACCodes.CANNOT_CREATE_SUPER_ADMIN_VIA_API);
+      throw new ForbiddenError(
+        ErrorRBACCodes.CANNOT_CREATE_SUPER_ADMIN_VIA_API,
+      );
     }
 
     // 2. Hierarchy Check (Only SUPER_ADMIN can create ADMINs)
-    if (targetRole === USER_ROLE.ADMIN && currentUser?.role !== USER_ROLE.SUPER_ADMIN) {
-      throw new ForbiddenError(ErrorRBACCodes.ONLY_SUPER_ADMIN_CAN_CREATE_ADMINS);
+    if (
+      targetRole === USER_ROLE.ADMIN &&
+      currentUser?.role !== USER_ROLE.SUPER_ADMIN
+    ) {
+      throw new ForbiddenError(
+        ErrorRBACCodes.ONLY_SUPER_ADMIN_CAN_CREATE_ADMINS,
+      );
     }
 
     const result = await this.userService.create(req.body);

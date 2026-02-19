@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { ErrorAuthCodes, ErrorUserCodes } from '../constants/error.constants.js';
+import {
+  ErrorAuthCodes,
+  ErrorUserCodes,
+} from '../constants/error.constants.js';
 import { OauthProvider } from '../enums/oauthProvider.enum.js';
 
 // 1. Register
@@ -9,6 +12,7 @@ export const RegisterRequestSchema = z.object({
     email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT),
     password: z.string().min(6, ErrorUserCodes.INVALID_PASSWORD_FORMAT),
     phone: z.string().min(10, ErrorUserCodes.INVALID_PHONE_FORMAT).optional(),
+    honey_pot: z.string().optional(),
   }),
 });
 
@@ -17,6 +21,7 @@ export const LoginRequestSchema = z.object({
   body: z.object({
     email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT),
     password: z.string().min(1, ErrorUserCodes.INVALID_PASSWORD_FORMAT),
+    honey_pot: z.string().optional(),
   }),
 });
 
@@ -65,16 +70,25 @@ export const SocialLoginRequestSchema = z.object({
 });
 
 // Client-side schemas (without request wrapper)
+// Client-side schemas (without request wrapper)
 export const loginSchema = z.object({
   email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT),
   password: z.string().min(1, ErrorUserCodes.INVALID_PASSWORD_FORMAT),
+  honey_pot: z.string().optional(),
 });
 
-export const registerSchema = z.object({
-  name: z.string().min(2, ErrorUserCodes.INVALID_NAME_FORMAT),
-  email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT),
-  password: z.string().min(6, ErrorUserCodes.INVALID_PASSWORD_FORMAT),
-});
+export const registerSchema = z
+  .object({
+    name: z.string().min(2, ErrorUserCodes.INVALID_NAME_FORMAT),
+    email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT),
+    password: z.string().min(6, ErrorUserCodes.INVALID_PASSWORD_FORMAT),
+    confirmPassword: z.string().min(1, 'CONFIRM_PASSWORD_IS_REQUIRED'),
+    honey_pot: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: ErrorUserCodes.PASSWORDS_DO_NOT_MATCH,
+    path: ['confirmPassword'],
+  });
 
 export type LoginSchema = z.infer<typeof loginSchema>;
 export type RegisterSchema = z.infer<typeof registerSchema>;

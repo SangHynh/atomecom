@@ -10,7 +10,10 @@ import { ErrorInfraCodes } from '@atomecom/shared';
 // TODO: Refactor error codes to enum
 // Resolve template directory relative to project root for best compatibility
 // This avoids issues with ESM vs CommonJS (import.meta vs __dirname)
-const _templateDir = path.resolve(process.cwd(), 'src/modules/emails/templates');
+const _templateDir = path.resolve(
+  process.cwd(),
+  'src/modules/emails/templates',
+);
 
 const MODULE = 'Email';
 const LAYER = 'Infrastructure';
@@ -21,19 +24,24 @@ export class ResendMailService implements IEmailService {
   private readonly CLIENT_HOST = process.env.CLIENT_HOST;
   private readonly PROJECT_NAME = process.env.PROJECT_NAME || 'System';
   private readonly LOGO_URL = process.env.EMAIL_LOGO_URL || '';
-  
+
   // Point to the internal templates folder
   private readonly TEMPLATE_DIR = _templateDir;
 
   constructor() {
     const apiKey = process.env.EMAIL_API_KEY;
     if (!apiKey) {
-      throw new InternalServerError(ErrorInfraCodes.MISSING_EMAIL_API_KEY_IN_ENV);
+      throw new InternalServerError(
+        ErrorInfraCodes.MISSING_EMAIL_API_KEY_IN_ENV,
+      );
     }
     this._resend = new Resend(apiKey);
   }
 
-  private async _renderTemplate(templateName: string, context: any): Promise<string> {
+  private async _renderTemplate(
+    templateName: string,
+    context: any,
+  ): Promise<string> {
     try {
       const templatePath = path.join(this.TEMPLATE_DIR, `${templateName}.hbs`);
       const templateContent = await readFile(templatePath, 'utf8');
@@ -44,7 +52,10 @@ export class ResendMailService implements IEmailService {
         logoUrl: this.LOGO_URL,
       });
     } catch (err) {
-      logger.error(`[${MODULE}][${LAYER}] Failed to render template: ${templateName}`, { error: err });
+      logger.error(
+        `[${MODULE}][${LAYER}] Failed to render template: ${templateName}`,
+        { error: err },
+      );
       throw new InternalServerError(ErrorInfraCodes.EMAIL_TEMPLATE_ERROR);
     }
   }
@@ -56,7 +67,9 @@ export class ResendMailService implements IEmailService {
     priority?: string;
   }) {
     if (!this.FROM_EMAIL || !this.CLIENT_HOST) {
-      throw new InternalServerError(ErrorInfraCodes.MISSING_REQUIRED_EMAIL_CONFIG_IN_ENV);
+      throw new InternalServerError(
+        ErrorInfraCodes.MISSING_REQUIRED_EMAIL_CONFIG_IN_ENV,
+      );
     }
 
     const { error } = await this._resend.emails.send({
@@ -82,7 +95,10 @@ export class ResendMailService implements IEmailService {
   public async sendVerificationEmail(to: string, token: string): Promise<void> {
     const verificationUrl = `${this.CLIENT_HOST}/verify-email?token=${token}`;
     const userName = to.split('@')[0];
-    const html = await this._renderTemplate('registration', { userName, url: verificationUrl });
+    const html = await this._renderTemplate('registration', {
+      userName,
+      url: verificationUrl,
+    });
 
     await this._send({
       to,
@@ -98,7 +114,10 @@ export class ResendMailService implements IEmailService {
   ): Promise<void> {
     const verificationUrl = `${this.CLIENT_HOST}/verify-email?token=${token}`;
     const userName = to.split('@')[0];
-    const html = await this._renderTemplate('verification_resend', { userName, url: verificationUrl });
+    const html = await this._renderTemplate('verification_resend', {
+      userName,
+      url: verificationUrl,
+    });
 
     await this._send({
       to,
@@ -114,7 +133,10 @@ export class ResendMailService implements IEmailService {
   ): Promise<void> {
     const resetUrl = `${this.CLIENT_HOST}/reset-password?token=${token}`;
     const userName = to.split('@')[0];
-    const html = await this._renderTemplate('password_reset', { userName, url: resetUrl });
+    const html = await this._renderTemplate('password_reset', {
+      userName,
+      url: resetUrl,
+    });
 
     await this._send({
       to,

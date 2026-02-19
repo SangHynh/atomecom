@@ -16,6 +16,11 @@ interface Config {
   cache: {
     uri: string;
   };
+  security: {
+    cors: {
+      allowedOrigins: string[];
+    };
+  };
 }
 
 // Development environment settings
@@ -32,6 +37,16 @@ const development: Config = {
   cache: {
     uri: process.env.DEV_CACHE_URI || 'redis://localhost:6379/0',
   },
+  security: {
+    cors: {
+      allowedOrigins: [
+        'http://localhost:3000',
+        'http://localhost:8386',
+        'http://localhost:5173',
+        'http://localhost:5500',
+      ], // Allow all in dev
+    },
+  },
 };
 
 // Production environment settings
@@ -47,6 +62,11 @@ const production: Config = {
   },
   cache: {
     uri: process.env.PROD_CACHE_URI || '',
+  },
+  security: {
+    cors: {
+      allowedOrigins: (process.env.PROD_CORS_ORIGIN || '').split(','),
+    },
   },
 };
 

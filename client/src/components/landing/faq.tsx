@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
-import { fadeInUp } from "./animations";
+import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { fadeInUp } from './animations';
 
 export function FAQ() {
   const { t } = useTranslation();
@@ -21,15 +21,19 @@ export function FAQ() {
   return (
     <section id="faq" className="py-24 sm:py-32 relative bg-muted/10">
       <div className="container mx-auto max-w-4xl px-6 lg:px-12">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="mb-16 text-center"
         >
-          <h3 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">{t('landing.faq_title')}</h3>
-          <p className="text-muted-foreground/70 font-medium">{t('landing.faq_desc')}</p>
+          <h3 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
+            {t('landing.faq_title')}
+          </h3>
+          <p className="text-muted-foreground/70 font-medium">
+            {t('landing.faq_desc')}
+          </p>
         </motion.div>
 
         <div className="space-y-6">
@@ -42,8 +46,12 @@ export function FAQ() {
               transition={{ duration: 0.6, delay: idx * 0.1 }}
               className="p-6 sm:p-8 rounded-2xl bg-background border border-border/40 transition-all hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 group"
             >
-              <h4 className="text-lg font-bold mb-3 group-hover:text-primary transition-colors">{faq.q}</h4>
-              <p className="text-sm sm:text-base text-muted-foreground/80 leading-relaxed">{faq.a}</p>
+              <h4 className="text-lg font-bold mb-3 group-hover:text-primary transition-colors">
+                {faq.q}
+              </h4>
+              <p className="text-sm sm:text-base text-muted-foreground/80 leading-relaxed">
+                {faq.a}
+              </p>
             </motion.div>
           ))}
         </div>

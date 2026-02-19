@@ -32,13 +32,24 @@ export class EmailListener {
   private _setupListeners(): void {
     // 1. User Created (Registration/Admin Create)
     this._eventBus.on(DomainEvents.USER_CREATED, async (data) => {
-      await this._handleEmailTask(data.userId, data.email, 'EMAIL_VERIFICATION');
+      await this._handleEmailTask(
+        data.userId,
+        data.email,
+        'EMAIL_VERIFICATION',
+      );
     });
 
     // 2. Verification Email Resend
-    this._eventBus.on(DomainEvents.VERIFICATION_EMAIL_REQUESTED, async (data) => {
-      await this._handleEmailTask(data.userId, data.email, 'VERIFICATION_RESEND');
-    });
+    this._eventBus.on(
+      DomainEvents.VERIFICATION_EMAIL_REQUESTED,
+      async (data) => {
+        await this._handleEmailTask(
+          data.userId,
+          data.email,
+          'VERIFICATION_RESEND',
+        );
+      },
+    );
 
     // 3. Password Reset Request
     this._eventBus.on(DomainEvents.PASSWORD_RESET_REQUESTED, async (data) => {
@@ -56,8 +67,9 @@ export class EmailListener {
     try {
       // Create email token
       // For both verification and resend, the token type is 'EMAIL_VERIFICATION'
-      const tokenType = type === 'RESET_PASSWORD' ? 'RESET_PASSWORD' : 'EMAIL_VERIFICATION';
-      
+      const tokenType =
+        type === 'RESET_PASSWORD' ? 'RESET_PASSWORD' : 'EMAIL_VERIFICATION';
+
       const token = await this._mailTokenService.createMailToken(
         userId,
         email,

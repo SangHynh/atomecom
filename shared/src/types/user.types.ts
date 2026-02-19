@@ -16,4 +16,5 @@ export interface User {
   status: USER_STATUS;
   isVerified: boolean;
   addresses: Address[];
+  avatar?: string;
 }

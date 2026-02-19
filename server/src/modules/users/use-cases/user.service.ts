@@ -245,6 +245,7 @@ export class UserService {
             providers: user.providers,
             avatar: avatar || user.avatar || PLACE_HOLDER_AVATAR,
             version: user.version ?? 0,
+            isVerified: true,
           });
         }
       }
@@ -263,7 +264,7 @@ export class UserService {
         avatar: avatar || PLACE_HOLDER_AVATAR,
         providers: [providerInfo],
         status: USER_STATUS.ACTIVE,
-        isVerified: true,
+        isVerified: false,
         role: USER_ROLE.USER,
         addresses: [],
         isEmailMissing: !email,
@@ -276,6 +277,8 @@ export class UserService {
         avatar: avatar || user.avatar || PLACE_HOLDER_AVATAR,
         name: name || user.name,
         version: user.version ?? 0,
+        // If this login have email, set to verified
+        isVerified: user.isVerified || !!email,
       });
     }
 

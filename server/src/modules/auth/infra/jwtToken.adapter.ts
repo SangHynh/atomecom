@@ -1,5 +1,8 @@
 import jwt from 'jsonwebtoken';
-import type { ITokenService, TokenPayload } from '@modules/auth/domain/IToken.service.js';
+import type {
+  ITokenService,
+  TokenPayload,
+} from '@modules/auth/domain/IToken.service.js';
 import {
   InternalServerError,
   UnauthorizedError,

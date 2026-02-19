@@ -28,7 +28,11 @@ import {
   FindUserByPhoneSchema,
 } from '@atomecom/shared';
 import { errorHandler } from '@shared/middlewares/error.middleware.js';
-import { connect, closeDatabase, clearDatabase } from '@shared/test/db-helper.js';
+import {
+  connect,
+  closeDatabase,
+  clearDatabase,
+} from '@shared/test/db-helper.js';
 
 const BASE_PATH = '/v1/api';
 
