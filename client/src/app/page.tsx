@@ -1,72 +1,51 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import { Header } from "@/components/landing/header";
+import { Hero } from "@/components/landing/hero";
+import { Vision } from "@/components/landing/vision";
+import { Solutions } from "@/components/landing/solutions";
+import { Architecture } from "@/components/landing/architecture";
+import { TechStack } from "@/components/landing/tech-stack";
+import { FAQ } from "@/components/landing/faq";
+import { CtaDemo } from "@/components/landing/cta-demo";
+import { JsonLd } from "@/components/landing/json-ld";
+import { Footer } from "@/components/landing/footer";
+import { useEffect } from "react";
 
 export default function LandingPage() {
+  useEffect(() => {
+    // Force scroll to top on refresh
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navbar */}
-      <header className="border-b">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <h1 className="text-2xl font-bold text-primary">Atomecom</h1>
-          <nav className="flex gap-4">
-            <Link href="/login">
-              <Button variant="ghost">Login</Button>
-            </Link>
-            <Link href="/register">
-              <Button>Register</Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background selection:bg-primary/10 transition-colors duration-500 overflow-x-hidden">
+      <JsonLd />
+      {/* modern background elements */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-5%] left-[-5%] w-[35%] h-[35%] rounded-full bg-primary/5 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[35%] h-[35%] rounded-full bg-blue-500/5 blur-[120px] animate-pulse delay-1000" />
+        
+        {/* subtle grid pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+      </div>
 
-      {/* Hero */}
-      <main className="container mx-auto px-4 py-16">
-        <section className="mb-16 text-center">
-          <h2 className="mb-4 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            Modern E-commerce Experience
-          </h2>
-          <p className="mx-auto mb-8 max-w-2xl text-xl text-muted-foreground">
-            Built with Next.js 15, Shadcn UI, and Clean Architecture using Domain Driven Design.
-          </p>
-          <div className="flex justify-center gap-4">
-            <Link href="/login">
-               <Button size="lg">Get Started</Button>
-            </Link>
-            <Link href="/products">
-               <Button size="lg" variant="outline">Browse Products</Button>
-            </Link>
-          </div>
-        </section>
+      <Header />
 
-        {/* Features Preview */}
-        <div className="grid gap-8 md:grid-cols-3">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Secure Authentication</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    Full JWT Authentication flow with Refresh Tokens and Role-based Access Control.
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Admin Dashboard</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    Protected area for Admins to manage users and products (Requires Login).
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Modern Stack</CardTitle>
-                </CardHeader>
-                <CardContent>
-                   Next.js App Router, Tailwind CSS, Zustand, and TanStack Query.
-                </CardContent>
-            </Card>
-        </div>
+      <main>
+        <Hero />
+        <Vision />
+        <Solutions />
+        <Architecture />
+        <TechStack />
+        <FAQ />
+        <CtaDemo />
       </main>
+
+      <Footer />
     </div>
   );
 }

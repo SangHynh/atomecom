@@ -5,26 +5,34 @@ import { useStore } from '@/store/useStore';
 import { LoginInput, SignUpInput, USER_ROLE } from '@atomecom/shared';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export const useAuth = () => {
   const router = useRouter();
   const { setUser, logout: clearStore, user, isAuthenticated } = useStore();
+  const { t } = useTranslation();
+
+  const handleAuthError = (error: AxiosError<{ message: string }>, defaultKey: string) => {
+    const errorCode = error.response?.data?.message;
+    
+    if (errorCode && t(`errors.${errorCode}`, { ns: 'errors', defaultValue: '' })) {
+      toast.error(t(`errors.${errorCode}`, { ns: 'errors' }));
+    } else if (error.response?.status === 500) {
+      toast.error(t('generic', { ns: 'errors' }));
+    } else {
+      toast.error(t(defaultKey, { defaultValue: errorCode || 'Error' }));
+    }
+  };
 
   const loginMutation = useMutation({
     mutationFn: (data: LoginInput) => AuthService.login(data),
     onSuccess: (response) => {
       const { user, tokens } = response.data;
-      
-      // Save tokens
       localStorage.setItem('accessToken', tokens.accessToken);
       localStorage.setItem('refreshToken', tokens.refreshToken);
-      
-      // Update store
       setUser(user);
+      toast.success(t('auth.login_success', { defaultValue: 'Logged in successfully' }));
       
-      toast.success('Logged in successfully');
-      
-      // Redirect based on role
       if (user.role === USER_ROLE.ADMIN) {
         router.push('/admin');
       } else {
@@ -32,7 +40,7 @@ export const useAuth = () => {
       }
     },
     onError: (error: AxiosError<{ message: string }>) => {
-        toast.error(error.response?.data?.message || 'Login failed');
+        handleAuthError(error, 'auth.login_failed');
     }
   });
 
@@ -40,19 +48,14 @@ export const useAuth = () => {
     mutationFn: (data: SignUpInput) => AuthService.register(data),
     onSuccess: (response) => {
        const { user, tokens } = response.data;
-
-       // Save tokens
        localStorage.setItem('accessToken', tokens.accessToken);
        localStorage.setItem('refreshToken', tokens.refreshToken);
-       
-        // Update store
        setUser(user);
-
-       toast.success('Account created successfully');
+       toast.success(t('auth.register_success', { defaultValue: 'Account created successfully' }));
        router.push('/');
     },
     onError: (error: AxiosError<{ message: string }>) => {
-        toast.error(error.response?.data?.message || 'Registration failed');
+        handleAuthError(error, 'auth.register_failed');
     }
   });
 
@@ -64,12 +67,11 @@ export const useAuth = () => {
         }
     },
     onSettled: () => {
-      // Always clear local state even if server logout fails
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       clearStore();
       router.push('/login');
-      toast.success('Logged out');
+      toast.success(t('auth.logout_success', { defaultValue: 'Logged out' }));
     },
   });
 
