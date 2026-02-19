@@ -1,4 +1,6 @@
 import type { ITokenService, TokenPayload } from '@modules/auth/domain/IToken.service.js';
+import { DomainEvents } from '@shared/constants/event.constants.js';
+import type { EventBus } from '@shared/infra/event-bus.js';
 import type { OauthFactory } from '@modules/auth/use-cases/oauth.factory.js';
 import type {
   AuthResponseDTO,
@@ -20,7 +22,6 @@ import {
 } from '@shared/core/error.response.js';
 import { OauthProvider } from '@atomecom/shared';
 import { USER_STATUS } from '@atomecom/shared';
-import type { IEmailService } from '@shared/interfaces/IEmail.service.js';
 import logger from '@shared/utils/logger.js';
 import { getExpiresAt, getExpiresInSeconds } from '@shared/utils/time.js';
 
@@ -31,33 +32,33 @@ interface AuthServiceDependencies {
   tokenService: ITokenService;
   userService: UserService;
   sessionService: SessionService;
-  emailService: IEmailService;
   mailTokenService: MailTokenService;
   oauthFactory: OauthFactory;
+  eventBus: EventBus;
 }
 
 export class AuthService {
   private readonly _tokenService: ITokenService;
   private readonly _userService: UserService;
   private readonly _sessionService: SessionService;
-  private readonly _emailService: IEmailService;
   private readonly _mailTokenService: MailTokenService;
   private readonly _oauthFactory: OauthFactory;
+  private readonly _eventBus: EventBus;
 
   constructor({
     tokenService,
     userService,
     sessionService,
-    emailService,
     mailTokenService,
     oauthFactory,
+    eventBus,
   }: AuthServiceDependencies) {
     this._tokenService = tokenService;
     this._userService = userService;
     this._sessionService = sessionService;
-    this._emailService = emailService;
     this._mailTokenService = mailTokenService;
     this._oauthFactory = oauthFactory;
+    this._eventBus = eventBus;
   }
 
   public async register(dto: RegisterInputDTO): Promise<AuthResponseDTO> {
@@ -65,11 +66,7 @@ export class AuthService {
     if (!user || !user.id || !user.email)
       throw new InternalServerError(ErrorUserCodes.CREATE_USER_FAILED);
     const tokens = await this._createNewSession(user as SafeUserResponseDTO);
-    this._sendEmailInBackground(
-      user.id,
-      user.email as string,
-      'EMAIL_VERIFICATION',
-    );
+    // NOTE: Emit UserRegistered event for Email notification
     return this._mapToAuthResponse(user as SafeUserResponseDTO, tokens);
   }
 
@@ -151,7 +148,10 @@ export class AuthService {
     const user = await this._userService.findByEmail(email);
     if (user && user.id) {
       if (user.isVerified) return;
-      this._sendEmailInBackground(user.id, email, 'EMAIL_VERIFICATION');
+      this._eventBus.emit(DomainEvents.VERIFICATION_EMAIL_REQUESTED, {
+        userId: user.id,
+        email: user.email,
+      });
     }
     logger.info(
       `[${MODULE}][${LAYER}][ResendEmail] Request initiated for email: ${email}`,
@@ -161,9 +161,12 @@ export class AuthService {
   public async forgotPassword(email: string): Promise<void> {
     const user = await this._userService.findByEmail(email, USER_STATUS.ACTIVE);
     if (user && user.id) {
-      this._sendEmailInBackground(user.id, email, 'RESET_PASSWORD');
+      this._eventBus.emit(DomainEvents.PASSWORD_RESET_REQUESTED, {
+        userId: user.id,
+        email: user.email,
+      });
       logger.info(
-        `[${MODULE}][${LAYER}][ForgotPassword] Email sent to ${email} for password reset. UserID: ${user.id}`,
+        `[${MODULE}][${LAYER}][ForgotPassword] Request initiated for email: ${email}. UserID: ${user.id}`,
       );
     }
     // background task, aldready logged, response 200 at controller
@@ -310,35 +313,5 @@ export class AuthService {
       user,
       tokens,
     };
-  }
-
-  private async _sendEmailInBackground(
-    userId: string,
-    email: string,
-    type: 'EMAIL_VERIFICATION' | 'RESET_PASSWORD',
-  ): Promise<void> {
-    try {
-      // 1. Create email token
-      const token = await this._mailTokenService.createMailToken(
-        userId,
-        email,
-        type,
-      );
-
-      // 2. Send email
-      if (type === 'EMAIL_VERIFICATION') {
-        await this._emailService.sendVerificationEmail(email, token);
-      } else if (type === 'RESET_PASSWORD') {
-        await this._emailService.sendResetPasswordEmail(email, token);
-      }
-      logger.info(
-        `[${MODULE}][${LAYER}][BackgroundMail] ${type} sent to ${email}`,
-      );
-    } catch (err) {
-      logger.error(
-        `[${MODULE}][${LAYER}][BackgroundMail] Failed to send ${type} to ${email}`,
-        { error: err },
-      );
-    }
   }
 }

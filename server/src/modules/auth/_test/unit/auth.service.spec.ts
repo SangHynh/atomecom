@@ -3,8 +3,8 @@ import type { UserService } from '@modules/users/use-cases/user.service.js';
 import type { ITokenService } from '@modules/auth/domain/IToken.service.js';
 import { SessionService } from '@modules/auth/use-cases/session.service.js';
 import { MailTokenService } from '@modules/auth/use-cases/mailToken.service.js';
-import type { IEmailService } from '@shared/interfaces/IEmail.service.js';
 import type { OauthFactory } from '@modules/auth/use-cases/oauth.factory.js';
+import type { EventBus } from '@shared/infra/event-bus.js';
 import { USER_ROLE } from '@atomecom/shared';
 import { USER_STATUS } from '@atomecom/shared';
 
@@ -25,8 +25,8 @@ describe('AuthService', () => {
   let mockTokenService: jest.Mocked<ITokenService>;
   let mockSessionService: jest.Mocked<SessionService>;
   let mockMailTokenService: jest.Mocked<MailTokenService>;
-  let mockEmailService: jest.Mocked<IEmailService>;
   let mockOauthFactory: jest.Mocked<OauthFactory>;
+  let mockEventBus: jest.Mocked<EventBus>;
 
   const mockUser = {
     id: 'user-123',
@@ -57,16 +57,16 @@ describe('AuthService', () => {
       handleRefreshToken: jest.fn(),
     } as any;
     mockMailTokenService = { createMailToken: jest.fn() } as any;
-    mockEmailService = { sendVerificationEmail: jest.fn(), sendResetPasswordEmail: jest.fn() } as any;
     mockOauthFactory = {} as any;
+    mockEventBus = { emit: jest.fn(), on: jest.fn() } as any;
 
     authService = new AuthService({
       userService: mockUserService as any,
       tokenService: mockTokenService as any,
       sessionService: mockSessionService as any,
       mailTokenService: mockMailTokenService as any,
-      emailService: mockEmailService as any,
       oauthFactory: mockOauthFactory as any,
+      eventBus: mockEventBus as any,
     });
   });
 

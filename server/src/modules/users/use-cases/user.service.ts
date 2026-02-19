@@ -1,4 +1,6 @@
 import type { IHashService } from '@modules/users/domain/IHash.service.js';
+import { DomainEvents } from '@shared/constants/event.constants.js';
+import type { EventBus } from '@shared/infra/event-bus.js';
 import type {
   IUserSocialLink,
   UserAddress,
@@ -28,15 +30,18 @@ const PLACE_HOLDER_AVATAR = `https://www.gravatar.com/avatar/0000000000000000000
 interface UserServiceDependencies {
   userRepo: IUserRepository;
   hashService: IHashService;
+  eventBus: EventBus;
 }
 
 export class UserService {
   private readonly _userRepo: IUserRepository;
   private readonly _hashService: IHashService;
+  private readonly _eventBus: EventBus;
 
-  constructor({ userRepo, hashService }: UserServiceDependencies) {
+  constructor({ userRepo, hashService, eventBus }: UserServiceDependencies) {
     this._userRepo = userRepo;
     this._hashService = hashService;
+    this._eventBus = eventBus;
   }
   public async findAll(
     dto: FindAllQueryUserDTO,
@@ -106,6 +111,13 @@ export class UserService {
     const passwordHash = await this._hashService.hash(dto.password);
     const entityData = this._toCreateEntity({ ...dto, password: passwordHash });
     const user = await this._userRepo.create(entityData);
+
+    // Emit event for Email module or other listeners
+    this._eventBus.emit(DomainEvents.USER_CREATED, {
+      userId: user.id,
+      email: user.email,
+    });
+
     return this._toSafeResponse(user);
   }
 

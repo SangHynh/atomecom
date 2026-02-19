@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
-import { InternalServerError } from '@core/error.response.js';
+import logger from '@shared/utils/logger.js';
+import { InternalServerError } from '@shared/core/error.response.js';
+import { ErrorInfraCodes } from '@atomecom/shared';
 import type { IDatabase } from '@shared/interfaces/IDatabase.provider.js';
 
 const MAX_POOL_SIZE = 100;
@@ -12,7 +14,7 @@ export class MongoDatabase implements IDatabase {
   public readonly name = 'MongoDB';
   constructor(uri: string) {
     if (!uri) {
-      throw new InternalServerError('DATABASE_URI_REQUIRED');
+      throw new InternalServerError(ErrorInfraCodes.DATABASE_URI_REQUIRED);
     }
     this._uri = uri;
   }

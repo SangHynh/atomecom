@@ -4,7 +4,9 @@ import {
   InternalServerError,
   UnauthorizedError,
 } from '@shared/core/error.response.js';
+import { ErrorAuthCodes } from '@atomecom/shared';
 
+const MODULE = 'Auth';
 const JWT_ALGORITHM: jwt.Algorithm = 'HS256';
 export class JwtTokenAdapter implements ITokenService {
   private readonly _accessSecret: string;
@@ -76,9 +78,10 @@ export class JwtTokenAdapter implements ITokenService {
     return new Promise((resolve, reject) => {
       jwt.verify(token, secret, (err, decoded) => {
         if (err) {
-          if (err.name === 'TokenExpiredError')
-            return reject(new UnauthorizedError('TOKEN_EXPIRED'));
-          return reject(new UnauthorizedError('INVALID_TOKEN'));
+          if (err.name === 'TokenExpiredError') {
+            return reject(new UnauthorizedError(ErrorAuthCodes.TOKEN_EXPIRED));
+          }
+          return reject(new UnauthorizedError(ErrorAuthCodes.INVALID_TOKEN));
         }
         resolve(decoded as T);
       });

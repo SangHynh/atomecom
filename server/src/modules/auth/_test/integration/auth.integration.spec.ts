@@ -14,6 +14,8 @@ import { MongooseMailTokenRepo } from '@modules/auth/infra/mongoose-mailToken.re
 import { MailTokenModel } from '@modules/auth/infra/mongoose-mailToken.model.js';
 import { AuthService } from '@modules/auth/use-cases/auth.service.js';
 import { AuthController } from '@modules/auth/presentation/auth.controller.js';
+import { EventBus } from '@shared/infra/event-bus.js';
+import { EmailListener } from '@modules/emails/use-cases/email.listener.js';
 import { asyncHandler } from '@shared/core/asyncHandler.js';
 import { validate } from '@shared/middlewares/validate.middleware.js';
 import {
@@ -60,9 +62,10 @@ const mockEmailService: IEmailService = {
 } as any;
 
 function createTestApp(): Express {
+  const eventBus = new EventBus();
   const userRepo = new MongooseUserRepo();
   const hashService = new BcryptHashAdapter();
-  const userService = new UserService({ userRepo, hashService });
+  const userService = new UserService({ userRepo, hashService, eventBus });
   
   const cacheRepo = new MockCacheRepo();
   const sessionService = new SessionService(cacheRepo);
@@ -77,10 +80,13 @@ function createTestApp(): Express {
     userService,
     tokenService,
     sessionService,
-    emailService: mockEmailService,
     mailTokenService,
     oauthFactory,
+    eventBus,
   });
+
+  // Initialize Email Listener
+  new EmailListener({ eventBus, emailService: mockEmailService, mailTokenService });
 
   const authController = new AuthController(authService);
 

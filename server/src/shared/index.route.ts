@@ -10,6 +10,7 @@ import { NotFoundError } from '@shared/core/error.response.js';
 import docsRouter from '@shared/docs.route.js';
 import toolRouter from './tools.route.js';
 import { isDev } from '@shared/utils/common.js';
+import { ErrorSystemCodes } from '@atomecom/shared';
 
 const router = express.Router();
 router.get('/', (_req: Request, res: Response) => res.send('Hello Kitty!'));
@@ -25,7 +26,7 @@ if (isDev) {
 }
 
 router.use((_req: Request, _res: Response, next: NextFunction) => {
-  const error = new NotFoundError('RESOURCE_NOT_FOUND');
+  const error = new NotFoundError(ErrorSystemCodes.RESOURCE_NOT_FOUND);
   next(error);
 });
 

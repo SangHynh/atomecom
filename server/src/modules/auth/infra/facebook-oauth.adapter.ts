@@ -1,7 +1,7 @@
 // @modules/auth/infra/oauth/facebook.provider.ts
 import type { ExternalProfile, IOAuthProvider } from '@modules/auth/domain/IOauthProvider.service.js';
 import { UnauthorizedError } from '@shared/core/error.response.js';
-import { OauthProvider } from '@atomecom/shared';
+import { OauthProvider, ErrorAuthCodes } from '@atomecom/shared';
 import logger from '@shared/utils/logger.js';
 import axios from 'axios';
 
@@ -28,7 +28,7 @@ export class FacebookProvider implements IOAuthProvider {
       };
     } catch (error) {
       logger.error(`[OAuth][Facebook] Verification failed: ${error}`);
-      throw new UnauthorizedError('INVALID_FACEBOOK_TOKEN');
+      throw new UnauthorizedError(ErrorAuthCodes.INVALID_FACEBOOK_TOKEN);
     }
   }
 }

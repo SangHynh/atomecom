@@ -1,7 +1,7 @@
 import type { UserEntity } from '@modules/users/domain/user.entity.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
-import { ErrorUserCodes } from '@atomecom/shared';
+import { ErrorUserCodes, ErrorInfraCodes } from '@atomecom/shared';
 import {
   ConflictError,
   InternalServerError,
@@ -129,7 +129,7 @@ export class MongooseUserRepo implements IUserRepository {
     ).lean();
     // Another user has modified the data at the same time
     if (!updatedUser) {
-      throw new ConflictError('DATA_MODIFIED_CONCURRENTLY');
+      throw new ConflictError(ErrorInfraCodes.DATA_MODIFIED_CONCURRENTLY);
     }
     return this._toDomain(updatedUser);
   }

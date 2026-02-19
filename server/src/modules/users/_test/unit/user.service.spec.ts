@@ -8,6 +8,7 @@
 import { UserService } from '@modules/users/use-cases/user.service.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import type { IHashService } from '@modules/users/domain/IHash.service.js';
+import type { EventBus } from '@shared/infra/event-bus.js';
 import { ErrorUserCodes } from '@atomecom/shared';
 import {
   ConflictError,
@@ -22,6 +23,7 @@ describe('UserService', () => {
   let userService: UserService;
   let mockUserRepo: jest.Mocked<IUserRepository>;
   let mockHashService: jest.Mocked<IHashService>;
+  let mockEventBus: jest.Mocked<EventBus>;
 
   const mockUser: UserEntity = {
     id: '507f1f77bcf86cd799439011',
@@ -55,9 +57,12 @@ describe('UserService', () => {
       compare: jest.fn(),
     };
 
+    mockEventBus = { emit: jest.fn(), on: jest.fn() } as any;
+
     userService = new UserService({
       userRepo: mockUserRepo as unknown as IUserRepository,
       hashService: mockHashService as unknown as IHashService,
+      eventBus: mockEventBus as any,
     });
   });
 

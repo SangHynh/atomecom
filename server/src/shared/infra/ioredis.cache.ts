@@ -2,14 +2,19 @@ import { InternalServerError } from '@shared/core/error.response.js';
 import type { ICache } from '@shared/interfaces/ICache.provider.js';
 import type { ICacheRepo } from '@shared/interfaces/ICache.repo.js';
 import { Redis } from 'ioredis';
+import logger from '@shared/utils/logger.js';
+import { ErrorInfraCodes } from '@atomecom/shared';
+
+const MODULE = 'Cache';
+const LAYER = 'Infrastructure';
 
 export class RedisCache implements ICache, ICacheRepo {
   public readonly name: string;
-  private readonly _uri: string;
+  private readonly _uri: string | undefined;
   private _client: Redis | null = null;
 
-  constructor(uri: string) {
-    if (!uri) throw new InternalServerError('REDIS_URI_REQUIRED');
+  constructor(uri: string | undefined) {
+    if (!uri) throw new InternalServerError(ErrorInfraCodes.REDIS_URI_REQUIRED);
     this._uri = uri;
     this.name = 'Redis';
   }
@@ -17,7 +22,7 @@ export class RedisCache implements ICache, ICacheRepo {
   public async connect(): Promise<void> {
     try {
       console.log(`[${this.name}] Connecting to ${this._uri}...`);
-      this._client = new Redis(this._uri, {
+      this._client = new Redis(this._uri as string, {
         connectTimeout: 10000,
         retryStrategy: (times) => Math.min(times * 50, 2000),
       });
@@ -94,18 +99,18 @@ export class RedisCache implements ICache, ICacheRepo {
   }
 
   public async del(key: string): Promise<void> {
-    if (!this._client) throw new InternalServerError('REDIS_NOT_CONNECTED');
+    if (!this._client) throw new InternalServerError(ErrorInfraCodes.REDIS_NOT_CONNECTED);
     await this._client.del(key);
   }
 
   public async has(key: string): Promise<boolean> {
-    if (!this._client) throw new InternalServerError('REDIS_NOT_CONNECTED');
+    if (!this._client) throw new InternalServerError(ErrorInfraCodes.REDIS_NOT_CONNECTED);
     const result = await this._client.exists(key);
     return result === 1;
   }
 
   public async flushAll(): Promise<void> {
-    if (!this._client) throw new InternalServerError('REDIS_NOT_CONNECTED');
+    if (!this._client) throw new InternalServerError(ErrorInfraCodes.REDIS_NOT_CONNECTED);
     await this._client.flushall();
   }
 

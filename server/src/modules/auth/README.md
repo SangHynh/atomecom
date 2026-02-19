@@ -23,7 +23,7 @@ Internal modules that the **Auth Module** coordinates to complete business logic
 | Module | Usage |
 |:---|:---|
 | **Users** | Managed via `UserService` for user creation, credential verification, and syncing OAuth profiles. |
-| **Shared** | Provides `IEmailService` for notifications, `ICacheRepo` interface for session handling, and OAuth provider definitions. |
+| **Shared** | Provides `EventBus` for side-effect notifications, `ICacheRepo` interface for session handling, and OAuth provider definitions. |
 
 ### Infrastructure & Implementation Dependencies
 Strict separation between programming interfaces (**Interfaces**) and concrete implementations (**Adapters/Repos**) following Clean Architecture principles.
@@ -33,7 +33,8 @@ Strict separation between programming interfaces (**Interfaces**) and concrete i
 | **Token Service** | `ITokenService` | `JWT Adapter` | Issuance and validation of Access/Refresh Tokens (JWT). |
 | **Cache Store** | `ICacheRepo` | `Ioredis Cache` | Generic cache repository used by `SessionService` to manage session lifecycle in **Redis**. |
 | **Mail Token** | `IMailTokenRepo` | `Mongoose Mail Token Repo` | Persistence for verification codes and password reset tokens in **MongoDB**. |
-| **Email Provider** | `IEmailService` | `Resend Email Provider` | Concrete implementation for physical email delivery via Resend API. |
+| **Email Provider** | `IEmailService` | `Managed by **Email Module** (Listener-based).` | Concrete implementation for physical email delivery via Resend API. |
+| **Event Bus** | `EventBus` | `Node EventEmitter` | Centralized bus for emitting domain/security events. |
 | **OAuth Factory** | `OauthFactory` | `OAuth Strategy Pattern` | Dynamic selection and management of social login strategies. |
 | **Google Auth** | `IOauthProvider` | `Google OAuth Adapter` | Verification of Google OAuth tokens and profile retrieval. |
 | **Facebook Auth** | `IOauthProvider` | `Facebook OAuth Adapter` | Verification of Facebook OAuth tokens and profile retrieval. |
@@ -51,6 +52,7 @@ flowchart TD
         SS[SessionService]
         MTS[MailTokenService]
         OF[OauthFactory]
+        EB((EventBus))
         IOP{IOAuthProvider}
         ITK{ITokenService}
         IMR{IMailTokenRepo}
@@ -59,8 +61,8 @@ flowchart TD
     subgraph External["External / Shared Dependencies"]
         direction LR
         US[UserService]
-        IES{IEmailService}
         ICR{ICacheRepo}
+        EM[Email Module]
     end
 
     subgraph Infra["Infrastructure Layer"]
@@ -69,7 +71,6 @@ flowchart TD
             JTA[JWT Adapter]
             GOA[Google OAuth Adapter]
             FOA[Facebook OAuth Adapter]
-            SMTP[Resend Email Provider]
             MTR[Mongoose Mail Token Repo]
             RCR[Redis Cache Repo]
         end
@@ -84,16 +85,16 @@ flowchart TD
     AS --> ITK
     AS --> US
     AS --> OF
+    AS -. "emits" .-> EB((EventBus))
     
     %% Service usage
     SS --> ICR
     MTS --> IMR
-    AS --> IES
     OF --> IOP
+    EB -. "notifies" .-> EM[Email Module]
 
     %% Dependency Inversion (Realization)
     JTA -. "implements" .-> ITK
-    SMTP -. "implements" .-> IES
     MTR -. "implements" .-> IMR
     RCR -. "implements" .-> ICR
     GOA -. "implements" .-> IOP
@@ -116,15 +117,17 @@ sequenceDiagram
     participant AS as AuthService
     participant US as UserService
     participant SS as SessionService
-    participant EMAIL as EmailService
-
+    
     C->>AS: register(RegisterDTO)
     AS->>US: create(userProps)
     US-->>AS: SafeUserResponseDTO
     AS->>AS: _createNewSession(user)
     AS->>SS: saveRefreshTokenToCache(sessionData)
-    AS->>EMAIL: sendVerificationEmail(email, token) [Background]
     AS-->>C: AuthResponseDTO (user + tokens)
+    
+    Note over AS, EB: Post-Response Side Effects
+    AS->>EB: emit(USER_CREATED)
+    EB-->>EMAIL: Listener: sendVerificationEmail
 ```
 
 1. **User Creation:** **AuthService** calls **UserService** to persist the new user.
@@ -264,14 +267,14 @@ sequenceDiagram
     participant AS as AuthService
     participant US as UserService
     participant MTS as MailTokenService
-    participant EMAIL as EmailService
 
     Note over C, AS: Flow 1: Request Reset
     C->>AS: forgotPassword(email)
     AS->>US: findByEmail(email, ACTIVE)
     alt User exists
         AS->>MTS: createMailToken(userId, 'RESET_PASSWORD')
-        AS->>EMAIL: sendResetPasswordEmail(email, token)
+        AS->>EB: emit(PASSWORD_RESET_REQUESTED)
+        EB-->>EMAIL: Listener: sendResetPasswordEmail
     end
     AS-->>C: 200 OK (Generic success message)
 

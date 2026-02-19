@@ -35,7 +35,8 @@ const BASE_PATH = '/v1/api';
 function createTestApp(): Express {
   const userRepo = new MongooseUserRepo();
   const hashService = new BcryptHashAdapter();
-  const userService = new UserService({ userRepo, hashService });
+  const eventBus = { emit: jest.fn(), on: jest.fn() } as any;
+  const userService = new UserService({ userRepo, hashService, eventBus });
   const userController = new UserController(userService);
 
   const userRouter = express.Router();

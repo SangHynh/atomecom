@@ -23,6 +23,7 @@ Decoupling of business logic from technical details using the Repository and Ada
 |:---|:---:|:---:|:---|
 | **Database** | `IUserRepository` | `MongooseUserRepository` | Handles user data persistence and queries on **MongoDB**. |
 | **Hash Service** | `IHashService` | `BcryptAdapter` | Manages password security through `hash()` and `compare()` operations. |
+| **Event Bus** | `EventBus` | `Node EventEmitter` | Notifies other modules (e.g., Email) of user lifecycle events. |
 
 ---
 
@@ -36,6 +37,7 @@ flowchart TD
         US[UserService]
         UR{IUserRepository}
         IHS{IHashService}
+        EB((EventBus))
     end
 
     subgraph Infra["Infrastructure Layer"]
@@ -49,6 +51,7 @@ flowchart TD
     UC --> US
     US --> UR
     US --> IHS
+    US -. "emits" .-> EB
 
     %% Dependency Inversion (Realization)
     MUR -. "implements" .-> UR
@@ -70,6 +73,7 @@ sequenceDiagram
     participant S as UserService
     participant R as UserRepo
     participant H as HashService
+    participant EB as EventBus
 
     C->>S: create(CreateUserDTO)
     S->>S: _validateEmailUniqueness
@@ -79,6 +83,7 @@ sequenceDiagram
     S->>S: _toCreateEntity(dto + passwordHash)
     S->>R: create(entityData)
     R-->>S: UserEntity (raw)
+    S->>EB: emit(USER_CREATED)
     S->>S: _toSafeResponse(user)
     S-->>C: SafeUserResponseDTO
 ```

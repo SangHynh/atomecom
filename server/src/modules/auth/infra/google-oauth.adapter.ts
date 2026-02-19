@@ -4,7 +4,7 @@ import {
   UnauthorizedError,
   InternalServerError,
 } from '@shared/core/error.response.js';
-import { OauthProvider } from '@atomecom/shared';
+import { OauthProvider, ErrorAuthCodes } from '@atomecom/shared';
 import logger from '@shared/utils/logger.js';
 import { OAuth2Client } from 'google-auth-library';
 
@@ -32,7 +32,7 @@ export class GoogleProvider implements IOAuthProvider {
       });
       const payload = ticket.getPayload();
       if (!payload) {
-        throw new UnauthorizedError('GOOGLE_TOKEN_PAYLOAD_NOT_FOUND');
+        throw new UnauthorizedError(ErrorAuthCodes.GOOGLE_TOKEN_PAYLOAD_NOT_FOUND);
       }
       const profile: ExternalProfile = {
         providerId: payload.sub,
@@ -46,7 +46,7 @@ export class GoogleProvider implements IOAuthProvider {
       return profile;
     } catch (error) {
       logger.error(`[OAuth][Google] Verification failed: ${error}`);
-      throw new UnauthorizedError('INVALID_GOOGLE_TOKEN');
+      throw new UnauthorizedError(ErrorAuthCodes.INVALID_GOOGLE_TOKEN);
     }
   }
 }
