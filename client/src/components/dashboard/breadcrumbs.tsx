@@ -13,16 +13,13 @@ export function Breadcrumbs() {
   const pathSegments = pathname.split('/').filter((segment) => segment);
 
   const getLabel = (segment: string) => {
-    // Check if translation exists for the segment
-    const key = `users.breadcrumbs.${segment.toLowerCase()}`;
+    const key = `breadcrumbs.${segment.toLowerCase()}`;
     const translated = t(key);
-    
-    // If translated is same as key, it means it's not found (default i18next behavior)
-    // or if it returns blank. We fallback to capitalized segment.
     if (translated === key) {
-      return segment.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      return segment
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (l) => l.toUpperCase());
     }
-    
     return translated;
   };
 
@@ -50,7 +47,7 @@ export function Breadcrumbs() {
               href={href}
               className={cn(
                 'transition-colors hover:text-primary',
-                isLast ? 'text-foreground font-black' : 'text-muted-foreground'
+                isLast ? 'text-foreground font-black' : 'text-muted-foreground',
               )}
             >
               {label}

@@ -53,10 +53,44 @@ export class EmailListener {
 
     // 3. Password Reset Request
     this._eventBus.on(DomainEvents.PASSWORD_RESET_REQUESTED, async (data) => {
+      logger.info(
+        `[${MODULE}][${LAYER}] Received ${DomainEvents.PASSWORD_RESET_REQUESTED} for ${data.email}`,
+      );
       await this._handleEmailTask(data.userId, data.email, 'RESET_PASSWORD');
     });
 
+    // 4. Account Status Changed (Banned, Deactive)
+    this._eventBus.on(DomainEvents.USER_STATUS_CHANGED, async (data) => {
+      logger.info(
+        `[${MODULE}][${LAYER}] Received ${DomainEvents.USER_STATUS_CHANGED} for ${data.email} (Status: ${data.status})`,
+      );
+      await this._handleStatusEmailTask(data.email, data.name, data.status);
+    });
+
+    // 5. Account Deleted
+    this._eventBus.on(DomainEvents.USER_DELETED, async (data) => {
+      await this._handleStatusEmailTask(data.email, data.name, data.status);
+    });
+
     logger.info(`[${MODULE}][${LAYER}] Event listeners initialized`);
+  }
+
+  private async _handleStatusEmailTask(
+    email: string,
+    name: string,
+    status: string,
+  ): Promise<void> {
+    try {
+      await this._emailService.sendStatusChangeEmail(email, name, status);
+      logger.info(
+        `[${MODULE}][${LAYER}][BackgroundMail] Status change (${status}) email sent to ${email}`,
+      );
+    } catch (err) {
+      logger.error(
+        `[${MODULE}][${LAYER}][BackgroundMail] Failed to send status change email to ${email}`,
+        { error: err },
+      );
+    }
   }
 
   private async _handleEmailTask(

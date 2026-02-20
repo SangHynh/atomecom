@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   ErrorAuthCodes,
   ErrorUserCodes,
+  ClientErrorCodes,
 } from '../constants/error.constants.js';
 import { OauthProvider } from '../enums/oauthProvider.enum.js';
 
@@ -10,7 +11,12 @@ export const RegisterRequestSchema = z.object({
   body: z.object({
     name: z.string().min(2, ErrorUserCodes.INVALID_NAME_FORMAT),
     email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT),
-    password: z.string().min(6, ErrorUserCodes.INVALID_PASSWORD_FORMAT),
+    password: z
+      .string()
+      .min(8, ErrorUserCodes.PASSWORD_TOO_SHORT)
+      .regex(/[A-Z]/, ErrorUserCodes.PASSWORD_NEED_UPPERCASE)
+      .regex(/[0-9]/, ErrorUserCodes.PASSWORD_NEED_NUMBER)
+      .regex(/[^a-zA-Z0-9]/, ErrorUserCodes.PASSWORD_NEED_SPECIAL_CHAR),
     phone: z.string().min(10, ErrorUserCodes.INVALID_PHONE_FORMAT).optional(),
     honey_pot: z.string().optional(),
   }),
@@ -57,7 +63,12 @@ export const EmailOnlyRequestSchema = z.object({
 export const ResetPasswordRequestSchema = z.object({
   body: z.object({
     token: z.string().min(1, ErrorAuthCodes.INVALID_OPAQUE_TOKEN),
-    newPassword: z.string().min(6, ErrorUserCodes.INVALID_PASSWORD_FORMAT),
+    newPassword: z
+      .string()
+      .min(8, ErrorUserCodes.PASSWORD_TOO_SHORT)
+      .regex(/[A-Z]/, ErrorUserCodes.PASSWORD_NEED_UPPERCASE)
+      .regex(/[0-9]/, ErrorUserCodes.PASSWORD_NEED_NUMBER)
+      .regex(/[^a-zA-Z0-9]/, ErrorUserCodes.PASSWORD_NEED_SPECIAL_CHAR),
   }),
 });
 
@@ -68,11 +79,11 @@ export const SocialLoginRequestSchema = z.object({
       .string()
       .toUpperCase()
       .refine((val) => Object.values(OauthProvider).includes(val as any), {
-        message: 'OAUTH_PROVIDER_IS_NOT_SUPPORTED',
+        message: ClientErrorCodes.OAUTH_PROVIDER_IS_NOT_SUPPORTED,
       }),
   }),
   body: z.object({
-    token: z.string().min(1, 'OAUTH_TOKEN_IS_REQUIRED'),
+    token: z.string().min(1, ClientErrorCodes.OAUTH_TOKEN_IS_REQUIRED),
   }),
 });
 
@@ -88,8 +99,15 @@ export const registerSchema = z
   .object({
     name: z.string().min(2, ErrorUserCodes.INVALID_NAME_FORMAT),
     email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT),
-    password: z.string().min(6, ErrorUserCodes.INVALID_PASSWORD_FORMAT),
-    confirmPassword: z.string().min(1, 'CONFIRM_PASSWORD_IS_REQUIRED'),
+    password: z
+      .string()
+      .min(8, ErrorUserCodes.PASSWORD_TOO_SHORT)
+      .regex(/[A-Z]/, ErrorUserCodes.PASSWORD_NEED_UPPERCASE)
+      .regex(/[0-9]/, ErrorUserCodes.PASSWORD_NEED_NUMBER)
+      .regex(/[^a-zA-Z0-9]/, ErrorUserCodes.PASSWORD_NEED_SPECIAL_CHAR),
+    confirmPassword: z
+      .string()
+      .min(1, ErrorUserCodes.CONFIRM_PASSWORD_IS_REQUIRED),
     honey_pot: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -99,3 +117,33 @@ export const registerSchema = z
 
 export type LoginSchema = z.infer<typeof loginSchema>;
 export type RegisterSchema = z.infer<typeof registerSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT),
+});
+export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, ErrorAuthCodes.INVALID_OPAQUE_TOKEN),
+    newPassword: z
+      .string()
+      .min(8, ErrorUserCodes.PASSWORD_TOO_SHORT)
+      .regex(/[A-Z]/, ErrorUserCodes.PASSWORD_NEED_UPPERCASE)
+      .regex(/[0-9]/, ErrorUserCodes.PASSWORD_NEED_NUMBER)
+      .regex(/[^a-zA-Z0-9]/, ErrorUserCodes.PASSWORD_NEED_SPECIAL_CHAR),
+    confirmPassword: z
+      .string()
+      .min(1, ErrorUserCodes.CONFIRM_PASSWORD_IS_REQUIRED),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: ErrorUserCodes.PASSWORDS_DO_NOT_MATCH,
+    path: ['confirmPassword'],
+  });
+export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;
+
+// Input types for services (matching server expected body)
+export type ResetPasswordInput = {
+  token: string;
+  newPassword: string;
+};

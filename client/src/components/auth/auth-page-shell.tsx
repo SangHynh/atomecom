@@ -17,11 +17,13 @@ interface AuthPageShellProps {
   /** Card subtitle/description */
   description: string;
   /** Label for the OR-divider between social and email form */
-  dividerLabel: string;
+  dividerLabel?: string;
   /** Whether auth action is loading (disables social buttons) */
   isLoading?: boolean;
+  /** Whether to show social login buttons (default true) */
+  showSocialButtons?: boolean;
   /** Link rendered below the form */
-  footer: ReactNode;
+  footer?: ReactNode;
   children: ReactNode;
 }
 
@@ -34,6 +36,7 @@ export function AuthPageShell({
   description,
   dividerLabel,
   isLoading,
+  showSocialButtons = true,
   footer,
   children,
 }: AuthPageShellProps) {
@@ -49,23 +52,27 @@ export function AuthPageShell({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <SocialAuthButtons isLoading={isLoading ?? false} />
+          {showSocialButtons && (
+            <>
+              <SocialAuthButtons isLoading={isLoading ?? false} />
 
-          {/* OR divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border/60" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase tracking-tighter">
-              <span className="bg-background px-4 text-muted-foreground font-bold">
-                {dividerLabel}
-              </span>
-            </div>
-          </div>
+              {/* OR divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border/60" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase tracking-tighter">
+                  <span className="bg-background px-4 text-muted-foreground font-bold">
+                    {dividerLabel}
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
 
           {children}
 
-          <div className="pt-2 text-center text-sm">{footer}</div>
+          {footer && <div className="pt-2 text-center text-sm">{footer}</div>}
         </CardContent>
       </Card>
     </div>

@@ -24,6 +24,7 @@ describe('UserService', () => {
   let mockUserRepo: jest.Mocked<IUserRepository>;
   let mockHashService: jest.Mocked<IHashService>;
   let mockEventBus: jest.Mocked<EventBus>;
+  let mockCache: any;
 
   const mockUser: UserEntity = {
     id: '507f1f77bcf86cd799439011',
@@ -50,6 +51,7 @@ describe('UserService', () => {
       findByOAuthId: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     };
 
     mockHashService = {
@@ -59,10 +61,18 @@ describe('UserService', () => {
 
     mockEventBus = { emit: jest.fn(), on: jest.fn() } as any;
 
+    mockCache = {
+      get: jest.fn(),
+      set: jest.fn(),
+      has: jest.fn(),
+      countByPattern: jest.fn(),
+    };
+
     userService = new UserService({
       userRepo: mockUserRepo as unknown as IUserRepository,
       hashService: mockHashService as unknown as IHashService,
       eventBus: mockEventBus as any,
+      cache: mockCache,
     });
   });
 
@@ -390,6 +400,111 @@ describe('UserService', () => {
           providers: [{ provider: 'FACEBOOK', providerId: '456' }],
         }),
       );
+    });
+  });
+
+  // ==================== STATUS & EVENTS (New Updates) ====================
+
+  describe('updateStatusAccount', () => {
+    it('should update status and emit USER_STATUS_CHANGED event', async () => {
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockUserRepo.update.mockResolvedValue({
+        ...mockUser,
+        status: USER_STATUS.BANNED,
+      } as UserEntity);
+
+      await userService.updateStatusAccount(mockUser.id!, USER_STATUS.BANNED);
+
+      expect(mockUserRepo.update).toHaveBeenCalledWith(mockUser.id, {
+        status: USER_STATUS.BANNED,
+        version: mockUser.version,
+      });
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'user.status_changed',
+        expect.objectContaining({
+          status: USER_STATUS.BANNED,
+          email: mockUser.email,
+        }),
+      );
+    });
+  });
+
+  describe('updateUser - Status Logic', () => {
+    it('should emit USER_STATUS_CHANGED if status is modified in generic updateUser', async () => {
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockUserRepo.update.mockResolvedValue({
+        ...mockUser,
+        status: USER_STATUS.DEACTIVE,
+      } as UserEntity);
+
+      await userService.updateUser(mockUser.id!, {
+        status: USER_STATUS.DEACTIVE,
+      });
+
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'user.status_changed',
+        expect.objectContaining({ status: USER_STATUS.DEACTIVE }),
+      );
+    });
+
+    it('should NOT emit USER_STATUS_CHANGED if status remains the same', async () => {
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockUserRepo.update.mockResolvedValue(mockUser);
+
+      await userService.updateUser(mockUser.id!, { name: 'New Name' });
+
+      expect(mockEventBus.emit).not.toHaveBeenCalledWith(
+        'user.status_changed',
+        expect.any(Object),
+      );
+    });
+  });
+
+  describe('Redis Session Parsing (Robustness)', () => {
+    it('should parse valid JSON session data', async () => {
+      const jsonSession = JSON.stringify({
+        timestamp: '2026-02-20T10:00:00Z',
+        ip: '1.2.3.4',
+        userAgent: 'Mozilla',
+      });
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockCache.get.mockResolvedValue(jsonSession);
+      mockCache.has.mockResolvedValue(true);
+
+      const result = await userService.findById(mockUser.id!);
+
+      expect(result.lastLoginAt).toEqual(new Date('2026-02-20T10:00:00Z'));
+      expect((result as any).lastIp).toBe('1.2.3.4');
+      expect((result as any).isOnline).toBe(true);
+    });
+
+    it('should fallback to raw string date for legacy session data', async () => {
+      const rawDate = '2026-01-01T12:00:00Z';
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockCache.get.mockResolvedValue(rawDate); // Not JSON
+
+      const result = await userService.findById(mockUser.id!);
+
+      expect(result.lastLoginAt).toEqual(new Date(rawDate));
+      expect((result as any).lastIp).toBe('unknown'); // Fallback default
+    });
+  });
+
+  describe('getStats', () => {
+    it('should return aggregated counts including Redis online count', async () => {
+      mockUserRepo.count.mockResolvedValue(10);
+      mockCache.countByPattern.mockResolvedValue(5);
+
+      const stats = await userService.getStats();
+
+      expect(stats).toEqual({
+        total: 10,
+        active: 5,
+        banned: 10,
+        deactive: 10,
+        verified: 10,
+      });
+      expect(mockCache.countByPattern).toHaveBeenCalledWith('heartbeat:user:*');
     });
   });
 });

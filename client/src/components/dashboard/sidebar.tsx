@@ -12,10 +12,13 @@ import {
   ChevronLeft,
   BarChart3,
   ShieldCheck,
+  Menu,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -51,45 +54,78 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
       {/* Sidebar Content */}
       <motion.aside
         initial={false}
-        animate={{ width: isOpen ? 280 : 80 }}
+        animate={{
+          width: isOpen
+            ? 280
+            : typeof window !== 'undefined' && window.innerWidth >= 1024
+              ? 80
+              : 280,
+          x: isOpen
+            ? 0
+            : typeof window !== 'undefined' && window.innerWidth >= 1024
+              ? 0
+              : -280,
+        }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className={cn(
-          'fixed lg:relative flex flex-col h-full bg-background/80 backdrop-blur-xl border-r border-border/50 z-50 transition-all duration-300 ease-in-out shadow-[4px_0_24px_rgba(0,0,0,0.02)]',
-          !isOpen && 'lg:w-20',
+          'fixed inset-y-0 left-0 bg-background dark:bg-zinc-950 border-r border-border z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex flex-col',
         )}
       >
-        {/* Subtle Background Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] via-transparent to-primary/[0.01] pointer-events-none" />
+        {/* Mobile Spacer - Avoids Toggle overlap */}
+        <div className="h-16 lg:hidden shrink-0" />
+
         {/* Logo Area */}
-        <div className="flex items-center justify-between h-20 px-6">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 ring-1 ring-white/10">
-              <ShieldCheck className="text-white h-6 w-6" />
+        <div
+          className={cn(
+            'flex items-center h-16 shrink-0 transition-all duration-300 px-6',
+            isOpen ? 'justify-between' : 'justify-center px-0',
+          )}
+        >
+          <div className="flex items-center gap-3 overflow-hidden z-10">
+            <div className="h-9 w-9 min-w-[36px] rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30 ring-1 ring-white/10 shrink-0 mx-auto group hover:shadow-violet-500/40 hover:scale-105 transition-all duration-300">
+              <ShieldCheck className="text-white h-5 w-5" />
             </div>
-            {isOpen && (
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70"
-              >
-                ATOME<span className="text-blue-600">COM</span>
-              </motion.span>
-            )}
-          </div>
-          <button
-            onClick={toggle}
-            className="hidden lg:flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted transition-colors"
-          >
-            <ChevronLeft
-              className={cn(
-                'h-5 w-5 transition-transform',
-                !isOpen && 'rotate-180',
+            <AnimatePresence>
+              {isOpen && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
+                  className="text-xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 overflow-hidden whitespace-nowrap"
+                >
+                  ATOME<span className="text-violet-600">COM</span>
+                </motion.span>
               )}
-            />
-          </button>
+            </AnimatePresence>
+          </div>
+
+          {/* Desktop Toggle Button - Floating Position */}
+          <div className="hidden lg:block">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggle}
+              className={cn(
+                'rounded-full hover:bg-muted/50 flex items-center justify-center transition-all bg-background border border-border/50 shadow-sm z-[70]',
+                isOpen
+                  ? 'h-8 w-8 relative'
+                  : 'h-7 w-7 absolute -right-3.5 top-4.5',
+              )}
+            >
+              <motion.div
+                animate={{ rotate: isOpen ? 0 : 180 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ChevronLeft
+                  className={cn('h-4 w-4', !isOpen && 'h-3.5 w-3.5')}
+                />
+              </motion.div>
+            </Button>
+          </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
+        <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -97,19 +133,13 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden',
+                  'flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden h-12 z-10',
                   isActive
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30'
+                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:shadow-sm',
+                  !isOpen && 'lg:px-0 lg:justify-center lg:w-12 lg:mx-auto',
                 )}
               >
-                {isActive && (
-                  <motion.div
-                    layoutId="active-pill"
-                    className="absolute inset-0 bg-white/10"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
                 <item.icon
                   className={cn(
                     'h-5 w-5 shrink-0',
@@ -118,15 +148,18 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
                       : 'group-hover:scale-110 transition-transform',
                   )}
                 />
-                {isOpen && (
-                  <motion.span
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="font-bold text-sm tracking-tight"
-                  >
-                    {item.name}
-                  </motion.span>
-                )}
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.span
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: 'auto' }}
+                      exit={{ opacity: 0, width: 0 }}
+                      className="font-bold text-sm tracking-tight overflow-hidden whitespace-nowrap"
+                    >
+                      {item.name}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
                 {!isOpen && (
                   <div className="absolute left-full ml-4 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-md z-[60]">
                     {item.name}
@@ -136,7 +169,6 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
             );
           })}
         </nav>
-
       </motion.aside>
     </>
   );

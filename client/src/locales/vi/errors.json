@@ -25,6 +25,19 @@
     "INVALID_URL": "Liên kết không hợp lệ.",
     "URL_EXPIRED": "Liên kết đã hết hạn.",
     "VERIFY_ACCOUNT_FAILED": "Xác thực tài khoản thất bại.",
-    "RESET_PASSWORD_FAILED": "Đặt lại mật khẩu thất bại."
+    "RESET_PASSWORD_FAILED": "Đặt lại mật khẩu thất bại.",
+    "PASSWORD_TOO_SHORT": "Mật khẩu quá ngắn.",
+    "PASSWORD_NEED_UPPERCASE": "Mật khẩu cần ít nhất một chữ hoa.",
+    "PASSWORD_NEED_NUMBER": "Mật khẩu cần ít nhất một chữ số.",
+    "PASSWORD_NEED_SPECIAL_CHAR": "Mật khẩu cần ít nhất một ký tự đặc biệt.",
+    "PASSWORDS_DO_NOT_MATCH": "Mật khẩu xác nhận không khớp.",
+    "CONFIRM_PASSWORD_IS_REQUIRED": "Vui lòng xác nhận mật khẩu.",
+    "ACCESS_DENIED_NO_ROLE": "Từ chối truy cập: Người dùng không có vai trò.",
+    "ACCESS_DENIED_INSUFFICIENT_PERMISSIONS": "Bạn không có quyền thực hiện hành động này.",
+    "CANNOT_DELETE_SELF": "Bạn không thể tự xóa chính mình.",
+    "CANNOT_DELETE_OWNER": "Không thể xóa chủ sở hữu hệ thống.",
+    "ONLY_OWNER_CAN_DELETE_ADMINS": "Chỉ chủ sở hữu mới có quyền xóa tài khoản quản trị viên.",
+    "CANNOT_UPDATE_OWNER": "Không thể cập nhật thông tin chủ sở hữu.",
+    "ONLY_OWNER_CAN_UPDATE_ADMINS": "Chỉ chủ sở hữu mới có quyền cập nhật tài khoản quản trị viên."
   }
 }

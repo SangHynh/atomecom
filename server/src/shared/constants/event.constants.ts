@@ -3,6 +3,7 @@ export enum DomainEvents {
   USER_CREATED = 'user.created',
   USER_UPDATED = 'user.updated',
   USER_DELETED = 'user.deleted',
+  USER_STATUS_CHANGED = 'user.status_changed',
   USER_ACTIVITY = 'user.activity',
 
   // Auth Events

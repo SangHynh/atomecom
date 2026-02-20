@@ -1,11 +1,3 @@
-export interface Pagination {
-  totalElements: number;
-  totalPage: number;
-  currentPage: number;
-  elementsPerPage: number;
-}
+import type { Pagination, PaginatedResult } from '@atomecom/shared';
 
-export interface PaginatedResult<T> {
-  data: T[];
-  pagination: Pagination;
-}
+export type { Pagination, PaginatedResult };

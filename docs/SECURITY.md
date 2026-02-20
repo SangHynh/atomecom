@@ -7,23 +7,24 @@ This document outlines the security measures implemented in the Atomecom applica
 We use a dual-token strategy (Access Token & Refresh Token) to balance security and user experience.
 
 ### Client-Side
+
 - **Storage**:
   - `Access Token`: Stored in **memory only** (via `axios` closure). This prevents XSS attacks from easily stealing the token.
-  - `Refresh Token`: Stored in an **HTTP-only, Secure Cookie**. This prevents client-side JavaScript access, mitigating XSS risks.
+  - `Refresh Token`: Stored in an **HTTP-only, Secure Cookie** with `SameSite: strict`. This prevents client-side JavaScript access and cross-site request forgery.
 - **Axios Interceptors**:
-  - **Request**: Automatically attaches the Authorization header (`Bearer <token>`) if an access token exists in memory.
-  - **Response**: Handles `401 Unauthorized` errors globally. If an API call fails due to an expired access token, the interceptor attempts to refresh the token using the HTTP-only cookie.
-    - If refresh is successful: Retries the original request with the new token.
-    - If refresh fails: Logs the user out and redirects to login, preventing infinite loops.
+  - **Proactive Refresh**: Before each request, the client checks the Access Token's expiration. If it's within **30 seconds** of expiring, it triggers an early refresh to prevent 401 errors.
+  - **Queueing Mechanism**: If multiple requests hit a 401 simultaneously, they are queued (`failedQueue`) and only **one** refresh request is sent. Once resolved, all queued requests retry with the new token.
+  - **Automatic Retry**: If a refresh is successful, it retries the original request with the new token. If it fails, the user is logged out.
 - **Auth Initializer**: A dedicated component (`AuthInitializer`) restores the in-memory access token on startup if a valid refresh cookie exists.
 
 ### Server-Side
+
 - **JWT Validation**: Protected routes require a valid `Bearer` token. The `authMiddleware` verifies the token's signature, expiration, and session status in Redis.
 - **JWT Nonce**: Every token includes a unique `nonce` (UUID). This ensures that tokens generated for the same user at the same time are mathematically unique, preventing collisions and rotation issues.
 - **Token Rotation & Reuse Detection**:
   - Every refresh produces a **new** refresh token and invalidates the old one.
-  - The system tracks a history of used tokens (`refreshTokensUsed`) in Redis.
-  - **Panic Button**: If a reuse is detected, the system immediately **revokes all active sessions** for that user.
+  - **Leeway Window**: The system maintains a **30-second leeway** for the most recently rotated token. This prevents race conditions where legitimate parallel requests might use a "just-replaced" token.
+  - **Panic Button**: If a token is reused outside the leeway window, the system immediately **revokes all active sessions** for that user.
 - **Revocation Mechanism**: Sessions can be revoked individually (logout) or globally (breach detection) by deleting the session key in Redis.
 
 ## 2. Anti-Bot & Deceptive Response Noise
@@ -37,6 +38,7 @@ We implement several layers of distraction and detection for malicious actors to
   1. The attacker's IP and User-Agent are logged with a `🚨 [SECURITY]` alert.
   2. The system returns a `200 OK` (to deceive the bot into assuming professional success) but includes a generated "System Integrity Hash".
   3. This "hash" is actually a collection of base64-encoded seamless metadata noise to effectively waste the attacker's resources and analysis time.
+- **Regex Sanitization**: All user-provided search keywords (e.g., in user management) are escaped using an internal `escapeRegExp` utility before being used in MongoDB `$regex` queries. This prevents ReDoS (Regular Expression Denial of Service) and Regex injection attacks.
 
 ## 3. Header Obfuscation & Seamless Metadata
 
@@ -50,8 +52,11 @@ To further obfuscate internal architecture and confuse automated scanners, the s
 ## 4. Opaque Tokens for Sensitive Operations
 
 For high-security one-time operations, we avoid JWTs in favor of **Opaque Tokens**:
+
 - **Usage**: Email Verification and Password Reset.
 - **Implementation**: 128-character high-entropy strings generated via `crypto.randomBytes(64)`.
+- **Password Hashing**: Centralized in `HashService` with standard comparison logic.
+- **Enhanced Complexity**: Enforced via Zod schemas requiring a minimum of 8 characters, at least one uppercase letter, one number, and one special character.
 - **Validation**: Stored in MongoDB with a strict expiration and a `isUsed` flag to prevent replay attacks and ensure one-time consumption.
 
 ## 5. Permission & Account Status (RBAC)

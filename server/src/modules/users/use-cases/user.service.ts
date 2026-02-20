@@ -9,6 +9,7 @@ import type {
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import type {
   CreateUserDTO,
+  DecoratedUser,
   FindAllQueryUserDTO,
   SafeUserResponseDTO,
   UpdateUserDTO,
@@ -23,7 +24,8 @@ import {
 import { OauthProvider } from '@atomecom/shared';
 import { USER_ROLE } from '@atomecom/shared';
 import { USER_STATUS } from '@atomecom/shared';
-import type { PaginatedResult } from '@shared/interfaces/pagination.model.js';
+import type { PaginatedResult } from '@atomecom/shared';
+import logger from '@shared/utils/logger.js';
 
 const LAYER = 'Service';
 const MODULE = 'User';
@@ -81,33 +83,7 @@ export class UserService {
 
     // Decorate with Last Login & Online Status from Redis
     await Promise.all(
-      data.map(async (user) => {
-        const [sessionData, isOnline] = await Promise.all([
-          this._cache.get<any>(`user:last_login:${user.id}`),
-          this._cache.has(`heartbeat:user:${user.id}`),
-        ]);
-
-        if (sessionData) {
-          try {
-            let session = sessionData;
-            if (typeof sessionData === 'string') {
-              session = JSON.parse(sessionData);
-            }
-
-            (user as any).lastLoginAt = new Date(session.timestamp);
-            (user as any).lastIp = session.ip;
-            (user as any).lastDevice = session.userAgent;
-          } catch (e) {
-            console.warn(`[UserService] JSON Parse Error for ${user.id}:`, e);
-            // Fallback for old simple string format
-            (user as any).lastLoginAt = new Date(sessionData);
-          }
-        } else {
-          (user as any).lastLoginAt = user.createdAt;
-        }
-
-        (user as any).isOnline = isOnline;
-      }),
+      data.map((user) => this._decorateWithSessionData(user as DecoratedUser)),
     );
 
     return this._toPaginatedResponse(data, totalElements, dto);
@@ -120,29 +96,10 @@ export class UserService {
     const user = await this._userRepo.findById(id, status);
     if (!user) throw new NotFoundError(ErrorUserCodes.USER_NOT_FOUND);
 
-    // Decorate with Last Login & Online Status from Redis
-    const [sessionJson, isOnline] = await Promise.all([
-      this._cache.get<string>(`user:last_login:${id}`),
-      this._cache.has(`heartbeat:user:${id}`),
-    ]);
+    const decoratedUser = user as DecoratedUser;
+    await this._decorateWithSessionData(decoratedUser);
 
-    if (sessionJson) {
-      try {
-        const session = JSON.parse(sessionJson);
-        (user as any).lastLoginAt = new Date(session.timestamp);
-        (user as any).lastIp = session.ip;
-        (user as any).lastDevice = session.userAgent;
-      } catch (e) {
-        // Fallback for old simple string format
-        (user as any).lastLoginAt = new Date(sessionJson);
-      }
-    } else {
-      (user as any).lastLoginAt = user.createdAt;
-    }
-
-    (user as any).isOnline = isOnline;
-
-    return this._toSafeResponse(user);
+    return this._toSafeResponse(decoratedUser);
   }
 
   /**
@@ -156,8 +113,7 @@ export class UserService {
     status?: USER_STATUS,
   ): Promise<SafeUserResponseDTO | null> {
     const user = await this._userRepo.findByEmail(email, status);
-    if (!user) return null;
-    return this._toSafeResponse(user);
+    return user ? this._toSafeResponse(user) : null;
   }
 
   /**
@@ -168,8 +124,7 @@ export class UserService {
     status?: USER_STATUS,
   ): Promise<SafeUserResponseDTO | null> {
     const user = await this._userRepo.findByPhone(phone, status);
-    if (!user) return null;
-    return this._toSafeResponse(user);
+    return user ? this._toSafeResponse(user) : null;
   }
 
   public async verifyCredentials(
@@ -219,6 +174,7 @@ export class UserService {
       password: passwordHash,
       version: user.version ?? 0,
     });
+    if (!updatedUser) throw new NotFoundError(ErrorUserCodes.USER_NOT_FOUND);
     return this._toSafeResponse(updatedUser);
   }
 
@@ -237,6 +193,7 @@ export class UserService {
       isVerified: false,
       version: existingUser.version ?? 0,
     });
+    if (!updatedUser) throw new NotFoundError(ErrorUserCodes.USER_NOT_FOUND);
     return this._toSafeResponse(updatedUser);
   }
 
@@ -253,6 +210,7 @@ export class UserService {
       phone: newPhone,
       version: existingUser.version ?? 0,
     });
+    if (!user) throw new NotFoundError(ErrorUserCodes.USER_NOT_FOUND);
     return this._toSafeResponse(user);
   }
 
@@ -265,6 +223,20 @@ export class UserService {
       status,
       version: existingUser.version ?? 0,
     });
+    if (!user) throw new NotFoundError(ErrorUserCodes.USER_NOT_FOUND);
+
+    if (user) {
+      this._eventBus.emit(DomainEvents.USER_STATUS_CHANGED, {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        status: user.status,
+      });
+      logger.info(
+        `[${MODULE}][${LAYER}][UpdateStatus] Event ${DomainEvents.USER_STATUS_CHANGED} emitted for user: ${user.email} (New Status: ${user.status})`,
+      );
+    }
+
     return this._toSafeResponse(user);
   }
 
@@ -289,6 +261,17 @@ export class UserService {
     }
 
     const user = await this._userRepo.update(id, updateData);
+    if (!user) throw new NotFoundError(ErrorUserCodes.USER_NOT_FOUND);
+
+    if (user) {
+      this._eventBus.emit(DomainEvents.USER_DELETED, {
+        userId: user.id,
+        email: existingUser.email, // Send to original email
+        name: user.name,
+        status: USER_STATUS.DELETED,
+      });
+    }
+
     return this._toSafeResponse(user);
   }
 
@@ -322,6 +305,7 @@ export class UserService {
       isVerified,
       version: existingUser.version ?? 0,
     });
+    if (!user) throw new NotFoundError(ErrorUserCodes.USER_NOT_FOUND);
 
     return this._toSafeResponse(user);
   }
@@ -348,7 +332,7 @@ export class UserService {
         : Promise.resolve(),
     ]);
 
-    const updateData: any = {
+    const updateData: Partial<UserEntity> = {
       ...dto,
       version: existingUser.version ?? 0,
     };
@@ -359,6 +343,19 @@ export class UserService {
 
     const user = await this._userRepo.update(id, updateData);
     if (!user) throw new NotFoundError(ErrorUserCodes.USER_NOT_FOUND);
+
+    // Emit event if status changed
+    if (dto.status && dto.status !== existingUser.status) {
+      this._eventBus.emit(DomainEvents.USER_STATUS_CHANGED, {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        status: user.status,
+      });
+      logger.info(
+        `[${MODULE}][${LAYER}][UpdateStatus] Event ${DomainEvents.USER_STATUS_CHANGED} emitted for user: ${user.email} (New Status: ${user.status})`,
+      );
+    }
 
     return this._toSafeResponse(user);
   }
@@ -410,7 +407,12 @@ export class UserService {
           // Link new provider to existing account instead of overwriting
           user.providers.push(providerInfo);
 
-          user = await this._userRepo.update(user.id!, {
+          if (!user.id)
+            throw new InternalServerError(
+              ErrorUserCodes.USER_DATA_MAPPING_ERROR,
+            );
+
+          user = await this._userRepo.update(user.id, {
             providers: user.providers,
             avatar: avatar || user.avatar || PLACE_HOLDER_AVATAR,
             version: user.version ?? 0,
@@ -431,13 +433,20 @@ export class UserService {
       user = await this._userRepo.create(newUserData);
     } else {
       // 4. If user exists, update basic profile information if necessary
-      user = await this._userRepo.update(user.id!, {
+      if (!user.id)
+        throw new InternalServerError(ErrorUserCodes.USER_DATA_MAPPING_ERROR);
+
+      user = await this._userRepo.update(user.id, {
         avatar: avatar || user.avatar || PLACE_HOLDER_AVATAR,
         name: name || user.name,
         version: user.version ?? 0,
         // If this login have email, set to verified
         isVerified: user.isVerified || !!email,
       });
+    }
+
+    if (!user) {
+      throw new InternalServerError(ErrorUserCodes.USER_DATA_MAPPING_ERROR);
     }
 
     return this._toSafeResponse(user);
@@ -468,23 +477,57 @@ export class UserService {
    * Domain Entity -> Safe Response
    * Converts a UserEntity to a SafeUserResponseDTO for client-side consumption.
    */
-  private _toSafeResponse(user: UserEntity | null): SafeUserResponseDTO {
-    const userObj = (user as any).toObject ? (user as any).toObject() : user;
-    const { password, __v, ...safeData } = userObj;
+  private _toSafeResponse(user: UserEntity): SafeUserResponseDTO {
+    const userObj =
+      'toObject' in user && typeof user.toObject === 'function'
+        ? (user.toObject() as DecoratedUser)
+        : ({ ...user } as DecoratedUser);
 
-    /**
-     * PREVENT DUMMY EMAIL EXPOSURE:
-     * For OAuth users without a provided email, the system generates a placeholder
-     * email (e.g., facebook_123@atomecom.dummy) to satisfy DB UNIQUE constraints.
-     * * When returning data to the client, if 'isEmailMissing' is true, we mask this
-     * dummy email as 'null'. This signals the Frontend to prompt the user for
-     * a valid email address.
-     */
-    if (safeData.isEmailMissing) {
-      safeData.email = null;
+    const { password, ...safeData } = userObj;
+
+    const result = safeData as SafeUserResponseDTO;
+
+    // Mask dummy email
+    if (result.isEmailMissing) {
+      result.email = null;
     }
 
-    return safeData as SafeUserResponseDTO;
+    return result;
+  }
+
+  /**
+   * Decorates a user entity with transient data from Redis (last login, online status)
+   */
+  private async _decorateWithSessionData(user: DecoratedUser): Promise<void> {
+    const [sessionData, isOnline] = await Promise.all([
+      this._cache.get<string | object>(`user:last_login:${user.id}`),
+      this._cache.has(`heartbeat:user:${user.id}`),
+    ]);
+
+    user.isOnline = isOnline;
+
+    if (!sessionData) {
+      user.lastLoginAt = user.createdAt || new Date();
+      return;
+    }
+
+    try {
+      let session: any = sessionData;
+      if (
+        typeof sessionData === 'string' &&
+        sessionData.trim().startsWith('{')
+      ) {
+        session = JSON.parse(sessionData);
+      }
+
+      user.lastLoginAt = new Date(session.timestamp || session);
+      user.lastIp = session.ip || 'unknown';
+      user.lastDevice = session.userAgent || 'unknown';
+    } catch (e) {
+      user.lastLoginAt = new Date(sessionData as string);
+      user.lastIp = 'unknown';
+      user.lastDevice = 'unknown';
+    }
   }
 
   /**
@@ -503,7 +546,7 @@ export class UserService {
       data: sanitizedData,
       pagination: {
         totalElements: total,
-        totalPage: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limit),
         currentPage: Number(dto.page) || 1,
         elementsPerPage: limit,
       },

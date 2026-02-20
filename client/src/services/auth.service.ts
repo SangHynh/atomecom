@@ -4,6 +4,7 @@ import {
   LoginInput,
   RefreshTokenInput,
   SignUpInput,
+  ResetPasswordInput,
 } from '@atomecom/shared';
 
 export const AuthService = {
@@ -37,6 +38,16 @@ export const AuthService = {
     const response = await api.post<AuthResponse>(`auth/social/${provider}`, {
       token,
     });
+    return response.data;
+  },
+
+  forgotPassword: async (email: string) => {
+    const response = await api.post('auth/forgot-password', { email });
+    return response.data;
+  },
+
+  resetPassword: async (data: ResetPasswordInput) => {
+    const response = await api.post('auth/reset-password', data);
     return response.data;
   },
 };

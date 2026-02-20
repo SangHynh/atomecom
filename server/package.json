@@ -15,7 +15,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "check": "tsc --noEmit",
-    "genkey": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\""
+    "genkey": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
+    "seed:user": "tsx src/modules/users/_test/seed/user.seeder.ts"
   },
   "keywords": [],
   "author": "",
@@ -53,6 +54,7 @@
     "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.0",
     "@eslint/js": "^9.39.2",
+    "@faker-js/faker": "^10.3.0",
     "@types/bcrypt": "^6.0.0",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.10",

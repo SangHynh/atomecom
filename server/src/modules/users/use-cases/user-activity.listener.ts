@@ -70,7 +70,12 @@ export class UserActivityListener {
     try {
       const key = `user:last_login:${userId}`;
       const now = new Date().toISOString();
-      await this._cache.set(key, now, 3600 * 24 * 30);
+      const sessionData = {
+        timestamp: now,
+        ip: 'unknown',
+        userAgent: 'unknown',
+      };
+      await this._cache.set(key, sessionData, 3600 * 24 * 30);
     } catch (error) {
       console.error(
         '[UserActivityListener] Failed to update last login in cache:',

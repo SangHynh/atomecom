@@ -56,7 +56,7 @@ export function Hero() {
             variants={fadeInUp}
             className="flex flex-col gap-4 sm:flex-row sm:justify-center w-full px-6 sm:px-0"
           >
-            <Link href="/login" className="w-full sm:w-auto">
+            <Link href="/home" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 className="group w-full sm:w-auto h-12 px-10 font-bold rounded-xl shadow-xl shadow-primary/20 transition-all duration-500 hover:scale-110 active:scale-95 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 border-none text-white cursor-pointer relative overflow-hidden group"

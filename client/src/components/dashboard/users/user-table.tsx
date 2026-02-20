@@ -66,22 +66,37 @@ function SortableTableHead({
   className,
   children,
 }: SortableTableHeadProps) {
+  const isActive = sortField === field;
   return (
     <TableHead
-      className={`py-3 px-4 font-bold text-xs uppercase tracking-wide text-muted-foreground cursor-pointer group hover:text-primary transition-colors ${className ?? ''}`}
+      className={cn(
+        'sticky top-0 z-20 py-4 px-4 font-bold text-[11px] uppercase tracking-wider cursor-pointer group transition-all duration-200 border-b',
+        'bg-muted/90 dark:bg-zinc-900 border-border/60 hover:bg-muted',
+        isActive
+          ? 'text-violet-600 border-b-violet-500/30'
+          : 'text-muted-foreground/60 hover:text-muted-foreground border-b-border/30',
+        className ?? '',
+      )}
       onClick={() => onSort(field)}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         {children}
-        {sortField === field ? (
-          sortOrder === 'asc' ? (
-            <ArrowUp className="h-4 w-4" />
+        <span
+          className={cn(
+            'transition-all duration-200',
+            isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-60',
+          )}
+        >
+          {isActive ? (
+            sortOrder === 'asc' ? (
+              <ArrowUp className="h-3 w-3 text-primary" />
+            ) : (
+              <ArrowDown className="h-3 w-3 text-primary" />
+            )
           ) : (
-            <ArrowDown className="h-4 w-4" />
-          )
-        ) : (
-          <ArrowUpDown className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-        )}
+            <ArrowUpDown className="h-3 w-3" />
+          )}
+        </span>
       </div>
     </TableHead>
   );
@@ -161,50 +176,40 @@ export function UserTable({
     return canManageUser(targetUser);
   };
   return (
-    <div className="flex flex-col rounded-2xl border border-border/50 bg-background/50 backdrop-blur-md overflow-hidden shadow-xl shadow-primary/5 h-fit max-h-full">
-      <div className="flex-1 overflow-auto">
+    <div className="flex flex-col rounded-2xl border border-border/40 bg-background/60 backdrop-blur-md overflow-hidden shadow-2xl shadow-black/5 ring-1 ring-border/20 flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         <Table>
-          <TableHeader className="bg-muted/30">
-            <TableRow className="hover:bg-transparent border-border/40">
-              <SortableTableHead
-                field="name"
-                sortField={sortField}
-                sortOrder={sortOrder}
-                onSort={onSort}
-              >
+          <TableHeader>
+            <TableRow className="hover:bg-transparent border-0">
+              <TableHead className="sticky top-0 z-20 bg-muted/90 dark:bg-zinc-900 py-4 px-4 font-bold text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border/60">
                 {t('users.table.columns.user')}
-              </SortableTableHead>
+              </TableHead>
               {visibleColumns.includes('role') && (
-                <TableHead className="py-3 px-4 font-bold text-xs uppercase tracking-wide text-muted-foreground">
+                <TableHead className="sticky top-0 z-10 bg-muted/90 dark:bg-zinc-900 py-4 px-4 font-bold text-[11px] uppercase tracking-wider text-muted-foreground hidden md:table-cell border-b border-border/60">
                   {t('users.table.columns.role')}
                 </TableHead>
               )}
               {visibleColumns.includes('status') && (
-                <TableHead className="py-3 px-4 font-bold text-xs uppercase tracking-wide text-muted-foreground">
+                <TableHead className="sticky top-0 z-20 bg-muted/90 dark:bg-zinc-900 py-4 px-4 font-bold text-[11px] uppercase tracking-wider text-muted-foreground hidden sm:table-cell border-b border-border/60">
                   {t('users.table.columns.status')}
                 </TableHead>
               )}
               {visibleColumns.includes('lastLogin') && (
-                <TableHead className="py-3 px-4 font-bold text-xs uppercase tracking-wide text-muted-foreground">
+                <TableHead className="sticky top-0 z-10 bg-muted/90 dark:bg-zinc-900 py-4 px-4 font-bold text-[11px] uppercase tracking-wider text-muted-foreground hidden md:table-cell border-b border-border/60">
                   {t('users.table.columns.last_login')}
                 </TableHead>
               )}
               {visibleColumns.includes('activity') && (
-                <TableHead className="py-3 px-4 font-bold text-xs uppercase tracking-wide text-muted-foreground">
+                <TableHead className="sticky top-0 z-20 bg-muted/90 dark:bg-zinc-900 py-4 px-4 font-bold text-[11px] uppercase tracking-wider text-muted-foreground hidden lg:table-cell border-b border-border/60">
                   {t('users.table.columns.activity')} (7d)
                 </TableHead>
               )}
               {visibleColumns.includes('joined') && (
-                <SortableTableHead
-                  field="createdAt"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={onSort}
-                >
+                <TableHead className="sticky top-0 z-10 bg-muted/90 dark:bg-zinc-900 py-4 px-4 font-bold text-[11px] uppercase tracking-wider text-muted-foreground hidden xl:table-cell border-b border-border/60">
                   {t('users.table.columns.joined')}
-                </SortableTableHead>
+                </TableHead>
               )}
-              <TableHead className="py-3 px-4 text-right font-bold text-xs uppercase tracking-wide text-muted-foreground">
+              <TableHead className="sticky top-0 z-20 bg-muted/90 dark:bg-zinc-900 py-4 px-4 text-right font-bold text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border/60">
                 {t('users.table.columns.actions')}
               </TableHead>
             </TableRow>
@@ -223,27 +228,27 @@ export function UserTable({
                     </div>
                   </TableCell>
                   {visibleColumns.includes('role') && (
-                    <TableCell className="py-3 px-4">
+                    <TableCell className="py-3 px-4 hidden md:table-cell">
                       <Skeleton className="h-4 w-20" />
                     </TableCell>
                   )}
                   {visibleColumns.includes('status') && (
-                    <TableCell className="py-3 px-4">
+                    <TableCell className="py-3 px-4 hidden sm:table-cell">
                       <Skeleton className="h-4 w-24" />
                     </TableCell>
                   )}
                   {visibleColumns.includes('lastLogin') && (
-                    <TableCell className="py-3 px-4">
+                    <TableCell className="py-3 px-4 hidden md:table-cell">
                       <Skeleton className="h-4 w-28" />
                     </TableCell>
                   )}
                   {visibleColumns.includes('activity') && (
-                    <TableCell className="py-3 px-4">
+                    <TableCell className="py-3 px-4 hidden lg:table-cell">
                       <Skeleton className="h-4 w-24" />
                     </TableCell>
                   )}
                   {visibleColumns.includes('joined') && (
-                    <TableCell className="py-3 px-4">
+                    <TableCell className="py-3 px-4 hidden xl:table-cell">
                       <Skeleton className="h-4 w-28" />
                     </TableCell>
                   )}
@@ -264,15 +269,15 @@ export function UserTable({
               users.map((user, index) => (
                 <TableRow
                   key={user.id}
-                  className="group hover:bg-blue-600/[0.03] transition-colors border-border/40 cursor-pointer"
+                  className="group relative even:bg-violet-500/[0.05] odd:bg-transparent hover:bg-violet-500/10 data-[state=selected]:bg-violet-500/15 transition-all duration-200 border-border/30 cursor-pointer"
                   onClick={() => onViewDetails(user)}
                 >
-                  <TableCell className="py-4 px-4">
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        <Avatar className="h-10 w-10 border border-primary/20 ring-2 ring-background ring-offset-1 transition-transform group-hover:scale-105">
+                  <TableCell className="py-3.5 px-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="relative shrink-0">
+                        <Avatar className="h-9 w-9 border-2 border-background ring-1 ring-border/40 group-hover:ring-primary/30 transition-all duration-200 shadow-sm group-hover:shadow-md group-hover:shadow-primary/10">
                           <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-black text-sm">
                             {user.name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -283,41 +288,42 @@ export function UserTable({
                           </span>
                         )}
                       </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-sm tracking-tight text-foreground group-hover:text-primary transition-colors">
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className="font-bold text-[15px] tracking-tight text-foreground group-hover:text-primary transition-colors duration-150 truncate">
                           {user.name}
                         </span>
-                        <span className="text-xs text-muted-foreground font-medium">
+                        <span className="text-[13px] text-muted-foreground font-medium truncate">
                           {maskEmail(user.email)}
                         </span>
                       </div>
                     </div>
                   </TableCell>
                   {visibleColumns.includes('role') && (
-                    <TableCell className="py-4 px-4">
+                    <TableCell className="py-4 px-4 hidden md:table-cell">
                       <div className="flex items-center gap-2">
                         {user.role === USER_ROLE.ADMIN ||
                         user.role === USER_ROLE.OWNER ? (
-                          <Shield className="h-4 w-4 text-primary" />
+                          <Badge
+                            variant="outline"
+                            className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 shadow-sm shadow-amber-500/5 ring-1 ring-amber-500/20"
+                          >
+                            <Shield className="h-3 w-3 mr-1.5" />
+                            {t(`users.table.roles.${user.role.toLowerCase()}`)}
+                          </Badge>
                         ) : (
-                          <UserIcon className="h-4 w-4 text-muted-foreground" />
+                          <Badge
+                            variant="outline"
+                            className="bg-muted/50 text-muted-foreground border-border/50 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 shadow-sm ring-1 ring-border/50"
+                          >
+                            <UserIcon className="h-3 w-3 mr-1.5" />
+                            {t(`users.table.roles.${user.role.toLowerCase()}`)}
+                          </Badge>
                         )}
-                        <span
-                          className={cn(
-                            'text-xs font-bold uppercase tracking-wider',
-                            user.role === USER_ROLE.ADMIN ||
-                              user.role === USER_ROLE.OWNER
-                              ? 'text-primary'
-                              : 'text-muted-foreground',
-                          )}
-                        >
-                          {t(`users.table.roles.${user.role.toLowerCase()}`)}
-                        </span>
                       </div>
                     </TableCell>
                   )}
                   {visibleColumns.includes('status') && (
-                    <TableCell className="py-4 px-4">
+                    <TableCell className="py-4 px-4 hidden sm:table-cell">
                       <div
                         className="flex flex-col gap-1.5"
                         onClick={(e) => e.stopPropagation()}
@@ -325,7 +331,7 @@ export function UserTable({
                         {user.isVerified ? (
                           <Badge
                             variant="outline"
-                            className="w-fit bg-emerald-500/10 text-emerald-600 border-emerald-500/10 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 shadow-sm shadow-emerald-500/5 ring-1 ring-emerald-500/20"
+                            className="w-fit bg-emerald-500/10 text-emerald-600 border-emerald-500/10 text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 shadow-sm shadow-emerald-500/5 ring-1 ring-emerald-500/20"
                           >
                             <CheckCircle2 className="h-3 w-3 mr-1.5" />
                             {t('users.table.status.verified')}
@@ -333,7 +339,7 @@ export function UserTable({
                         ) : (
                           <Badge
                             variant="outline"
-                            className="w-fit bg-amber-500/10 text-amber-600 border-amber-500/10 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 shadow-sm shadow-amber-500/5 ring-1 ring-amber-500/20 transition-all hover:bg-amber-500/20"
+                            className="w-fit bg-amber-500/10 text-amber-600 border-amber-500/10 text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 shadow-sm shadow-amber-500/5 ring-1 ring-amber-500/20 transition-all hover:bg-amber-500/20"
                           >
                             <Clock className="h-3 w-3 mr-1.5" />
                             {t('users.table.status.pending')}
@@ -348,7 +354,7 @@ export function UserTable({
                             <Badge
                               variant="outline"
                               className={cn(
-                                'w-fit text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 shadow-sm ring-1 transition-all',
+                                'w-fit text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 shadow-sm ring-1 transition-all',
                                 canManageUser(user)
                                   ? 'cursor-pointer hover:scale-105 active:scale-95'
                                   : 'cursor-not-allowed opacity-80',
@@ -384,7 +390,7 @@ export function UserTable({
                             align="start"
                             className="w-40 rounded-xl border-border/50 backdrop-blur-xl bg-background/95 p-1 shadow-2xl"
                           >
-                            <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest px-2 py-1.5 opacity-50">
+                            <DropdownMenuLabel className="text-[11px] font-black uppercase tracking-widest px-2 py-1.5 opacity-60">
                               {t('users.table.actions.set_status')}
                             </DropdownMenuLabel>
                             <DropdownMenuItem
@@ -394,7 +400,7 @@ export function UserTable({
                                 })
                               }
                               className={cn(
-                                'rounded-lg text-[10px] font-bold uppercase tracking-widest gap-2 py-2 cursor-pointer transition-colors',
+                                'rounded-lg text-[11px] font-bold uppercase tracking-widest gap-2 py-2 cursor-pointer transition-colors',
                                 user.status === USER_STATUS.ACTIVE
                                   ? 'bg-blue-600/10 text-blue-600 focus:bg-blue-600/20 focus:text-blue-700'
                                   : 'focus:bg-blue-600/10 focus:text-blue-600',
@@ -443,7 +449,7 @@ export function UserTable({
                     </TableCell>
                   )}
                   {visibleColumns.includes('lastLogin') && (
-                    <TableCell className="py-4 px-4">
+                    <TableCell className="py-4 px-4 hidden md:table-cell">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="h-4 w-4 text-orange-500" />
                         <span className="text-xs font-bold uppercase tracking-wide">
@@ -457,7 +463,7 @@ export function UserTable({
                     </TableCell>
                   )}
                   {visibleColumns.includes('activity') && (
-                    <TableCell className="py-4 px-4">
+                    <TableCell className="py-4 px-4 hidden lg:table-cell">
                       <div className="h-8 w-24 opacity-60 group-hover:opacity-100 transition-opacity">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={activityData[index]}>
@@ -474,7 +480,7 @@ export function UserTable({
                     </TableCell>
                   )}
                   {visibleColumns.includes('joined') && (
-                    <TableCell className="py-4 px-4">
+                    <TableCell className="py-4 px-4 hidden xl:table-cell">
                       <span className="text-xs font-bold text-muted-foreground uppercase opacity-70">
                         {format(new Date(user.createdAt), 'MMM dd, yyyy')}
                       </span>
@@ -490,7 +496,7 @@ export function UserTable({
                           variant="ghost"
                           size="icon"
                           onClick={() => onEdit(user)}
-                          className="h-8 w-8 rounded-lg hover:bg-blue-600/10 hover:text-blue-600 transition-colors"
+                          className="h-8 w-8 rounded-lg hover:bg-violet-600/10 hover:text-violet-600 transition-colors cursor-pointer"
                           title={t('users.table.actions.edit')}
                         >
                           <Edit className="h-3.5 w-3.5" />
@@ -505,70 +511,128 @@ export function UserTable({
         </Table>
       </div>
 
-      {/* Integrated Pagination Footer */}
+      {/* Integrated Pagination Footer - Desktop Only */}
       {pagination && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/20 backdrop-blur-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                {t('users.table.pagination.show')}
-              </span>
-              <select
-                value={pagination.limit}
-                onChange={(e) =>
-                  pagination.onLimitChange(Number(e.target.value))
-                }
-                className="bg-transparent border border-border/50 rounded-lg text-[10px] font-black py-1 px-1.5 focus:outline-none focus:ring-1 focus:ring-primary transition-all cursor-pointer"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </select>
-            </div>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest hidden sm:inline opacity-70">
-              {users.length} {t('users.table.pagination.of')}{' '}
-              {pagination.totalElements} {t('users.title')}
+        <div className="hidden sm:flex items-center px-5 py-3 border-t border-border/30 bg-muted/10 backdrop-blur-sm">
+          {/* Left spacer for count */}
+          <div className="flex-1 flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-foreground/80">
+            <span className="text-primary">{users.length}</span>
+            <span className="text-muted-foreground/60 font-medium lowercase italic px-0.5">
+              {t('users.table.pagination.of')}
+            </span>
+            <span className="text-primary">{pagination.totalElements}</span>
+            <span className="ml-1 text-muted-foreground/80">
+              {t('users.title')}
             </span>
           </div>
 
-          <div className="flex items-center gap-1">
+          {/* Centered Pagination */}
+          <div className="flex items-center gap-1 flex-shrink-0">
             <Button
-              variant="ghost"
+              variant="outline"
+              size="icon"
+              disabled={pagination.currentPage <= 1}
+              onClick={() => pagination.onPageChange(1)}
+              className="h-8 w-8 rounded-lg border-border/40 hover:bg-violet-500/10 hover:text-violet-600 transition-all disabled:opacity-20 cursor-pointer shadow-sm"
+              title={t('users.table.pagination.first', 'First Page')}
+            >
+              <ChevronLeftIcon className="h-4 w-4 -mr-2" />
+              <ChevronLeftIcon className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
               size="icon"
               disabled={pagination.currentPage <= 1}
               onClick={() =>
                 pagination.onPageChange(pagination.currentPage - 1)
               }
-              className="h-7 w-7 rounded-lg border-border/50 hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30"
+              className="h-8 w-8 rounded-lg border-border/40 hover:bg-violet-500/10 hover:text-violet-600 transition-all disabled:opacity-20 cursor-pointer shadow-sm"
             >
-              <ChevronLeftIcon className="h-3.5 w-3.5" />
+              <ChevronLeftIcon className="h-4 w-4" />
             </Button>
 
-            <div className="flex items-center gap-1.5 px-3">
-              <span className="text-[10px] font-black text-primary">
-                {pagination.currentPage}
-              </span>
-              <span className="text-[10px] font-bold text-muted-foreground">
-                /
-              </span>
-              <span className="text-[10px] font-bold text-muted-foreground">
-                {pagination.totalPages || 1}
-              </span>
+            <div className="flex items-center gap-1 mx-1">
+              {(() => {
+                const total = pagination.totalPages;
+                const current = pagination.currentPage;
+                const pages: (number | string)[] = [];
+
+                if (total <= 7) {
+                  for (let i = 1; i <= total; i++) pages.push(i);
+                } else {
+                  if (current <= 4) {
+                    for (let i = 1; i <= 5; i++) pages.push(i);
+                    pages.push('...');
+                    pages.push(total);
+                  } else if (current >= total - 3) {
+                    pages.push(1);
+                    pages.push('...');
+                    for (let i = total - 4; i <= total; i++) pages.push(i);
+                  } else {
+                    pages.push(1);
+                    pages.push('...');
+                    pages.push(current - 1);
+                    pages.push(current);
+                    pages.push(current + 1);
+                    pages.push('...');
+                    pages.push(total);
+                  }
+                }
+
+                return pages.map((p, i) =>
+                  p === '...' ? (
+                    <span
+                      key={`sep-${i}`}
+                      className="text-[10px] font-bold text-muted-foreground/30 px-1"
+                    >
+                      ...
+                    </span>
+                  ) : (
+                    <Button
+                      key={`page-${p}`}
+                      variant={current === p ? 'default' : 'outline'}
+                      size="icon"
+                      onClick={() => pagination.onPageChange(p as number)}
+                      className={cn(
+                        'h-8 w-8 rounded-lg text-xs font-black transition-all shadow-sm cursor-pointer',
+                        current === p
+                          ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 border-none'
+                          : 'border-border/40 hover:bg-violet-500/10 hover:text-violet-600',
+                      )}
+                    >
+                      {p}
+                    </Button>
+                  ),
+                );
+              })()}
             </div>
 
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               disabled={pagination.currentPage >= pagination.totalPages}
               onClick={() =>
                 pagination.onPageChange(pagination.currentPage + 1)
               }
-              className="h-7 w-7 rounded-lg border-border/50 hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30"
+              className="h-8 w-8 rounded-lg border-border/40 hover:bg-violet-500/10 hover:text-violet-600 transition-all disabled:opacity-20 cursor-pointer shadow-sm"
             >
-              <ChevronRightIcon className="h-3.5 w-3.5" />
+              <ChevronRightIcon className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={pagination.currentPage >= pagination.totalPages}
+              onClick={() => pagination.onPageChange(pagination.totalPages)}
+              className="h-8 w-8 rounded-lg border-border/40 hover:bg-violet-500/10 hover:text-violet-600 transition-all disabled:opacity-20 cursor-pointer shadow-sm"
+              title={t('users.table.pagination.last', 'Last Page')}
+            >
+              <ChevronRightIcon className="h-4 w-4" />
+              <ChevronRightIcon className="h-4 w-4 -ml-2" />
             </Button>
           </div>
+
+          {/* Right spacer to balance everything */}
+          <div className="flex-1" />
         </div>
       )}
     </div>

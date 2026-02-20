@@ -6,6 +6,7 @@ import {
   ConflictError,
   InternalServerError,
 } from '@shared/core/error.response.js';
+import { escapeRegExp } from '@shared/utils/regex.util.js';
 
 const LAYER = 'Repository';
 const MODULE = 'User';
@@ -35,9 +36,10 @@ export class MongooseUserRepo implements IUserRepository {
     if (status) query.status = status;
     if (role) query.role = role;
     if (keyword) {
+      const safeKeyword = escapeRegExp(keyword);
       query.$or = [
-        { name: { $regex: keyword, $options: 'i' } },
-        { email: { $regex: keyword, $options: 'i' } },
+        { name: { $regex: safeKeyword, $options: 'i' } },
+        { email: { $regex: safeKeyword, $options: 'i' } },
       ];
     }
 

@@ -19,6 +19,7 @@ describe('EmailListener', () => {
       sendVerificationEmail: jest.fn(),
       sendResetPasswordEmail: jest.fn(),
       resendVerificationEmail: jest.fn(),
+      sendStatusChangeEmail: jest.fn(),
     } as any;
     mockMailTokenService = {
       createMailToken: jest.fn().mockResolvedValue('fake-token'),
@@ -44,6 +45,14 @@ describe('EmailListener', () => {
       DomainEvents.PASSWORD_RESET_REQUESTED,
       expect.any(Function),
     );
+    expect(mockEventBus.on).toHaveBeenCalledWith(
+      DomainEvents.USER_STATUS_CHANGED,
+      expect.any(Function),
+    );
+    expect(mockEventBus.on).toHaveBeenCalledWith(
+      DomainEvents.USER_DELETED,
+      expect.any(Function),
+    );
   });
 
   it('should handle USER_CREATED event', async () => {
@@ -61,6 +70,36 @@ describe('EmailListener', () => {
     expect(mockEmailService.sendVerificationEmail).toHaveBeenCalledWith(
       'test@ex.com',
       'fake-token',
+    );
+  });
+
+  it('should handle USER_STATUS_CHANGED event', async () => {
+    const handler = mockEventBus.on.mock.calls.find(
+      (call) => call[0] === DomainEvents.USER_STATUS_CHANGED,
+    )![1];
+
+    const data = { email: 'user@ex.com', name: 'John', status: 'BANNED' };
+    await handler(data);
+
+    expect(mockEmailService.sendStatusChangeEmail).toHaveBeenCalledWith(
+      'user@ex.com',
+      'John',
+      'BANNED',
+    );
+  });
+
+  it('should handle USER_DELETED event', async () => {
+    const handler = mockEventBus.on.mock.calls.find(
+      (call) => call[0] === DomainEvents.USER_DELETED,
+    )![1];
+
+    const data = { email: 'deleted@ex.com', name: 'John', status: 'DELETED' };
+    await handler(data);
+
+    expect(mockEmailService.sendStatusChangeEmail).toHaveBeenCalledWith(
+      'deleted@ex.com',
+      'John',
+      'DELETED',
     );
   });
 

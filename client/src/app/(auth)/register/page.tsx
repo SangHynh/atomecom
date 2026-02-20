@@ -124,6 +124,12 @@ export default function RegisterPage() {
                       className={INPUT_CLS}
                     />
                   </FormControl>
+                  <p className="text-[10px] text-muted-foreground/60 mt-1 ml-1 leading-tight">
+                    {t(
+                      'auth.password_requirement',
+                      'Password must be at least 8 characters, with uppercase, lowercase and a number.',
+                    )}
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}

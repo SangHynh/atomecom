@@ -33,14 +33,54 @@ import {
   closeDatabase,
   clearDatabase,
 } from '@shared/test/db-helper.js';
+import type { ICacheRepo } from '@shared/interfaces/ICache.repo.js';
 
 const BASE_PATH = '/v1/api';
+
+// Mock Cache Repo (In-memory)
+class MockCacheRepo implements ICacheRepo {
+  private _data = new Map<string, any>();
+  async get<T>(key: string): Promise<T | null> {
+    return this._data.get(key) || null;
+  }
+  async set(key: string, value: any, ttl?: number): Promise<void> {
+    this._data.set(key, value);
+  }
+  async del(key: string): Promise<void> {
+    this._data.delete(key);
+  }
+  async has(key: string): Promise<boolean> {
+    return this._data.has(key);
+  }
+  async countByPattern(pattern: string): Promise<number> {
+    const p = pattern.replace(/\*/g, '.*');
+    const regex = new RegExp('^' + p + '$');
+    let count = 0;
+    for (const key of this._data.keys()) {
+      if (regex.test(key)) count++;
+    }
+    return count;
+  }
+  async deleteByPattern(pattern: string): Promise<void> {
+    const p = pattern.replace(/\*/g, '.*');
+    const regex = new RegExp('^' + p + '$');
+    for (const key of this._data.keys()) {
+      if (regex.test(key)) this._data.delete(key);
+    }
+  }
+}
 
 function createTestApp(): Express {
   const userRepo = new MongooseUserRepo();
   const hashService = new BcryptHashAdapter();
   const eventBus = { emit: jest.fn(), on: jest.fn() } as any;
-  const userService = new UserService({ userRepo, hashService, eventBus });
+  const cacheRepo = new MockCacheRepo();
+  const userService = new UserService({
+    userRepo,
+    hashService,
+    eventBus,
+    cache: cacheRepo,
+  });
   const userController = new UserController(userService);
 
   const userRouter = express.Router();

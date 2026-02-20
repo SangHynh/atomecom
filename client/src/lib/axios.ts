@@ -28,11 +28,79 @@ export const setAccessToken = (token: string | null) => {
 
 export const getAccessToken = () => accessToken;
 
-// Request Interceptor: Attach Token
+const isTokenExpired = (token: string, leewaySeconds: number = 30) => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const exp = payload.exp * 1000;
+    return Date.now() + leewaySeconds * 1000 > exp;
+  } catch (e) {
+    return true;
+  }
+};
+
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+const refreshAccessToken = async () => {
+  if (isRefreshing) {
+    return new Promise((resolve, reject) => {
+      failedQueue.push({ resolve, reject });
+    });
+  }
+
+  isRefreshing = true;
+  try {
+    const response = await axios.post(
+      `${API_URL}/auth/refresh-token`,
+      {},
+      { withCredentials: true },
+    );
+    const { accessToken: newAccessToken } = response.data.data.tokens;
+    setAccessToken(newAccessToken);
+    processQueue(null, newAccessToken);
+    return newAccessToken;
+  } catch (error) {
+    processQueue(error, null);
+    setAccessToken(null);
+    throw error;
+  } finally {
+    isRefreshing = false;
+  }
+};
+
+// Request Interceptor: Attach Token & Proactive Refresh
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
     const token = getAccessToken();
-    if (token && config.headers) {
+
+    // Do NOT proactive refresh for auth endpoints
+    const isAuthEndpoint =
+      config.url?.includes('auth/login') ||
+      config.url?.includes('auth/register') ||
+      config.url?.includes('auth/refresh-token') ||
+      config.url?.includes('auth/logout');
+
+    if (token && !isAuthEndpoint && isTokenExpired(token)) {
+      try {
+        const newToken = (await refreshAccessToken()) as string;
+        if (config.headers) {
+          config.headers.Authorization = `Bearer ${newToken}`;
+        }
+      } catch (e) {
+        // If refresh fails, let the request proceed (it will likely 401 and handled there)
+      }
+    } else if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -46,21 +114,6 @@ api.interceptors.request.use(
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
-
-let isRefreshing = false;
-let failedQueue: any[] = [];
-
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-
-  failedQueue = [];
-};
 
 api.interceptors.response.use(
   (response) => response,
@@ -79,56 +132,18 @@ api.interceptors.response.use(
       !isAuthEndpoint &&
       !originalRequest._retry
     ) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-            }
-            return api(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
-      }
-
       originalRequest._retry = true;
-      isRefreshing = true;
 
       try {
-        // Call refresh endpoint - Cookie will be sent automatically
-        const response = await axios.post(
-          `${API_URL}/auth/refresh-token`,
-          {},
-          { withCredentials: true },
-        );
-
-        const { accessToken: newAccessToken } = response.data.data.tokens;
-
-        // Update global and defaults
-        setAccessToken(newAccessToken);
-        api.defaults.headers.common['Authorization'] =
-          `Bearer ${newAccessToken}`;
+        const newAccessToken = await refreshAccessToken();
 
         if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         }
 
-        processQueue(null, newAccessToken);
         return api(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError, null);
-        setAccessToken(null);
-        if (typeof window !== 'undefined') {
-          // Instead of hard redirect here, we should probably let the component handle it
-          // or at least clear the store first.
-          // window.location.href = '/login';
-        }
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
 

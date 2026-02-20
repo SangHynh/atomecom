@@ -3,7 +3,13 @@ import { AxiosError } from 'axios';
 import { AuthService } from '@/services/auth.service';
 import { useStore } from '@/store/useStore';
 import { setAccessToken } from '@/lib/axios';
-import { LoginInput, SignUpInput, USER_ROLE } from '@atomecom/shared';
+import {
+  LoginSchema,
+  RegisterSchema,
+  ClientErrorCodes,
+  USER_ROLE,
+  ResetPasswordSchema,
+} from '@atomecom/shared';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -38,32 +44,29 @@ export const useAuth = () => {
   };
 
   const loginMutation = useMutation({
-    mutationFn: (data: LoginInput & { honey_pot?: string }) =>
-      AuthService.login(data),
+    mutationFn: (data: LoginSchema) => AuthService.login(data),
     onSuccess: (response) => {
       const { user, tokens } = response.data;
       setAccessToken(tokens.accessToken);
+      localStorage.removeItem('explicitLogout');
       setUser(user);
       toast.success(
         t('auth.login_success', { defaultValue: 'Logged in successfully' }),
       );
 
-      if (
-        (user.role === USER_ROLE.ADMIN || user.role === USER_ROLE.OWNER)
-      ) {
+      if (user.role === USER_ROLE.ADMIN || user.role === USER_ROLE.OWNER) {
         router.push('/admin');
       } else {
         router.push('/');
       }
     },
     onError: (error: AxiosError<{ message: string }>) => {
-      handleAuthError(error, 'auth.login_failed');
+      handleAuthError(error, ClientErrorCodes.LOGIN_FAILED);
     },
   });
 
   const registerMutation = useMutation({
-    mutationFn: (data: SignUpInput & { honey_pot?: string }) =>
-      AuthService.register(data),
+    mutationFn: (data: RegisterSchema) => AuthService.register(data),
     onSuccess: (response) => {
       const { user, tokens } = response.data;
       setAccessToken(tokens.accessToken);
@@ -76,7 +79,7 @@ export const useAuth = () => {
       router.push('/');
     },
     onError: (error: AxiosError<{ message: string }>) => {
-      handleAuthError(error, 'auth.register_failed');
+      handleAuthError(error, ClientErrorCodes.REGISTER_FAILED);
     },
   });
 
@@ -87,6 +90,7 @@ export const useAuth = () => {
     onSettled: () => {
       setAccessToken(null);
       localStorage.removeItem('accessToken'); // Cleanup legacy
+      localStorage.setItem('explicitLogout', 'true'); // Prevent auto-refresh
       logoutStore();
       router.push('/login');
       toast.success(t('auth.logout_success', { defaultValue: 'Logged out' }));
@@ -103,16 +107,44 @@ export const useAuth = () => {
       toast.success(
         t('auth.login_success', { defaultValue: 'Logged in successfully' }),
       );
-      if (
-        (user.role === USER_ROLE.ADMIN || user.role === USER_ROLE.OWNER)
-      ) {
+      if (user.role === USER_ROLE.ADMIN || user.role === USER_ROLE.OWNER) {
         router.push('/admin');
       } else {
         router.push('/');
       }
     },
     onError: (error: AxiosError<{ message: string }>) => {
-      handleAuthError(error, 'auth.social_login_failed');
+      handleAuthError(error, ClientErrorCodes.SOCIAL_LOGIN_FAILED);
+    },
+  });
+
+  const forgotPasswordMutation = useMutation({
+    mutationFn: (email: string) => AuthService.forgotPassword(email),
+    onSuccess: () => {
+      toast.success(
+        t('auth.forgot_password_success', {
+          defaultValue: 'Password reset link sent to your email',
+        }),
+      );
+      router.push('/login');
+    },
+    onError: (error: AxiosError<{ message: string }>) => {
+      handleAuthError(error, 'FAIL');
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: (data: ResetPasswordSchema) => AuthService.resetPassword(data),
+    onSuccess: () => {
+      toast.success(
+        t('auth.reset_password_success', {
+          defaultValue: 'Password character reset successfully',
+        }),
+      );
+      router.push('/login');
+    },
+    onError: (error: AxiosError<{ message: string }>) => {
+      handleAuthError(error, 'FAIL');
     },
   });
 
@@ -128,5 +160,9 @@ export const useAuth = () => {
     isLoggingOut: logoutMutation.isPending,
     socialLogin: socialLoginMutation.mutate,
     isSocialLoggingIn: socialLoginMutation.isPending,
+    forgotPassword: forgotPasswordMutation.mutate,
+    isForgottingPassword: forgotPasswordMutation.isPending,
+    resetPassword: resetPasswordMutation.mutate,
+    isResettingPassword: resetPasswordMutation.isPending,
   };
 };

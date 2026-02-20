@@ -159,14 +159,22 @@ export class AuthService {
   }
 
   public async forgotPassword(email: string): Promise<void> {
+    logger.debug(
+      `[${MODULE}][${LAYER}][ForgotPassword] Looking up user by email: ${email}`,
+    );
     const user = await this._userService.findByEmail(email, USER_STATUS.ACTIVE);
+
     if (user && user.id) {
       this._eventBus.emit(DomainEvents.PASSWORD_RESET_REQUESTED, {
         userId: user.id,
         email: user.email,
       });
       logger.info(
-        `[${MODULE}][${LAYER}][ForgotPassword] Request initiated for email: ${email}. UserID: ${user.id}`,
+        `[${MODULE}][${LAYER}][ForgotPassword] Event ${DomainEvents.PASSWORD_RESET_REQUESTED} emitted for ${email}`,
+      );
+    } else {
+      logger.warn(
+        `[${MODULE}][${LAYER}][ForgotPassword] User not found or not active for email: ${email}`,
       );
     }
     // background task, aldready logged, response 200 at controller

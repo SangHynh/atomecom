@@ -181,14 +181,15 @@ sequenceDiagram
 
 All update methods use **Optimistic Locking** via the `version` field to prevent concurrent data loss.
 
-| Method                | Purpose                 | Side Effects                                                                                  |
-| :-------------------- | :---------------------- | :-------------------------------------------------------------------------------------------- |
-| `changePassword`      | Update Bcrypt hash      | Increments version                                                                            |
-| `changeEmail`         | Update email address    | Resets `isVerified: false`, `isEmailMissing: false`                                           |
-| `changePhone`         | Update phone contact    | Increments version                                                                            |
-| `updateStatusAccount` | Change account state    | `ACTIVE`, `BANNED`, etc.                                                                      |
-| `verifyAccount`       | Set email verified flag | Typically called by Auth Module                                                               |
-| `delete`              | Soft delete account     | Updates `status: DELETED`, masks Email/Phone, clears Social Providers to free up unique index |
+| Method                | Purpose                 | Side Effects                                                                                 |
+| :-------------------- | :---------------------- | :------------------------------------------------------------------------------------------- |
+| `changePassword`      | Update Bcrypt hash      | Increments version                                                                           |
+| `changeEmail`         | Update email address    | Resets `isVerified: false`, `isEmailMissing: false`                                          |
+| `changePhone`         | Update phone contact    | Increments version                                                                           |
+| `updateStatusAccount` | Change account state    | `ACTIVE`, `BANNED`, etc. Emits `USER_STATUS_CHANGED`.                                        |
+| `verifyAccount`       | Set email verified flag | Typically called by Auth Module                                                              |
+| `delete`              | Soft delete account     | Updates `status: DELETED`, masks Email/Phone, clears Social Providers. Emits `USER_DELETED`. |
+| `updateUser`          | Generic user update     | Updates provided fields. Emits `USER_STATUS_CHANGED` ONLY if status is modified.             |
 
 #### Soft Delete Workflow
 
@@ -201,11 +202,28 @@ sequenceDiagram
 
     C->>S: delete(id)
     S->>R: findById(id)
-    Note over S: Mask sensitive data (email, phone)<br/>& Clear providers
-    S->>R: update(id, { status: DELETED, deletedAt: now, email, phone, providers: [] })
-    S->>EB: emit(USER_DELETED)
+    Note over S: Preserve original email for notification.<br/>Mask active sensitive data (email, phone)<br/>& Clear social providers
+    S->>R: update(id, { status: DELETED, deletedAt: now, ... })
+    S->>EB: emit(USER_DELETED, { email: originalEmail, ... })
     S-->>C: void
 ```
+
+#### Status Change Workflow
+
+```mermaid
+sequenceDiagram
+    participant C as AdminController
+    participant S as UserService
+    participant R as UserRepo
+    participant EB as EventBus
+
+    C->>S: updateStatusAccount(id, status)
+    S->>R: update(id, { status })
+    S->>EB: emit(USER_STATUS_CHANGED, { email, status, ... })
+    S-->>C: SafeUserResponseDTO
+```
+
+- **Persistence**: We preserve the user's original email in the event payload before masking in the DB, allowing the Email module to send a final "Good bye" or "Account Deleted" notification to the correct address.
 
 ---
 
@@ -246,6 +264,7 @@ The Users module includes a `UserActivityListener` that responds to system-wide 
 
 - **Event**: `USER_ACTIVITY` (emitted by `authMiddleware`).
 - **Logic**: Updates a Redis key `heartbeat:user:{userId}` with a **5-minute TTL**.
+- **Standardization**: All user activity data utilizes a consistent **JSON format** `{ timestamp, ip, userAgent }` to ensure compatibility across all dashboard filters.
 - **Purpose**: Provides a high-performance "Active Now" count by querying the number of active Redis keys.
 
 #### II. Last Login Tracking (`_handleLastLogin`)
@@ -338,9 +357,9 @@ Inside the Users Module, real-time and fast-access data are managed on Redis to 
 | `heartbeat:user:{userId}`  | Timestamp | 5 Mins  | Marks the user as online (Active Now).                                |
 | `user:last_login:{userId}` | JSON Obj  | 30 Days | Stores `{ timestamp, ip, userAgent }` for session history & displays. |
 
-> [!TIP]
-> **Why use Redis for Session Tracking?**
-> Storing transient session data like IP and Device info in Redis avoids database bloat and audit-trail pollution. The 30-day TTL ensures history is available for admin review without permanent storage.
+> [!IMPORTANT]
+> **Data Standardization & Fallback**
+> To prevent parsing crashes, the system enforces a strict JSON schema for session keys. A **robust fallback mechanism** in `UserService` detects legacy "raw string" dates and handles them gracefully without throwing exceptions, ensuring a seamless migration during system updates.
 
 ### 4.3 Validation Rules
 

@@ -7,10 +7,21 @@ import {
 
 export const UserService = {
   getUsers: async (params?: any) => {
-    const response = await api.get<{ data: User[]; pagination: any }>('users', {
+    const response = await api.get<any>('users', {
       params,
     });
-    return response.data;
+    const { data, metadata } = response.data;
+    return {
+      data,
+      pagination: metadata?.pagination
+        ? {
+            totalElements: metadata.pagination.total_items,
+            totalPages: metadata.pagination.total_pages,
+            currentPage: metadata.pagination.page,
+            elementsPerPage: metadata.pagination.limit,
+          }
+        : null,
+    };
   },
 
   getUserById: async (id: string) => {

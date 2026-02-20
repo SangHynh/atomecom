@@ -1,6 +1,7 @@
 import type {
   IUserSocialLink,
   UserAddress,
+  UserEntity,
 } from '@modules/users/domain/user.entity.js';
 import { OauthProvider } from '@atomecom/shared';
 import { USER_ROLE } from '@atomecom/shared';
@@ -50,7 +51,7 @@ export interface UpsertOAuthUserDTO {
 export interface SafeUserResponseDTO {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   phone?: string;
   role: USER_ROLE;
   status: USER_STATUS;
@@ -79,3 +80,13 @@ export interface SafeOAuthResponseDTO extends Omit<
   isEmailMissing: boolean;
   avatar?: string;
 }
+
+/**
+ * Extension of UserEntity with transient fields from Redis/Session
+ */
+export type DecoratedUser = UserEntity & {
+  lastLoginAt?: Date;
+  lastIp?: string;
+  lastDevice?: string;
+  isOnline?: boolean;
+};

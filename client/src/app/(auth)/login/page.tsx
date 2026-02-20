@@ -99,6 +99,14 @@ export default function LoginPage() {
               </FormItem>
             )}
           />
+          <div className="flex justify-end -mt-2">
+            <Link
+              href="/forgot-password"
+              className="text-xs font-bold text-muted-foreground hover:text-primary transition-colors"
+            >
+              {t('auth.forgot_password', 'Forgot password?')}
+            </Link>
+          </div>
           <HoneyPotField control={form.control} />
           <Button
             type="submit"

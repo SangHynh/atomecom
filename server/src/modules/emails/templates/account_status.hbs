@@ -1,0 +1,114 @@
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <style>
+      body {
+        font-family: sans-serif;
+        line-height: 1.6;
+        color: #333;
+      }
+      .container {
+        width: 80%;
+        margin: 20px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .content {
+        margin-bottom: 30px;
+      }
+      .footer {
+        font-size: 0.8em;
+        color: #777;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+      .active {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      .banned {
+        background-color: #fee2e2;
+        color: #991b1b;
+      }
+      .deactive {
+        background-color: #fef3c7;
+        color: #92400e;
+      }
+      .deleted {
+        background-color: #f3f4f6;
+        color: #374151;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='header'>
+        {{#if logoUrl}}
+          <img
+            src='{{logoUrl}}'
+            alt='{{projectName}} Logo'
+            style='max-width: 150px;'
+          />
+        {{else}}
+          <h1>{{projectName}}</h1>
+        {{/if}}
+      </div>
+      <div class='content'>
+        <p>Hello {{userName}},</p>
+
+        <p>We are writing to inform you about a change in your account status on the
+          <strong>{{projectName}}</strong> platform.</p>
+
+        <div style='margin: 20px 0;'>
+          Current Status:
+          {{#if isActive}}
+            <span class='status-badge active'>Active</span>
+          {{/if}}
+          {{#if isBanned}}
+            <span class='status-badge banned'>Banned</span>
+          {{/if}}
+          {{#if isDeactive}}
+            <span class='status-badge deactive'>Deactivated</span>
+          {{/if}}
+          {{#if isDeleted}}
+            <span class='status-badge deleted'>Deleted</span>
+          {{/if}}
+        </div>
+
+        {{#if isActive}}
+          <p>Great news! Your account has been activated/restored. You can now log in and continue using all our services as usual.</p>
+        {{/if}}
+
+        {{#if isBanned}}
+          <p>Your account has been restricted due to a violation of our Terms of Service. If you believe this is a mistake, please contact our support team for review.</p>
+        {{/if}}
+
+        {{#if isDeactive}}
+          <p>Your account is currently deactivated. You will not be able to log in until it is reactivated by an administrator. Please reach out if you have any questions.</p>
+        {{/if}}
+
+        {{#if isDeleted}}
+          <p>Your account has been successfully removed from our system. Your data has been processed in accordance with our privacy policy.</p>
+        {{/if}}
+
+        <p>Thank you for being part of {{projectName}}.</p>
+      </div>
+      <div class='footer'>
+        <p>This is an automated email, please do not reply directly to this message.</p>
+        <p>&copy; 2026 {{projectName}}. All rights reserved.</p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -25,3 +25,15 @@ export interface ErrorResponse {
   message: string;
   errors?: unknown[];
 }
+
+export interface Pagination {
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  elementsPerPage: number;
+}
+
+export interface PaginatedResult<T> {
+  data: T[];
+  pagination: Pagination;
+}

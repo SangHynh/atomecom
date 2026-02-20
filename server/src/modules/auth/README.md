@@ -215,7 +215,10 @@ sequenceDiagram
 ```
 
 - **Rotation:** Every refresh issues a **new** refresh token and invalidates the old one.
-- **Security:** If an old (already used) Refresh Token is presented, the **entire session** is revoked in Redis, protecting against token theft.
+- **Server-side Leeway:** To prevent race conditions during concurrent requests, the system allows the most recently rotated token to be reused within a **30-second window**.
+- **Security:** If an old Refresh Token is presented outside the leeway window, the **entire session** is revoked in Redis, protecting against token theft.
+- **Client-side Queueing:** The Axios client (interceptors) ensures that parallel 401 requests are queued while a single refresh is in progress, preventing redundant server calls.
+- **Proactive Refresh:** The client automatically triggers a refresh **30 seconds before** the Access Token expires, ensuring a seamless user experience.
 
 ---
 
@@ -451,8 +454,9 @@ When a user authenticates via a social provider (Google/Facebook) that does not 
 The system implements a rigorous session security policy to protect against token theft:
 
 1. **Rotation**: Every time a user refreshes their Access Token, a **new** Refresh Token is issued, and the old one is invalidated.
-2. **Detection**: The system tracks the history of used tokens (`refreshTokensUsed`) within a session (limited to the last 5 tokens for performance).
-3. **Revocation (Panic Button)**: If a client attempts to use a Refresh Token that has already been rotated (exists in history), it indicates a potential breach. The system immediately **revokes ALL active sessions** for that user from Redis to stop the attacker.
+2. **Leeway Window**: The `SessionService` implements a **30-second grace period** for the rotated token. This allows any in-flight requests that were sent just before the rotation to complete successfully without triggering reuse detection.
+3. **Detection**: The system tracks the history of used tokens (`refreshTokensUsed`) within a session.
+4. **Revocation (Panic Button)**: If a client attempts to use an old Refresh Token outside the leeway window, it indicates a breach. The system immediately **revokes ALL active sessions** for that user.
 
 #### IV. Real-time Heartbeat (Activity Tracking)
 

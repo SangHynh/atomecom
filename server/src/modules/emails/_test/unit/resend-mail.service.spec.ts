@@ -109,6 +109,36 @@ describe('ResendMailService', () => {
     );
   });
 
+  describe('sendStatusChangeEmail', () => {
+    it('should send banned email with correct English subject', async () => {
+      mockResendInstance.emails.send.mockResolvedValue({
+        data: { id: 'msg-status-1' },
+      });
+
+      await mailService.sendStatusChangeEmail('john@ex.com', 'John', 'BANNED');
+
+      expect(mockResendInstance.emails.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subject: expect.stringContaining('🚫 ACCOUNT RESTRICTED'),
+        }),
+      );
+    });
+
+    it('should send active (restored) email with correct subject', async () => {
+      mockResendInstance.emails.send.mockResolvedValue({
+        data: { id: 'msg-status-2' },
+      });
+
+      await mailService.sendStatusChangeEmail('john@ex.com', 'John', 'ACTIVE');
+
+      expect(mockResendInstance.emails.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subject: expect.stringContaining('✅ ACCOUNT ACTIVATED'),
+        }),
+      );
+    });
+  });
+
   it('should throw InternalServerError when sending fails', async () => {
     mockResendInstance.emails.send.mockResolvedValue({
       data: null,

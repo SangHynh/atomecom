@@ -145,4 +145,36 @@ export class ResendMailService implements IEmailService {
       html,
     });
   }
+
+  public async sendStatusChangeEmail(
+    to: string,
+    userName: string,
+    status: string,
+  ): Promise<void> {
+    const html = await this._renderTemplate('account_status', {
+      userName,
+      status: status.toLowerCase(),
+      isActive: status.toUpperCase() === 'ACTIVE',
+      isBanned: status.toUpperCase() === 'BANNED',
+      isDeactive: status.toUpperCase() === 'DEACTIVE',
+      isDeleted: status.toUpperCase() === 'DELETED',
+    });
+
+    const statusMap: Record<string, string> = {
+      ACTIVE: '✅ ACCOUNT ACTIVATED',
+      BANNED: '🚫 ACCOUNT RESTRICTED',
+      DEACTIVE: '⚠️ ACCOUNT DEACTIVATED',
+      DELETED: '🗑️ ACCOUNT DELETED',
+    };
+
+    const subject =
+      statusMap[status.toUpperCase()] || '📢 ACCOUNT STATUS UPDATE';
+
+    await this._send({
+      to,
+      subject: `${subject} - ${this.PROJECT_NAME.toUpperCase()}`,
+      priority: '2 (High)',
+      html,
+    });
+  }
 }

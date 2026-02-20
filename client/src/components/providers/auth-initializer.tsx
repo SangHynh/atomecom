@@ -18,13 +18,39 @@ export default function AuthInitializer({
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const initialized = useRef(false);
 
+  // Use refs so the async callback always sees current values
+  // without causing the effect to re-run (which would re-trigger refresh)
+  const isAuthenticatedRef = useRef(isAuthenticated);
+  const logoutRef = useRef(logout);
+  const tRef = useRef(t);
   useEffect(() => {
-    const initializeAuth = async () => {
-      if (!hasHydrated) return;
-      if (initialized.current) return;
-      initialized.current = true;
+    isAuthenticatedRef.current = isAuthenticated;
+  }, [isAuthenticated]);
+  useEffect(() => {
+    logoutRef.current = logout;
+  }, [logout]);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
 
+  // Only run once when the store has hydrated — NOT on every isAuthenticated change.
+  // If isAuthenticated were in the dep array, HMR or store re-hydration could
+  // re-trigger this effect, call refresh on an already-rotated token, get 401, and log out.
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (initialized.current) return;
+    initialized.current = true;
+
+    const initializeAuth = async () => {
       const accessToken = getAccessToken();
+
+      // If user just logged out intentionally, skip refresh cycle
+      if (
+        typeof window !== 'undefined' &&
+        localStorage.getItem('explicitLogout') === 'true'
+      ) {
+        return;
+      }
 
       if (!accessToken) {
         try {
@@ -35,11 +61,12 @@ export default function AuthInitializer({
         } catch (error) {
           console.error('Silent refresh failed', error);
           if (axios.isAxiosError(error) && error.response?.status === 401) {
-            if (isAuthenticated) {
-              logout();
+            if (isAuthenticatedRef.current) {
+              // DO NOT call logout() here again, just clear auth state
+              // as it might re-trigger the route redirect in useAuth.
               setAccessToken(null);
-              // Session expiry is a business-logic event — show toast
-              toast.error(t('auth.session_expired'));
+              logoutRef.current();
+              toast.error(tRef.current('auth.session_expired'));
             }
           }
           // Network/500 errors: do NOT logout, let interceptor handle next request
@@ -50,7 +77,7 @@ export default function AuthInitializer({
     };
 
     initializeAuth();
-  }, [isAuthenticated, logout, hasHydrated, t]);
+  }, [hasHydrated]); // ✅ Only depends on hasHydrated
 
   if (isRefreshing || !hasHydrated) {
     return (

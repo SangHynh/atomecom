@@ -25,6 +25,19 @@
     "INVALID_URL": "Invalid link.",
     "URL_EXPIRED": "Link expired.",
     "VERIFY_ACCOUNT_FAILED": "Verification failed.",
-    "RESET_PASSWORD_FAILED": "Password reset failed."
+    "RESET_PASSWORD_FAILED": "Password reset failed.",
+    "PASSWORD_TOO_SHORT": "Password is too short.",
+    "PASSWORD_NEED_UPPERCASE": "Password needs at least one uppercase letter.",
+    "PASSWORD_NEED_NUMBER": "Password needs at least one number.",
+    "PASSWORD_NEED_SPECIAL_CHAR": "Password needs at least one special character.",
+    "PASSWORDS_DO_NOT_MATCH": "Passwords do not match.",
+    "CONFIRM_PASSWORD_IS_REQUIRED": "Confirm password is required.",
+    "ACCESS_DENIED_NO_ROLE": "Access Denied: User has no role assigned.",
+    "ACCESS_DENIED_INSUFFICIENT_PERMISSIONS": "You do not have permission to perform this action.",
+    "CANNOT_DELETE_SELF": "You cannot delete yourself.",
+    "CANNOT_DELETE_OWNER": "System Owner cannot be deleted.",
+    "ONLY_OWNER_CAN_DELETE_ADMINS": "Only the Owner can delete Administrator accounts.",
+    "CANNOT_UPDATE_OWNER": "System Owner cannot be updated via this interface.",
+    "ONLY_OWNER_CAN_UPDATE_ADMINS": "Only the Owner can update Administrator accounts."
   }
 }

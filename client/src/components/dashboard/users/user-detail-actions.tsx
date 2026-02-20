@@ -11,7 +11,7 @@ import {
   CheckCircle2,
   Ban,
 } from 'lucide-react';
-import { User, USER_ROLE, USER_STATUS } from '@atomecom/shared';
+import { User, USER_ROLE, USER_STATUS, ErrorUserCodes } from '@atomecom/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -115,10 +115,17 @@ export function UserDetailActions({
   };
 
   const handlePasswordReset = () => {
-    if (!newPassword || newPassword.length < 6) {
+    const isValid =
+      newPassword.length >= 8 &&
+      /[A-Z]/.test(newPassword) &&
+      /[0-9]/.test(newPassword) &&
+      /[^a-zA-Z0-9]/.test(newPassword);
+
+    if (!newPassword || !isValid) {
       toast.error(
-        t('users.actions.password_too_short', {
-          defaultValue: 'Password must be at least 6 characters',
+        t(`errors.${ErrorUserCodes.PASSWORD_TOO_SHORT}`, {
+          ns: 'errors',
+          defaultValue: 'Must be 8+ chars, 1 upper, 1 number, 1 special',
         }),
       );
       return;
@@ -147,30 +154,30 @@ export function UserDetailActions({
     <div className="px-2 space-y-6">
       {/* ⚙️ Admin Actions */}
       {canAdminActions && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 px-1">
-            <Settings2 className="h-4 w-4 text-amber-500" />
-            <h3 className="text-xs font-black uppercase tracking-widest text-foreground/80">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="h-px flex-1 bg-gradient-to-r from-amber-500/40 to-transparent" />
+            <h3 className="text-[9px] font-black uppercase tracking-[0.25em] text-muted-foreground/60 shrink-0 flex items-center gap-1.5">
+              <Settings2 className="h-3 w-3 text-amber-500/70" />
               {t('users.details.admin_actions', {
                 defaultValue: 'Admin Actions',
               })}
             </h3>
+            <div className="h-px flex-1 bg-gradient-to-l from-amber-500/40 to-transparent" />
           </div>
 
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.02] overflow-hidden divide-y divide-border/30">
             {/* Status */}
-            <div className="flex items-center justify-between p-3 gap-4">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between p-3 gap-3">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
                   <Shield className="h-4 w-4 text-amber-500" />
                 </div>
-                <div>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-foreground/80">
-                    {t('users.details.status', {
-                      defaultValue: 'Status',
-                    })}
+                <div className="min-w-0">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-foreground/80 truncate">
+                    {t('users.details.status', { defaultValue: 'Status' })}
                   </div>
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-[10px] text-muted-foreground truncate">
                     {t('users.details.status_hint', {
                       defaultValue: 'Control account access',
                     })}
@@ -182,7 +189,7 @@ export function UserDetailActions({
                 onValueChange={handleStatusChange}
                 disabled={isUpdating}
               >
-                <SelectTrigger className="h-8 w-[150px] text-[10px] font-black uppercase tracking-wide border-border/50 rounded-lg">
+                <SelectTrigger className="h-8 w-[130px] shrink-0 text-[10px] font-black uppercase tracking-wide border-border/50 rounded-lg">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -209,18 +216,18 @@ export function UserDetailActions({
             </div>
 
             {/* Email Verified Toggle */}
-            <div className="flex items-center justify-between p-3 gap-4">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between p-3 gap-3">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
                   <ShieldCheck className="h-4 w-4 text-emerald-500" />
                 </div>
-                <div>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-foreground/80">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-foreground/80 truncate">
                     {t('users.form.verified', {
                       defaultValue: 'Email Verified',
                     })}
                   </div>
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-[10px] text-muted-foreground truncate">
                     {user.isVerified
                       ? t('users.details.is_verified', {
                           defaultValue: 'Email is verified',
@@ -253,16 +260,16 @@ export function UserDetailActions({
 
             {/* Role — Owner only */}
             {isOwner && (
-              <div className="flex items-center justify-between p-3 gap-4">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between p-3 gap-3">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   <div className="h-8 w-8 rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0">
                     <UserCog className="h-4 w-4 text-rose-500" />
                   </div>
-                  <div>
-                    <div className="text-[10px] font-black uppercase tracking-widest text-foreground/80">
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-foreground/80 truncate">
                       {t('users.form.role', { defaultValue: 'Role' })}
                     </div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-[10px] text-muted-foreground truncate">
                       {t('users.details.role_hint', {
                         defaultValue: 'Assign permissions',
                       })}
@@ -274,7 +281,7 @@ export function UserDetailActions({
                   onValueChange={handleRoleChange}
                   disabled={isUpdating}
                 >
-                  <SelectTrigger className="h-8 w-[150px] text-[10px] font-black uppercase tracking-wide border-border/50 rounded-lg">
+                  <SelectTrigger className="h-8 w-[130px] shrink-0 text-[10px] font-black uppercase tracking-wide border-border/50 rounded-lg">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -317,16 +324,16 @@ export function UserDetailActions({
               <div className="flex gap-2">
                 <Input
                   type="password"
-                  placeholder="New password (min 6 chars)"
+                  placeholder={t('users.form.password_placeholder')}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="h-8 text-xs bg-background border-border/60 rounded-lg flex-1"
+                  className="h-8 text-[10px] bg-background border-border/60 rounded-lg flex-1"
                 />
                 <Button
                   size="sm"
                   onClick={handlePasswordReset}
                   disabled={
-                    !newPassword || newPassword.length < 6 || isSavingPw
+                    !newPassword || newPassword.length < 8 || isSavingPw
                   }
                   className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-black text-[9px] uppercase tracking-widest"
                 >
@@ -342,14 +349,15 @@ export function UserDetailActions({
 
       {/* 🚨 Danger Zone */}
       {user.role !== USER_ROLE.OWNER && (
-        <div className="pt-4 opacity-80 hover:opacity-100 transition-opacity">
-          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/[0.02] p-4 space-y-3">
-            <div className="flex items-center gap-2 text-rose-600 font-black text-[10px] uppercase tracking-widest">
-              <Shield className="h-3 w-3" />
-              {t('users.details.danger_zone', {
-                defaultValue: 'Danger Zone',
-              })}
-            </div>
+        <div className="pt-2">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="h-px flex-1 bg-gradient-to-r from-rose-500/40 to-transparent" />
+            <h3 className="text-[9px] font-black uppercase tracking-[0.25em] text-rose-500/60 shrink-0">
+              {t('users.details.danger_zone', { defaultValue: 'Danger Zone' })}
+            </h3>
+            <div className="h-px flex-1 bg-gradient-to-l from-rose-500/40 to-transparent" />
+          </div>
+          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/[0.02] hover:bg-rose-500/[0.04] transition-all p-4 space-y-3">
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <p className="text-[10px] font-bold text-foreground">

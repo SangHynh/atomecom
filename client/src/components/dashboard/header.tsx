@@ -15,33 +15,40 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+
+import { motion } from 'framer-motion';
 
 interface HeaderProps {
   onMenuClick: () => void;
+  isOpen: boolean;
 }
 
-export function AdminHeader({ onMenuClick }: HeaderProps) {
+export function AdminHeader({ onMenuClick, isOpen }: HeaderProps) {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
 
   return (
-    <header className="h-16 bg-background/40 backdrop-blur-xl border-b border-border/40 sticky top-0 z-30 px-6 flex items-center justify-between shadow-sm">
+    <header className="h-16 bg-background dark:bg-zinc-950 border-b border-border sticky top-0 z-30 px-6 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-4">
-        <button
-          onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+        {/* Search Bar - Fixed Responsiveness with Safe Margin */}
+        <div
+          className={cn(
+            'hidden md:flex items-center gap-3 bg-muted/20 hover:bg-muted/30 border border-border/40 px-4 py-2 rounded-2xl w-full max-w-[280px] lg:max-w-lg focus-within:ring-4 focus-within:ring-violet-500/10 focus-within:border-violet-500/40 focus-within:bg-background transition-all duration-300 group shadow-sm',
+            !isOpen && 'lg:ml-10',
+          )}
         >
-          <Menu className="h-6 w-6" />
-        </button>
-
-        {/* Search Placeholder */}
-        <div className="hidden md:flex items-center gap-2 bg-muted/30 border border-border/40 px-4 py-2 rounded-xl w-64 lg:w-96 focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:border-blue-500/30 transition-all">
-          <Search className="h-4 w-4 text-muted-foreground" />
+          <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-violet-500 group-focus-within:scale-110 transition-all duration-300" />
           <input
             type="text"
             placeholder={t('header.search_placeholder')}
-            className="bg-transparent border-none focus:outline-none text-xs w-full font-bold uppercase tracking-tight"
+            className="bg-transparent border-none focus:outline-none text-[13px] w-full font-medium placeholder:text-muted-foreground/50 transition-all"
           />
+          <div className="hidden lg:flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-muted/50 border border-border/40 shadow-inner group-focus-within:opacity-0 transition-opacity">
+            <span className="text-[10px] font-bold text-muted-foreground opacity-60">
+              ⌘K
+            </span>
+          </div>
         </div>
       </div>
 
@@ -50,8 +57,8 @@ export function AdminHeader({ onMenuClick }: HeaderProps) {
           <LanguageSelector />
           <ThemeToggle />
           <button className="p-2 rounded-xl hover:bg-muted transition-all relative group">
-            <Bell className="h-5 w-5 text-muted-foreground group-hover:text-blue-500 transition-colors" />
-            <span className="absolute top-2 right-2.5 h-2 w-2 bg-blue-500 rounded-full border-2 border-background shadow-sm" />
+            <Bell className="h-5 w-5 text-muted-foreground group-hover:text-violet-500 transition-colors" />
+            <span className="absolute top-2 right-2.5 h-2 w-2 bg-violet-500 rounded-full border-2 border-background shadow-sm" />
           </button>
         </div>
 
@@ -72,10 +79,10 @@ export function AdminHeader({ onMenuClick }: HeaderProps) {
                 )}
               </div>
               <div className="hidden lg:block text-left">
-                <p className="text-xs font-black tracking-tight uppercase leading-tight">
+                <p className="text-sm font-bold tracking-tight text-foreground leading-tight">
                   {user?.name}
                 </p>
-                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5">
                   {user?.role}
                 </p>
               </div>
@@ -83,16 +90,16 @@ export function AdminHeader({ onMenuClick }: HeaderProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-56 rounded-xl border-border/50 shadow-2xl backdrop-blur-md bg-background/90"
+            className="w-56 rounded-xl border-border/50 shadow-2xl backdrop-blur-2xl bg-background/80"
           >
             <DropdownMenuLabel className="font-bold">
               {t('header.my_account')}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="focus:bg-primary/10 rounded-lg cursor-pointer font-medium">
+            <DropdownMenuItem className="focus:bg-violet-500/10 focus:text-violet-500 rounded-lg cursor-pointer font-medium transition-colors">
               {t('header.profile')}
             </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-primary/10 rounded-lg cursor-pointer font-medium">
+            <DropdownMenuItem className="focus:bg-violet-500/10 focus:text-violet-500 rounded-lg cursor-pointer font-medium transition-colors">
               {t('header.settings')}
             </DropdownMenuItem>
             <DropdownMenuItem

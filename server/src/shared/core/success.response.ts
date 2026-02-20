@@ -98,7 +98,7 @@ export class OK<T = any> extends SuccessResponse<T> {
       metadata: {
         pagination: {
           total_items: result.pagination.totalElements,
-          total_pages: result.pagination.totalPage,
+          total_pages: result.pagination.totalPages,
           page: result.pagination.currentPage,
           limit: result.pagination.elementsPerPage,
         },

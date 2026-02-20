@@ -30,7 +30,7 @@ import {
 } from '@atomecom/shared';
 import { errorHandler } from '@shared/middlewares/error.middleware.js';
 import type { ICacheRepo } from '@shared/interfaces/ICache.repo.js';
-import type { IEmailService } from '@shared/interfaces/IEmail.service.js';
+import type { IEmailService } from '@modules/emails/domain/IEmail.service.js';
 
 // env for JWT
 process.env.ACCESS_TOKEN_SECRET = 'test-access-secret';
@@ -187,7 +187,7 @@ describe('Auth Module - Integration Tests', () => {
   describe('Happy Path', () => {
     const registerDto = {
       email: 'test@example.com',
-      password: 'password123',
+      password: 'Password@123',
       name: 'Test User',
     };
 
@@ -280,7 +280,7 @@ describe('Auth Module - Integration Tests', () => {
     it('1. Token Reuse Detection (Security Rotation)', async () => {
       const regRes = await request(app).post('/auth/register').send({
         email: 'security@test.com',
-        password: 'password123',
+        password: 'Password@123',
         name: 'Sec User',
       });
       // Get RT from cookie
@@ -300,26 +300,38 @@ describe('Auth Module - Integration Tests', () => {
         ?.split('=')[1];
       expect(rt2).toBeDefined();
 
-      // Second Refresh with rt1 (REUSE!)
+      // Second Refresh with rt2 (Valid Rotation)
       const refresh2 = await request(app)
         .post('/auth/refresh-token')
-        .set('Cookie', [`refreshToken=${rt1}`]);
-      expect(refresh2.status).toBe(401);
+        .set('Cookie', [`refreshToken=${rt2}`]);
+      expect(refresh2.status).toBe(200);
 
-      const body = refresh2.body;
-      expect(body.message).toBe(ErrorAuthCodes.TOKEN_REUSED_DETECTION);
-
-      // Verify rt2 is also revoked now
+      // Third Refresh with rt1 (REUSE DETECTION!)
+      // rt1 is now in refreshTokensUsed and NOT the lastRefreshToken anymore
       const refresh3 = await request(app)
         .post('/auth/refresh-token')
-        .set('Cookie', [`refreshToken=${rt2}`]);
+        .set('Cookie', [`refreshToken=${rt1}`]);
       expect(refresh3.status).toBe(401);
+
+      const body = refresh3.body;
+      expect(body.message).toBe(ErrorAuthCodes.TOKEN_REUSED_DETECTION);
+
+      // Verify rt3 is also revoked now
+      const refresh3Cookies = refresh2.get('Set-Cookie');
+      const rt3 = (refresh3Cookies as string[])?.[0]
+        ?.split(';')[0]
+        ?.split('=')[1];
+
+      const refresh4 = await request(app)
+        .post('/auth/refresh-token')
+        .set('Cookie', [`refreshToken=${rt3}`]);
+      expect(refresh4.status).toBe(401);
     });
 
     it('2. Invalid Credentials', async () => {
       await request(app).post('/auth/register').send({
         email: 'wrong@test.com',
-        password: 'password123',
+        password: 'Password@123',
         name: 'User',
       });
 
