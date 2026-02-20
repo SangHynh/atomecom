@@ -297,6 +297,9 @@ export class AuthService {
       ttl,
     );
 
+    // Emit Login Event for EDA tracking (e.g., lastLoginAt)
+    this._eventBus.emit(DomainEvents.USER_LOGGED_IN, { userId: user.id });
+
     return { accessToken, refreshToken };
   }
 

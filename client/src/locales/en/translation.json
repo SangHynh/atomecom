@@ -72,7 +72,9 @@
     "cta_desc": "Enter your email to request early access to our modern Dashboard system. We will review and send access instructions as soon as possible.",
     "cta_placeholder": "Enter your email address...",
     "cta_button": "Request Demo Access",
-    "cta_success": "Your request has been submitted successfully! Admin will review and get back to you via email shortly."
+    "cta_success": "Your request has been submitted successfully! Admin will review and get back to you via email shortly.",
+    "cta_error": "Failed to send request. Please try again later.",
+    "cta_terms": "By registering, you agree to our privacy and security terms."
   },
   "nav": {
     "solutions": "Solutions",
@@ -96,6 +98,227 @@
     "login_failed": "Login failed",
     "register_success": "Account created successfully",
     "register_failed": "Registration failed",
-    "logout_success": "Logged out"
+    "logout_success": "Logged out",
+    "session_expired": "Session expired. Please login again.",
+    "initializing": "Initializing Session...",
+    "social_login_failed": "Social login failed. Please try again.",
+    "back_to_login": "Back to Login",
+    "continue": "Continue"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "products": "Products",
+    "orders": "Orders",
+    "analytics": "Analytics",
+    "settings": "Settings"
+  },
+  "header": {
+    "search_placeholder": "Search resources, users...",
+    "my_account": "My Account",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "title": "Admin Dashboard",
+    "welcome": "Welcome back, {{name}}",
+    "system_status": "System is running smoothly",
+    "actions": {
+      "last_24h": "Last 24 Hours",
+      "download_report": "Download Report",
+      "view_all": "View All"
+    },
+    "sales": {
+      "title": "Sales Overview",
+      "desc": "Revenue generated this week",
+      "category_title": "Category Sales",
+      "category_desc": "Distribution by category"
+    },
+    "orders": {
+      "title": "Recent Orders",
+      "customer": "Customer",
+      "product": "Product",
+      "amount": "Amount",
+      "status": "Status",
+      "delivered": "Delivered",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "cancelled": "Cancelled"
+    },
+    "performance": {
+      "title": "System Performance",
+      "server_load": "Server Load",
+      "api_latency": "API Latency",
+      "error_rate": "Error Rate",
+      "storage_usage": "Storage Usage",
+      "active_sessions": "Active Sessions"
+    }
+  },
+  "users": {
+    "title": "Users Management",
+    "stats": {
+      "total": "Total Users",
+      "growth_hint": "+12% from last month",
+      "active": "Active Now",
+      "verified": "Verified Users",
+      "restricted": "Restricted/Inactive",
+      "realtime": "Real-time",
+      "security": "Security",
+      "total_desc": "Total accounts registered in the system",
+      "active_desc": "Users currently online or active within the last 5 minutes",
+      "verified_desc": "Users who have successfully verified their identity",
+      "restricted_desc": "Currently includes {{banned}} restricted and {{deactive}} inactive accounts."
+    },
+    "table": {
+      "columns": {
+        "user": "User",
+        "role": "Role",
+        "status": "Status",
+        "last_login": "Last Login",
+        "activity": "Activity",
+        "joined": "Joined",
+        "actions": "Actions"
+      },
+      "actions": {
+        "view": "View Details",
+        "edit": "Edit Account",
+        "delete": "Delete User",
+        "active": "Activate Account",
+        "banned": "Ban Account",
+        "deactive": "Deactivate"
+      },
+      "status": {
+        "verified": "Verified",
+        "pending": "Pending",
+        "active": "Active",
+        "banned": "Restricted",
+        "deactive": "Deactive",
+        "deleted": "Deleted"
+      },
+      "pagination": {
+        "show": "Show",
+        "of": "of",
+        "results": "results"
+      },
+      "roles": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "user": "User"
+      },
+      "empty": "No users found",
+      "never": "Never"
+    },
+    "details": {
+      "profile": "User Profile",
+      "contact": "Contact Information",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "not_provided": "Not provided",
+      "metadata": "Account Metadata",
+      "user_id": "User Identifier (UID)",
+      "last_login_at": "Last Login At",
+      "usage": "Usage Stats",
+      "orders": "Total Orders",
+      "spent": "Total Spent",
+      "value": "Account Value",
+      "tier": "Loyalty Tier",
+      "security_session": "Security & Session",
+      "ip": "IP Address",
+      "device": "Last Active Device",
+      "trust": "Security & Trust",
+      "verified_identity": "Verified Identity",
+      "verify_now": "Verify Now",
+      "addresses": "Address Information",
+      "no_addresses": "No addresses registered",
+      "default": "Default",
+      "never_logged_in": "Never logged in",
+      "danger_zone": "Danger Zone",
+      "delete_title": "Delete Account",
+      "delete_warning": "Once deleted, this user will be restricted and their data will be masked.",
+      "admin_actions": "Admin Actions",
+      "status": "Account Status",
+      "status_hint": "Control account access",
+      "is_verified": "Email is verified",
+      "not_verified": "Not yet verified",
+      "role_hint": "Assign system permissions",
+      "reset_password": "Reset Password",
+      "reset_password_hint": "Set a new password for this account",
+      "confirm_role_change": "Are you sure you want to change this user role to {{role}}?",
+      "confirm_verify": "Confirm marking this user as verified?",
+      "confirm_unverify": "Confirm removing verification from this user?",
+      "change_role_title": "Change Role"
+    },
+    "form": {
+      "create": "Create User",
+      "edit": "Edit User",
+      "save": "Save Changes",
+      "processing": "Processing...",
+      "name": "Full Name",
+      "name_placeholder": "Enter full name",
+      "email_placeholder": "user@example.com",
+      "role": "System Role",
+      "role_placeholder": "Select a role",
+      "role_user": "User Account",
+      "role_admin": "Administrator",
+      "role_owner": "Owner",
+      "password": "Password",
+      "password_new": "New Password (Optional)",
+      "password_placeholder": "Minimum 6 characters",
+      "password_keep": "Leave blank to keep current",
+      "verified": "Email Verified",
+      "editing_own_profile": "Your Profile"
+    },
+    "page": {
+      "search_placeholder": "Search by name, email or phone...",
+      "filter": "Filter",
+      "roles": "Roles",
+      "all_roles": "All Roles",
+      "administrators": "Administrators",
+      "customers": "Customers",
+      "account_status": "Status",
+      "all_accounts": "All accounts",
+      "active": "Active",
+      "banned": "Restricted",
+      "deactive": "Deactivated",
+      "reset_filters": "Reset filters",
+      "view": "View",
+      "toggle_columns": "Toggle Columns",
+      "set_status": "Set Status",
+      "syncing": "Syncing Data...",
+      "new_account": "New Account",
+      "status_confirm": "Confirm Status Change",
+      "status_confirm_text": "Are you sure you want to change this user status to {{status}}?",
+      "delete_confirm": "Are you sure you want to delete this user?",
+      "bulk_delete_confirm": "Are you sure you want to delete {{count}} users?",
+      "bulk_delete_success": "Successfully deleted {{count}} users",
+      "create_title": "Create User",
+      "create_desc": "Add a new account to the system."
+    },
+    "actions": {
+      "verified_success": "User marked as verified",
+      "unverified_success": "User marked as unverified",
+      "role_updated": "Role updated successfully",
+      "status_updated": "Status updated successfully",
+      "password_updated": "Password reset successfully",
+      "password_too_short": "Password must be at least 6 characters",
+      "created_success": "User created successfully",
+      "created_failed": "Failed to create user",
+      "updated_success": "User updated successfully",
+      "updated_failed": "Failed to update user",
+      "deleted_success": "User deleted successfully",
+      "deleted_failed": "Failed to delete user"
+    }
+  },
+  "empty": {
+    "title": "No Users Found",
+    "desc_filters": "We couldn't find any users matching your current filters. Try adjusting your criteria.",
+    "desc_search": "We couldn't find any users matching your current search. Try adjusting your criteria.",
+    "clear_filters": "Clear all filters"
+  },
+  "breadcrumbs": {
+    "admin": "Admin",
+    "users": "Users",
+    "dashboard": "Dashboard"
   }
 }

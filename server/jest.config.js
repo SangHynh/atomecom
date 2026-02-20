@@ -6,7 +6,8 @@ export default {
   testMatch: ['**/_test/**/*.spec.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   moduleNameMapper: {
-    '^@shared/utils/logger\\.js$': '<rootDir>/src/shared/utils/__mocks__/logger.ts',
+    '^@shared/utils/logger\\.js$':
+      '<rootDir>/src/shared/utils/__mocks__/logger.ts',
     '^(\\.\\.?/.+)\\.js$': '$1',
     '^(\\.\\./)+app$': '<rootDir>/src/app.ts',
     '^(\\.\\./)+container$': '<rootDir>/src/container.ts',
@@ -43,8 +44,8 @@ export default {
   collectCoverage: true,
   coverageDirectory: 'coverage',
   reporters: [
-     'default',
-     '<rootDir>/src/shared/test/module-summary-reporter.cjs'
+    'default',
+    '<rootDir>/src/shared/test/module-summary-reporter.cjs',
   ],
   coverageReporters: ['json', 'lcov', 'text', 'clover', 'html'],
 };

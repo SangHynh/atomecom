@@ -1,4 +1,4 @@
-// @modules/auth/infra/oauth.factory.ts (Hoặc domain/use-cases nếu ông muốn trừu tượng hoàn toàn)
+// @modules/auth/infra/oauth.factory.ts (Or domain/use-cases if you want full abstraction)
 import type { IOAuthProvider } from '@modules/auth/domain/IOauthProvider.service.js';
 import { OauthProvider } from '@atomecom/shared';
 import { InternalServerError } from '@shared/core/error.response.js';

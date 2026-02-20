@@ -8,6 +8,7 @@ export const validate = (schema: any) =>
       body: req.body,
       query: req.query,
       params: req.params,
+      cookies: req.cookies,
     });
 
     // St2: Set parsed data to request

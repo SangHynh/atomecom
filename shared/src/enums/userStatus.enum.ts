@@ -8,6 +8,6 @@ export enum USER_STATUS {
   // Account is restricted by the system.
   BANNED = 'BANNED',
 
-  // Soft-deleted state. Account is marked for removal
+  // Account is soft deleted.
   DELETED = 'DELETED',
 }

@@ -11,7 +11,12 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslation } from 'react-i18next';
 import { MobileMenu } from './mobile-menu';
-import { Tooltip } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export function Header() {
   const { isAuthenticated, logout, user } = useAuth();
@@ -142,17 +147,24 @@ export function Header() {
               </div>
 
               {/* Logout Action */}
-              <Tooltip content={t('nav.logout')} side="right">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => logout()}
-                  aria-label="Logout"
-                  className="h-9 w-9 rounded-xl border border-destructive/10 text-destructive bg-destructive/5 hover:bg-destructive hover:text-white cursor-pointer transition-all active:scale-95 group/logout shadow-sm"
-                >
-                  <LogOut className="h-4 w-4 transition-all group-hover/logout:-translate-x-0.5 group-hover/logout:text-white" />
-                </Button>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => logout()}
+                      aria-label="Logout"
+                      className="h-9 w-9 rounded-xl border border-destructive/10 text-destructive bg-destructive/5 hover:bg-destructive hover:text-white cursor-pointer transition-all active:scale-95 group/logout shadow-sm"
+                    >
+                      <LogOut className="h-4 w-4 transition-all group-hover/logout:-translate-x-0.5 group-hover/logout:text-white" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>{t('nav.logout')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           )}
 

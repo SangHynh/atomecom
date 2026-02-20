@@ -10,7 +10,13 @@ import { useTranslation } from 'react-i18next';
 
 export const useAuth = () => {
   const router = useRouter();
-  const { setUser, logout: clearStore, user, isAuthenticated } = useStore();
+  const {
+    setUser,
+    logout: logoutStore,
+    user,
+    isAuthenticated,
+    hasHydrated,
+  } = useStore();
   const { t } = useTranslation();
 
   const handleAuthError = (
@@ -42,7 +48,9 @@ export const useAuth = () => {
         t('auth.login_success', { defaultValue: 'Logged in successfully' }),
       );
 
-      if (user.role === USER_ROLE.ADMIN) {
+      if (
+        (user.role === USER_ROLE.ADMIN || user.role === USER_ROLE.OWNER)
+      ) {
         router.push('/admin');
       } else {
         router.push('/');
@@ -79,7 +87,7 @@ export const useAuth = () => {
     onSettled: () => {
       setAccessToken(null);
       localStorage.removeItem('accessToken'); // Cleanup legacy
-      clearStore();
+      logoutStore();
       router.push('/login');
       toast.success(t('auth.logout_success', { defaultValue: 'Logged out' }));
     },
@@ -95,7 +103,13 @@ export const useAuth = () => {
       toast.success(
         t('auth.login_success', { defaultValue: 'Logged in successfully' }),
       );
-      router.push('/');
+      if (
+        (user.role === USER_ROLE.ADMIN || user.role === USER_ROLE.OWNER)
+      ) {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
     },
     onError: (error: AxiosError<{ message: string }>) => {
       handleAuthError(error, 'auth.social_login_failed');
@@ -105,6 +119,7 @@ export const useAuth = () => {
   return {
     user,
     isAuthenticated,
+    hasHydrated,
     login: loginMutation.mutate,
     isLoggingIn: loginMutation.isPending,
     register: registerMutation.mutate,

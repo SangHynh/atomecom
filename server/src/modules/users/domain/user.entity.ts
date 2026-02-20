@@ -31,4 +31,8 @@ export interface UserEntity {
   providers: IUserSocialLink[];
   isExternal?: boolean;
   isEmailMissing: boolean;
+  lastLoginAt?: Date;
+  deletedAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

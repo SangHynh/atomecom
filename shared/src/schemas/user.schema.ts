@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { USER_ROLE } from '../enums/userRole.enum.js';
+import { USER_STATUS } from '../enums/userStatus.enum.js';
 import { ErrorUserCodes } from '../constants/error.constants.js';
 
 export const UserAddressSchema = z.object({
@@ -41,7 +42,49 @@ export const CreateUserRequestSchema = z.object({
   }),
 });
 
-// Update user validation
+// Update user validation (Admin/General)
 export const UpdateUserRequestSchema = z.object({
-  body: CreateUserRequestSchema.shape.body.partial(),
+  body: z.object({
+    name: z.string().min(2, ErrorUserCodes.INVALID_NAME_FORMAT).optional(),
+    email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT).optional(),
+    phone: z.string().min(10, ErrorUserCodes.INVALID_PHONE_FORMAT).optional(),
+    role: z.nativeEnum(USER_ROLE).optional(),
+    status: z.nativeEnum(USER_STATUS).optional(),
+    isVerified: z.boolean().optional(),
+    password: z
+      .string()
+      .min(6, ErrorUserCodes.INVALID_PASSWORD_FORMAT)
+      .optional(),
+    addresses: z.array(UserAddressSchema).optional(),
+  }),
+});
+
+// Update profile validation (for "Me")
+export const UpdateProfileRequestSchema = z.object({
+  body: z.object({
+    name: z.string().min(2, ErrorUserCodes.INVALID_NAME_FORMAT).optional(),
+    avatar: z.string().url().optional(),
+    addresses: z.array(UserAddressSchema).optional(),
+  }),
+});
+
+// Change password validation
+export const ChangePasswordRequestSchema = z.object({
+  body: z.object({
+    newPassword: z.string().min(6, ErrorUserCodes.INVALID_PASSWORD_FORMAT),
+  }),
+});
+
+// Change email validation
+export const ChangeEmailRequestSchema = z.object({
+  body: z.object({
+    newEmail: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT),
+  }),
+});
+
+// Change phone validation
+export const ChangePhoneRequestSchema = z.object({
+  body: z.object({
+    newPhone: z.string().min(10, ErrorUserCodes.INVALID_PHONE_FORMAT),
+  }),
 });

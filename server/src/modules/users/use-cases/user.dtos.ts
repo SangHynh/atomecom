@@ -12,6 +12,9 @@ export interface FindAllQueryUserDTO {
   status?: USER_STATUS;
   keyword?: string;
   role?: USER_ROLE;
+  sortField?: string;
+  sortOrder?: 'asc' | 'desc';
+  isDeleted?: boolean;
 }
 
 export interface CreateUserDTO {
@@ -25,6 +28,12 @@ export interface CreateUserDTO {
 
 export interface UpdateUserDTO {
   name?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
+  role?: USER_ROLE;
+  status?: USER_STATUS;
+  isVerified?: boolean;
   addresses?: UserAddress[];
 }
 
@@ -53,6 +62,10 @@ export interface SafeUserResponseDTO {
   updatedAt: Date;
   isEmailMissing: boolean;
   avatar?: string;
+  lastLoginAt?: string | Date;
+  isOnline?: boolean;
+  lastIp?: string;
+  lastDevice?: string;
 }
 
 export interface SafeOAuthResponseDTO extends Omit<

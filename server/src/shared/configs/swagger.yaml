@@ -75,7 +75,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
 
-  /auth/refresh:
+  /auth/refresh-token:
     post:
       summary: Refresh authentication tokens
       tags: [Auth]
@@ -204,7 +204,7 @@ paths:
       tags: [Auth]
       description: |
         Authenticates a user via a social provider.
-        
+
         **Developer Tools (Local Only):**
         To get a valid social token for testing, use our local Test UI:
         * **Google:** [http://localhost:3636/tools/google](http://localhost:3636/tools/google)
@@ -274,6 +274,91 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /users/stats:
+    get:
+      summary: Get user statistics (Admin)
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Statistical data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    {
+                      type: integer,
+                      description: 'Total users (excluding deleted)',
+                    }
+                  active:
+                    { type: integer, description: 'Users with status ACTIVE' }
+                  restricted:
+                    {
+                      type: integer,
+                      description: 'Total BANNED and DEACTIVE users',
+                    }
+                  verified:
+                    { type: integer, description: 'Users with isVerified true' }
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /users/me:
+    get:
+      summary: Get current authenticated user profile
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /users/me/profile:
+    patch:
+      summary: Update current user profile
+      tags: [User]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                avatar: { type: string }
+                addresses:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/UserAddress'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
     post:
       summary: Create a new user (Admin)
       tags: [User]
@@ -309,6 +394,72 @@ paths:
       responses:
         '200':
           description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+    patch:
+      summary: Update user
+      description: |
+        Updates a user's data. Permission logic:
+        - **Self-Update (any role)**: Can update `name`, `email`, `phone`, `addresses`.
+        - **Admin**: Can update `status`, `isVerified`, `password` for Users only. Cannot update Owners or other Admins.
+        - **Owner**: Can update `status`, `isVerified`, `password`, and `role` for any user.
+        - Personal info (`name`, `email`, `phone`, `addresses`) is **always ignored** when an Admin/Owner updates someone else.
+      tags: [User]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 2 }
+                email: { type: string, format: email }
+                phone: { type: string, minLength: 10 }
+                addresses:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      street: { type: string }
+                      city: { type: string }
+                      isDefault: { type: boolean }
+                role:
+                  {
+                    type: string,
+                    enum: [user, admin],
+                    description: 'Owner only',
+                  }
+                status:
+                  {
+                    type: string,
+                    enum: [active, deactive, banned, deleted],
+                    description: 'Admin/Owner only',
+                  }
+                isVerified: { type: boolean, description: 'Admin/Owner only' }
+                password:
+                  {
+                    type: string,
+                    minLength: 6,
+                    description: 'Admin/Owner only',
+                  }
+      responses:
+        '200':
+          description: User updated successfully
           content:
             application/json:
               schema:
@@ -379,81 +530,95 @@ components:
       type: object
       required: [email, password, name]
       properties:
-        name: { type: string, example: "John Doe" }
-        email: { type: string, format: email, example: "john@example.com" }
-        password: { type: string, format: password, minLength: 6, example: "secret123" }
+        name: { type: string, example: 'John Doe' }
+        email: { type: string, format: email, example: 'john@example.com' }
+        password:
+          { type: string, format: password, minLength: 6, example: 'secret123' }
 
     LoginInput:
       type: object
       required: [email, password]
       properties:
-        email: { type: string, format: email, example: "john@example.com" }
-        password: { type: string, format: password, example: "secret123" }
+        email: { type: string, format: email, example: 'john@example.com' }
+        password: { type: string, format: password, example: 'secret123' }
 
     RefreshTokenInput:
       type: object
       required: [refreshToken]
       properties:
-        refreshToken: { type: string, example: "eyJhbGciOiJIUz..." }
+        refreshToken: { type: string, example: 'eyJhbGciOiJIUz...' }
 
     LogoutInput:
       type: object
       required: [refreshToken]
       properties:
-        refreshToken: { type: string, example: "eyJhbGciOiJIUz..." }
+        refreshToken: { type: string, example: 'eyJhbGciOiJIUz...' }
 
     ResendVerificationInput:
       type: object
       required: [email]
       properties:
-        email: { type: string, format: email, example: "john@example.com" }
+        email: { type: string, format: email, example: 'john@example.com' }
 
     ForgotPasswordInput:
       type: object
       required: [email]
       properties:
-        email: { type: string, format: email, example: "john@example.com" }
+        email: { type: string, format: email, example: 'john@example.com' }
 
     ResetPasswordInput:
       type: object
       required: [token, newPassword]
       properties:
-        token: { type: string, example: "abc123token..." }
-        newPassword: { type: string, format: password, minLength: 6, example: "newSecret123" }
+        token: { type: string, example: 'abc123token...' }
+        newPassword:
+          {
+            type: string,
+            format: password,
+            minLength: 6,
+            example: 'newSecret123',
+          }
 
     SocialLoginInput:
       type: object
       required: [token]
       properties:
-        token: { type: string, description: "Provider ID Token (Legacy) or Access Token (OAuth2 - Recommended)" }
+        token:
+          {
+            type: string,
+            description: 'Provider ID Token (Legacy) or Access Token (OAuth2 - Recommended)',
+          }
 
     # --- USER INPUTS ---
     CreateUserInput:
       type: object
       required: [name, email, password]
       properties:
-        name: { type: string, example: "Alice" }
-        email: { type: string, format: email, example: "alice@example.com" }
-        password: { type: string, example: "password123" }
-        phone: { type: string, example: "0912345678" }
-        role: { type: string, enum: [USER, ADMIN], default: "USER" }
+        name: { type: string, example: 'Alice' }
+        email: { type: string, format: email, example: 'alice@example.com' }
+        password: { type: string, example: 'password123' }
+        phone: { type: string, example: '0912345678' }
+        role: { type: string, enum: [USER, ADMIN], default: 'USER' }
         addresses:
           type: array
           items:
-            type: object
-            properties:
-              street: { type: string }
-              city: { type: string }
-              isDefault: { type: boolean }
+            $ref: '#/components/schemas/UserAddress'
+
+    UserAddress:
+      type: object
+      properties:
+        street: { type: string }
+        city: { type: string }
+        isDefault: { type: boolean }
 
     # --- BASE RESPONSES ---
     MetaData:
       type: object
       properties:
-        timestamp: { type: string, example: "2024-02-15T10:00:00.000Z" }
-        version: { type: string, example: "1.0.0" }
-        trace_id: { type: string, nullable: true, example: "12345-abcde" }
-        execution_time: { type: string, nullable: true, example: "15.23ms" }
+        timestamp: { type: string, example: '2024-02-15T10:00:00.000Z' }
+        version: { type: string, example: '1.0.0' }
+        trace_id: { type: string, nullable: true, example: '12345-abcde' }
+        execution_time: { type: string, nullable: true, example: '15.23ms' }
         pagination:
           type: object
           properties:
@@ -465,25 +630,25 @@ components:
     SuccessResponse:
       type: object
       properties:
-        status: { type: string, example: "success" }
+        status: { type: string, example: 'success' }
         code: { type: integer, example: 200 }
-        message: { type: string, example: "SUCCESS" }
+        message: { type: string, example: 'SUCCESS' }
         metadata: { $ref: '#/components/schemas/MetaData' }
         data: { type: object, nullable: true }
 
     ErrorResponse:
       type: object
       properties:
-        status: { type: string, example: "error" }
-        statusCode: 
+        status: { type: string, example: 'error' }
+        statusCode:
           oneOf:
             - type: integer
             - type: string
-          example: "400, 401, 403, 404, 409, 500"
-        message: { type: string, example: "ERROR_MESSAGE_HERE" }
+          example: '400, 401, 403, 404, 409, 500'
+        message: { type: string, example: 'ERROR_MESSAGE_HERE' }
         errors:
           type: array
-          items: 
+          items:
             type: object
             additionalProperties: true
 
@@ -532,12 +697,17 @@ components:
     User:
       type: object
       properties:
-        id: { type: string, example: "65c3b1e..." }
-        name: { type: string, example: "John Doe" }
-        email: { type: string, example: "john@example.com" }
-        phone: { type: string, example: "0912345678" }
-        role: { type: string, enum: [USER, ADMIN], example: "USER" }
-        status: { type: string, enum: [active, deactive, banned], example: "active" }
+        id: { type: string, example: '65c3b1e...' }
+        name: { type: string, example: 'John Doe' }
+        email: { type: string, example: 'john@example.com' }
+        phone: { type: string, example: '0912345678' }
+        role: { type: string, enum: [USER, ADMIN], example: 'USER' }
+        status:
+          {
+            type: string,
+            enum: [active, deactive, banned, deleted],
+            example: 'active',
+          }
         isVerified: { type: boolean, example: true }
         addresses:
           type: array

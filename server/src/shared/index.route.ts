@@ -17,7 +17,7 @@ import logger from '@shared/utils/logger.js';
 const router = express.Router();
 router.get('/', (_req: Request, res: Response) => res.send('Hello Kitty!'));
 
-router.use('/v1/health', healthRouter);
+router.use('/health', healthRouter);
 
 router.use(`/v1/api`, userRouter);
 router.use(`/v1/api`, authRouter);

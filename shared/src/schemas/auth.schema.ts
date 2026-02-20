@@ -27,9 +27,16 @@ export const LoginRequestSchema = z.object({
 
 // 3. Refresh Token & Logout
 export const TokenRequestSchema = z.object({
-  body: z.object({
-    refreshToken: z.string().min(1, ErrorAuthCodes.INVALID_REFRESH_TOKEN),
-  }),
+  body: z
+    .object({
+      refreshToken: z.string().optional(),
+    })
+    .optional(),
+  cookies: z
+    .object({
+      refreshToken: z.string().optional(),
+    })
+    .optional(),
 });
 
 // 4. Verify Email (Query Params)

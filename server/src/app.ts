@@ -9,7 +9,7 @@ import { globalRateLimiter } from '@shared/middlewares/ratelimit.middleware.js';
 import { errorHandler } from '@shared/middlewares/error.middleware.js';
 import { helmetMiddleware } from '@shared/middlewares/helmet.middleware.js';
 import { corsMiddleware } from '@shared/middlewares/cors.middleware.js';
-import { authMiddlewareImpl, blacklistMiddlewareImpl } from './container.js';
+import { blacklistMiddlewareImpl } from './container.js';
 import cookieParser from 'cookie-parser';
 
 const app = express();

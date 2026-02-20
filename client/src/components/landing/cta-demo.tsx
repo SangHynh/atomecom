@@ -30,9 +30,9 @@ export function CtaDemo() {
       !publicKey ||
       serviceId === 'your_service_id'
     ) {
-      // Fallback for demo/missing keys
+      // Infra not configured — simulate for demo, log only
+      console.warn('[CTA] EmailJS keys not configured, using simulation');
       setTimeout(() => {
-        toast.info('EmailJS keys not configured. Sending simulated request...');
         toast.success(t('landing.cta_success'));
         setEmail('');
         setIsSubmitting(false);
@@ -46,14 +46,12 @@ export function CtaDemo() {
         request_type: 'Admin Demo Access',
         submitted_at: new Date().toLocaleString(),
       };
-
       await emailjs.send(serviceId, templateId, templateParams, publicKey);
-
       toast.success(t('landing.cta_success'));
       setEmail('');
     } catch (error) {
       console.error('EmailJS Error:', error);
-      toast.error('Failed to send request. Please try again later.');
+      toast.error(t('landing.cta_error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -61,7 +59,6 @@ export function CtaDemo() {
 
   return (
     <section className="py-24 relative overflow-hidden">
-      {/* Decorative background */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/10 blur-[120px] rounded-full" />
       </div>
@@ -74,7 +71,6 @@ export function CtaDemo() {
           transition={{ duration: 0.8 }}
           className="max-w-4xl mx-auto rounded-[2.5rem] p-8 sm:p-16 border border-primary/20 bg-background/40 backdrop-blur-xl shadow-2xl shadow-primary/5 text-center relative overflow-hidden"
         >
-          {/* Subtle pattern */}
           <div className="absolute inset-0 -z-10 opacity-[0.03] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:20px_20px]" />
 
           <motion.div
@@ -128,8 +124,7 @@ export function CtaDemo() {
           </form>
 
           <p className="mt-8 text-xs text-muted-foreground/50">
-            Bằng cách đăng ký, bạn đồng ý với các điều khoản bảo mật của chúng
-            tôi.
+            {t('landing.cta_terms')}
           </p>
         </motion.div>
       </div>

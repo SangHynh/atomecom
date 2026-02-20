@@ -1,6 +1,6 @@
 {
   "landing": {
-    "badge": "Hệ thống chuẩn chuyên nghiệp",
+    "badge": "Chuẩn hệ thống chuyên nghiệp",
     "title_modern": "Nền tảng",
     "title_ecommerce": "E-commerce",
     "title_suffix": "Hiện đại & Tin cậy",
@@ -72,7 +72,9 @@
     "cta_desc": "Hãy nhập email của bạn để gửi yêu cầu trải nghiệm hệ thống Dashboard hiện đại. Chúng tôi sẽ phê duyệt và gửi thông tin truy cập sớm nhất có thể.",
     "cta_placeholder": "Nhập email của bạn...",
     "cta_button": "Đăng ký trải nghiệm",
-    "cta_success": "Yêu cầu của bạn đã được gửi thành công! Admin sẽ duyệt và phản hồi qua email sớm nhất nhé."
+    "cta_success": "Yêu cầu của bạn đã được gửi thành công! Admin sẽ duyệt và phản hồi qua email sớm nhất nhé.",
+    "cta_error": "Gửi yêu cầu thất bại. Vui lòng thử lại sau.",
+    "cta_terms": "Bằng cách đăng ký, bạn đồng ý với các điều khoản bảo mật của chúng tôi."
   },
   "nav": {
     "solutions": "Giải pháp",
@@ -96,6 +98,228 @@
     "login_failed": "Đăng nhập thất bại",
     "register_success": "Tạo tài khoản thành công",
     "register_failed": "Đăng ký thất bại",
-    "logout_success": "Đã đăng xuất"
+    "logout_success": "Đã đăng xuất",
+    "session_expired": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+    "initializing": "Đang khởi tạo phiên...",
+    "social_login_failed": "Đăng nhập mạng xã hội thất bại. Vui lòng thử lại.",
+    "back_to_login": "Quay lại đăng nhập",
+    "continue": "Tiếp tục"
+  },
+  "sidebar": {
+    "dashboard": "Tổng quan",
+    "users": "Người dùng",
+    "products": "Sản phẩm",
+    "orders": "Đơn hàng",
+    "analytics": "Phân tích",
+    "settings": "Cài đặt"
+  },
+  "header": {
+    "search_placeholder": "Tìm kiếm tài nguyên, người dùng...",
+    "my_account": "Tài khoản của tôi",
+    "profile": "Hồ sơ",
+    "settings": "Cài đặt",
+    "logout": "Đăng xuất"
+  },
+  "dashboard": {
+    "title": "Bảng điều khiển Admin",
+    "welcome": "Chào mừng trở lại, {{name}}",
+    "system_status": "Hệ thống hoạt động ổn định",
+    "actions": {
+      "last_24h": "24 giờ qua",
+      "download_report": "Tải báo cáo",
+      "view_all": "Xem tất cả"
+    },
+    "sales": {
+      "title": "Tổng quan doanh số",
+      "desc": "Doanh thu trong tuần này",
+      "category_title": "Doanh số theo danh mục",
+      "category_desc": "Phân bố theo ngành hàng"
+    },
+    "orders": {
+      "title": "Đơn hàng gần đây",
+      "customer": "Khách hàng",
+      "product": "Sản phẩm",
+      "amount": "Giá trị",
+      "status": "Trạng thái",
+      "delivered": "Đã giao",
+      "processing": "Đang xử lý",
+      "shipped": "Đang vận chuyển",
+      "cancelled": "Đã hủy"
+    },
+    "performance": {
+      "title": "Hiệu năng hệ thống",
+      "server_load": "Tải máy chủ",
+      "api_latency": "Độ trễ API",
+      "error_rate": "Tỷ lệ lỗi",
+      "storage_usage": "Dung lượng lưu trữ",
+      "active_sessions": "Phiên hoạt động"
+    }
+  },
+  "users": {
+    "title": "Quản lý người dùng",
+    "stats": {
+      "total": "Tổng người dùng",
+      "growth_hint": "+12% so với tháng trước",
+      "active": "Đang hoạt động",
+      "verified": "Đã xác thực",
+      "restricted": "Hạn chế/Tạm dừng",
+      "realtime": "Thời gian thực",
+      "security": "Bảo mật",
+      "total_desc": "Tổng số tài khoản đã đăng ký trong hệ thống",
+      "active_desc": "Người dùng hiện đang trực tuyến hoặc hoạt động trong 5 phút qua",
+      "verified_desc": "Người dùng đã xác định danh tính thành công",
+      "restricted_desc": "Hệ thống hiện có {{banned}} tài khoản bị khóa và {{deactive}} tài khoản vô hiệu."
+    },
+    "table": {
+      "columns": {
+        "user": "Người dùng",
+        "role": "Vai trò",
+        "status": "Trạng thái",
+        "last_login": "Đăng nhập cuối",
+        "activity": "Hoạt động",
+        "joined": "Ngày tham gia",
+        "actions": "Thao tác"
+      },
+      "actions": {
+        "view": "Xem chi tiết",
+        "edit": "Sửa tài khoản",
+        "delete": "Xóa người dùng",
+        "set_status": "Đặt trạng thái",
+        "active": "Kích hoạt",
+        "banned": "Chặn tài khoản",
+        "deactive": "Vô hiệu hóa"
+      },
+      "status": {
+        "verified": "Đã xác thực",
+        "pending": "Chờ xác thực",
+        "active": "Hoạt động",
+        "banned": "Bị hạn chế",
+        "deactive": "Vô hiệu",
+        "deleted": "Đã xóa"
+      },
+      "pagination": {
+        "show": "Hiển thị",
+        "of": "trên",
+        "results": "kết quả"
+      },
+      "roles": {
+        "owner": "Chủ sở hữu",
+        "admin": "Quản trị",
+        "user": "Người dùng"
+      },
+      "empty": "Không tìm thấy người dùng",
+      "never": "Chưa từng"
+    },
+    "details": {
+      "profile": "Hồ sơ người dùng",
+      "contact": "Thông tin liên hệ",
+      "email": "Địa chỉ Email",
+      "phone": "Số điện thoại",
+      "not_provided": "Chưa cung cấp",
+      "metadata": "Siêu dữ liệu tài khoản",
+      "user_id": "Mã định danh (UID)",
+      "last_login_at": "Đăng nhập lần cuối",
+      "usage": "Thống kê sử dụng",
+      "orders": "Tổng số đơn",
+      "spent": "Tổng chi tiêu",
+      "value": "Giá trị tài khoản",
+      "tier": "Hạng thành viên",
+      "security_session": "Bảo mật & Phiên",
+      "ip": "Địa chỉ IP",
+      "device": "Thiết bị gần nhất",
+      "trust": "Bảo mật & Tin cậy",
+      "verified_identity": "Danh tính xác thực",
+      "verify_now": "Xác thực ngay",
+      "addresses": "Thông tin địa chỉ",
+      "no_addresses": "Chưa có địa chỉ nào",
+      "default": "Mặc định",
+      "never_logged_in": "Chưa từng đăng nhập",
+      "danger_zone": "Khu vực nguy hiểm",
+      "delete_title": "Xóa tài khoản",
+      "delete_warning": "Sau khi xóa, người dùng này sẽ bị hạn chế và dữ liệu sẽ được ẩn danh.",
+      "admin_actions": "Hành động quản trị",
+      "status": "Trạng thái tài khoản",
+      "status_hint": "Kiểm soát quyền truy cập tài khoản",
+      "is_verified": "Email đã được xác thực",
+      "not_verified": "Chưa xác thực email",
+      "role_hint": "Phân quyền trong hệ thống",
+      "reset_password": "Đặt lại mật khẩu",
+      "reset_password_hint": "Đặt mật khẩu mới cho tài khoản này",
+      "confirm_role_change": "Bạn có chắc chắn muốn thay đổi vai trò của người dùng này thành {{role}}?",
+      "confirm_verify": "Xác nhận đánh dấu người dùng này là đã xác thực?",
+      "confirm_unverify": "Xác nhận hủy xác thực người dùng này?",
+      "change_role_title": "Thay đổi vai trò"
+    },
+    "form": {
+      "create": "Tạo người dùng",
+      "edit": "Sửa người dùng",
+      "save": "Lưu thay đổi",
+      "processing": "Đang xử lý...",
+      "name": "Họ và tên",
+      "name_placeholder": "Nhập họ và tên",
+      "email_placeholder": "user@example.com",
+      "role": "Vai trò hệ thống",
+      "role_placeholder": "Chọn vai trò",
+      "role_user": "Tài khoản khách",
+      "role_admin": "Quản trị viên",
+      "role_owner": "Chủ sở hữu",
+      "password": "Mật khẩu",
+      "password_new": "Mật khẩu mới (Tùy chọn)",
+      "password_placeholder": "Tối thiểu 6 ký tự",
+      "password_keep": "Để trống nếu giữ nguyên",
+      "verified": "Email đã xác thực",
+      "editing_own_profile": "Hồ sơ của bạn"
+    },
+    "page": {
+      "search_placeholder": "Tìm theo tên, email hoặc SĐT...",
+      "filter": "Bộ lọc",
+      "roles": "Vai trò",
+      "all_roles": "Tất cả vai trò",
+      "administrators": "Quản trị viên",
+      "customers": "Khách hàng",
+      "account_status": "Trạng thái",
+      "all_accounts": "Tất cả tài khoản",
+      "active": "Hoạt động",
+      "banned": "Hạn chế",
+      "deactive": "Vô hiệu hóa",
+      "reset_filters": "Đặt lại bộ lọc",
+      "view": "Hiển thị",
+      "toggle_columns": "Ẩn hiện cột",
+      "set_status": "Đặt trạng thái",
+      "syncing": "Đang đồng bộ...",
+      "new_account": "Thêm tài khoản",
+      "status_confirm": "Xác nhận thay đổi",
+      "status_confirm_text": "Bạn có chắc chắn muốn thay đổi trạng thái của người dùng này thành {{status}}?",
+      "delete_confirm": "Bạn có chắc chắn muốn xóa người dùng này?",
+      "bulk_delete_confirm": "Bạn có chắc muốn xóa {{count}} người dùng?",
+      "bulk_delete_success": "Đã xóa thành công {{count}} người dùng",
+      "create_title": "Tạo người dùng mới",
+      "create_desc": "Thêm một thành viên mới vào hệ thống."
+    },
+    "actions": {
+      "verified_success": "Người dùng đã được xác thực",
+      "unverified_success": "Người dùng đã được đánh dấu chưa xác thực",
+      "role_updated": "Cập nhật vai trò thành công",
+      "status_updated": "Cập nhật trạng thái thành công",
+      "password_updated": "Đặt lại mật khẩu thành công",
+      "password_too_short": "Mật khẩu phải có ít nhất 6 ký tự",
+      "created_success": "Tạo người dùng thành công",
+      "created_failed": "Tạo người dùng thất bại",
+      "updated_success": "Cập nhật người dùng thành công",
+      "updated_failed": "Cập nhật người dùng thất bại",
+      "deleted_success": "Xóa người dùng thành công",
+      "deleted_failed": "Xóa người dùng thất bại"
+    },
+    "empty": {
+      "title": "Không tìm thấy người dùng",
+      "desc_filters": "Chúng tôi không tìm thấy người dùng nào khớp với bộ lọc hiện tại. Hãy thử điều chỉnh tiêu chuẩn của bạn.",
+      "desc_search": "Chúng tôi không tìm thấy người dùng nào khớp với tìm kiếm hiện tại. Hãy thử điều chỉnh tiêu chuẩn của bạn.",
+      "clear_filters": "Xóa tất cả bộ lọc"
+    },
+    "breadcrumbs": {
+      "admin": "Quản trị",
+      "users": "Người dùng",
+      "dashboard": "Tổng quan"
+    }
   }
 }

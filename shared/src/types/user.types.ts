@@ -17,4 +17,11 @@ export interface User {
   isVerified: boolean;
   addresses: Address[];
   avatar?: string;
+  createdAt: string;
+  updatedAt: string;
+  lastLoginAt?: string;
+  isOnline?: boolean;
+  lastIp?: string;
+  lastDevice?: string;
+  deletedAt?: string;
 }

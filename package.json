@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
       "setup": "node scripts/setup.js && npm install",
-      "dev": "concurrently --kill-others-on-fail --raw \"npm run dev -w server\" \"npm run dev -w client\"",
+      "dev": "concurrently --kill-others-on-fail --raw -n \"SERVER,CLIENT\" -c \"blue,magenta\" --hide \"CLIENT\" \"npm run dev -w server\" \"npm run dev -w client\"",
       "dev:server": "npm run dev -w server",
       "dev:client": "npm run dev -w client",
       "build:shared": "npm run build -w shared",

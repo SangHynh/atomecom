@@ -16,10 +16,12 @@ export default function AuthGuard({
   allowedRoles,
   requireVerified,
 }: AuthGuardProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, hasHydrated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    if (!hasHydrated) return;
+
     if (!isAuthenticated && !user) {
       router.push('/login');
       return;
@@ -35,12 +37,19 @@ export default function AuthGuard({
       //    router.push('/verify-email');
       // }
     }
-  }, [isAuthenticated, user, router, allowedRoles, requireVerified]);
+  }, [
+    isAuthenticated,
+    user,
+    router,
+    allowedRoles,
+    requireVerified,
+    hasHydrated,
+  ]);
 
-  if (!isAuthenticated || !user) {
+  if (!hasHydrated || (!isAuthenticated && !user)) {
     return (
       <div className="flex h-screen items-center justify-center">
-        Loading...
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     );
   }

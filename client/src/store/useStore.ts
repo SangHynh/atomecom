@@ -13,8 +13,10 @@ interface AppState {
   // Auth State
   user: User | null;
   isAuthenticated: boolean;
+  hasHydrated: boolean;
   setUser: (user: User | null) => void;
   logout: () => void;
+  setHasHydrated: (state: boolean) => void;
 }
 
 // Create the store with DevTools and Persist middleware
@@ -29,6 +31,7 @@ export const useStore = create<AppState>()(
         // Auth Initial State
         user: null,
         isAuthenticated: false,
+        hasHydrated: false,
 
         // Actions
         toggleSidebar: () =>
@@ -36,9 +39,13 @@ export const useStore = create<AppState>()(
         setTheme: (theme) => set({ theme }),
         setUser: (user) => set({ user, isAuthenticated: !!user }),
         logout: () => set({ user: null, isAuthenticated: false }),
+        setHasHydrated: (state) => set({ hasHydrated: state }),
       }),
       {
-        name: 'app-storage', // name of the item in the storage (must be unique)
+        name: 'app-storage',
+        onRehydrateStorage: () => (state) => {
+          state?.setHasHydrated(true);
+        },
       },
     ),
   ),

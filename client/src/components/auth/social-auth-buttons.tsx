@@ -47,14 +47,11 @@ export function SocialAuthButtons({ isLoading }: SocialAuthButtonsProps) {
 
   const initializeGoogle = () => {
     if (tokenClient) return;
-
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
     if (!clientId) {
-      // Missing config
+      console.warn('[SocialAuth] NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set');
       return;
     }
-
     if (window.google?.accounts?.oauth2) {
       const client = window.google.accounts.oauth2.initTokenClient({
         client_id: clientId,
@@ -62,10 +59,10 @@ export function SocialAuthButtons({ isLoading }: SocialAuthButtonsProps) {
           'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
         callback: (response: TokenResponse) => {
           if (response.error) {
+            // User-facing: OAuth flow actually errored (business logic)
             toast.error(t(`errors.${ClientErrorCodes.SOCIAL_LOGIN_FAILED}`));
             return;
           }
-          // Send Access Token to backend (Server will verify via Google UserInfo API)
           socialLogin({ provider: 'google', token: response.access_token });
         },
       });
@@ -76,7 +73,6 @@ export function SocialAuthButtons({ isLoading }: SocialAuthButtonsProps) {
   const initializeFacebook = () => {
     const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
     if (!appId) return;
-
     if (window.FB) {
       window.FB.init({
         appId: appId,
@@ -91,7 +87,6 @@ export function SocialAuthButtons({ isLoading }: SocialAuthButtonsProps) {
     if (window.google) {
       initializeGoogle();
     }
-
     window.fbAsyncInit = function () {
       initializeFacebook();
     };
@@ -99,56 +94,32 @@ export function SocialAuthButtons({ isLoading }: SocialAuthButtonsProps) {
 
   const handleGoogleLogin = () => {
     if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-      toast.error(
-        t(`errors.${ClientErrorCodes.MISSING_CONFIG}`, {
-          defaultValue: 'Google Client ID is missing',
-        }),
+      // Missing env var — infra issue, not user-facing
+      console.warn(
+        '[SocialAuth] NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured',
       );
       return;
     }
-
     if (tokenClient) {
       tokenClient.requestAccessToken();
     } else {
-      // Retry initialization if script loaded late
+      // SDK not ready yet — retry init silently
       initializeGoogle();
-      if (typeof window !== 'undefined' && window.google?.accounts?.oauth2) {
-        // If initialization succeeded immediately (rare but possible), try requesting
-        // Use setTimeout to allow state update or direct object usage if refactoring (simplified here to toast)
-        toast.error(
-          t(`errors.${ClientErrorCodes.SOCIAL_LOGIN_FAILED}`, {
-            defaultValue: 'Google SDK loading... Try again.',
-          }),
-        );
-      } else {
-        toast.error(
-          t(`errors.${ClientErrorCodes.SOCIAL_LOGIN_FAILED}`, {
-            defaultValue: 'Google SDK not loaded',
-          }),
-        );
-      }
+      console.warn('[SocialAuth] Google SDK not ready, retrying init...');
     }
   };
 
   const handleFacebookLogin = () => {
     if (!process.env.NEXT_PUBLIC_FACEBOOK_APP_ID) {
-      toast.error(
-        t(`errors.${ClientErrorCodes.MISSING_CONFIG}`, {
-          defaultValue: 'Facebook App ID is missing',
-        }),
+      console.warn(
+        '[SocialAuth] NEXT_PUBLIC_FACEBOOK_APP_ID is not configured',
       );
       return;
     }
-
     if (!window.FB) {
-      toast.error(
-        t(`errors.${ClientErrorCodes.SOCIAL_LOGIN_FAILED}`, {
-          defaultValue: 'Facebook SDK not loaded',
-        }),
-      );
+      console.warn('[SocialAuth] Facebook SDK not loaded');
       return;
     }
-
     window.FB.login(
       (response: any) => {
         if (response.authResponse) {
@@ -157,6 +128,7 @@ export function SocialAuthButtons({ isLoading }: SocialAuthButtonsProps) {
             token: response.authResponse.accessToken,
           });
         } else {
+          // User cancelled or denied — user-facing feedback is appropriate
           toast.error(t(`errors.${ClientErrorCodes.SOCIAL_LOGIN_FAILED}`));
         }
       },

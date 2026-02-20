@@ -1,4 +1,3 @@
-
 class ModuleSummaryReporter {
   constructor(globalConfig, options) {
     this._globalConfig = globalConfig;
@@ -12,7 +11,7 @@ class ModuleSummaryReporter {
   onRunComplete(contexts, results) {
     const moduleResults = {};
 
-    results.testResults.forEach(suiteResult => {
+    results.testResults.forEach((suiteResult) => {
       const pathParts = suiteResult.testFilePath.split(/[\/\\]/);
       const modulesIndex = pathParts.indexOf('modules');
       let moduleName = 'Other';
@@ -30,20 +29,23 @@ class ModuleSummaryReporter {
           failed: 0,
           total: 0,
           pending: 0,
-          tests: []
+          tests: [],
         };
       }
 
       moduleResults[moduleName].passed += suiteResult.numPassingTests;
       moduleResults[moduleName].failed += suiteResult.numFailingTests;
       moduleResults[moduleName].pending += suiteResult.numPendingTests;
-      moduleResults[moduleName].total += (suiteResult.numPassingTests + suiteResult.numFailingTests + suiteResult.numPendingTests);
+      moduleResults[moduleName].total +=
+        suiteResult.numPassingTests +
+        suiteResult.numFailingTests +
+        suiteResult.numPendingTests;
 
-      suiteResult.testResults.forEach(test => {
+      suiteResult.testResults.forEach((test) => {
         moduleResults[moduleName].tests.push({
           title: test.fullName,
           status: test.status,
-          duration: test.duration
+          duration: test.duration,
         });
       });
     });
@@ -53,19 +55,23 @@ class ModuleSummaryReporter {
     console.log('   📊 DETAILED MODULE TEST REPORT       ');
     console.log('========================================');
 
-    Object.keys(moduleResults).sort().forEach(moduleName => {
-      const stats = moduleResults[moduleName];
-      console.log(`\n📦 [Module: ${moduleName.toUpperCase()}]`);
-      console.log(`SUMMARY: Total: ${stats.total} | ✔ Pass: ${stats.passed} | ✖ Fail: ${stats.failed}`);
-      console.log('----------------------------------------');
+    Object.keys(moduleResults)
+      .sort()
+      .forEach((moduleName) => {
+        const stats = moduleResults[moduleName];
+        console.log(`\n📦 [Module: ${moduleName.toUpperCase()}]`);
+        console.log(
+          `SUMMARY: Total: ${stats.total} | ✔ Pass: ${stats.passed} | ✖ Fail: ${stats.failed}`,
+        );
+        console.log('----------------------------------------');
 
-      stats.tests.forEach(test => {
-        let icon = '✔';
-        if (test.status === 'failed') icon = '✖';
-        if (test.status === 'pending') icon = '○';
-        console.log(`  ${icon} ${test.title} (${test.duration}ms)`);
+        stats.tests.forEach((test) => {
+          let icon = '✔';
+          if (test.status === 'failed') icon = '✖';
+          if (test.status === 'pending') icon = '○';
+          console.log(`  ${icon} ${test.title} (${test.duration}ms)`);
+        });
       });
-    });
 
     console.log('\n========================================');
     if (results.numFailedTests > 0) {

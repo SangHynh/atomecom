@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import QueryProvider from '@/providers/query-provider';
 import { Toaster } from 'sonner';
@@ -7,14 +7,10 @@ import I18nProvider from '@/providers/i18n-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
 import AuthInitializer from '@/components/providers/auth-initializer';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const jakarta = Plus_Jakarta_Sans({
+  variable: '--font-jakarta',
   subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -64,7 +60,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${jakarta.variable} antialiased`}
         suppressHydrationWarning
       >
         <ThemeProvider
@@ -80,21 +76,21 @@ export default function RootLayout({
             <Toaster
               position="bottom-right"
               expand={false}
-              richColors={false}
+              richColors
               closeButton
               theme="system"
               toastOptions={{
                 classNames: {
-                  toast:
-                    'group font-sans border border-border/50 shadow-2xl p-3 rounded-xl backdrop-blur-md bg-background/70 text-foreground text-xs font-bold transition-all duration-300',
-                  success:
-                    'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-                  error:
-                    'border-destructive/20 bg-destructive/10 text-destructive',
-                  info: 'border-sky-500/20 bg-sky-500/10 text-sky-600 dark:text-sky-400',
-                  warning:
-                    'border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400',
+                  toast: 'group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg',
+                  description: 'group-[.toast]:text-muted-foreground',
+                  actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
+                  cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
                 },
+                style: {
+                    padding: '12px',
+                    fontSize: '12px',
+                    width: '300px',
+                }
               }}
             />
             {/* 🍯 Security Honeypot: Do not remove */}

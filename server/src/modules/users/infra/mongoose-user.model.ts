@@ -71,6 +71,8 @@ const UserSchema = new Schema<UserEntity & Document>(
     providers: [UserSocialLinkSchema],
     isExternal: { type: Boolean, default: false },
     isEmailMissing: { type: Boolean, default: false },
+    lastLoginAt: { type: Date },
+    deletedAt: { type: Date, default: null },
   },
   {
     timestamps: true,
@@ -84,7 +86,34 @@ const UserSchema = new Schema<UserEntity & Document>(
   },
 );
 
-// 3. Indexing
+// 3. Middlewares: Automatically exclude DELETED users from all queries
+const excludeDeletedMiddleware = function (this: any) {
+  const currentQuery = this.getQuery() || {};
+
+  // Use $and to combine conditions and avoid overwriting existing status filters
+  this.setQuery({
+    $and: [
+      currentQuery,
+      { status: { $ne: USER_STATUS.DELETED } },
+      { deletedAt: null },
+    ],
+  });
+};
+
+UserSchema.pre(/^find/, excludeDeletedMiddleware);
+UserSchema.pre('countDocuments', excludeDeletedMiddleware);
+
+UserSchema.pre('aggregate', function (this: any) {
+  const pipeline = this.pipeline();
+  pipeline.unshift({
+    $match: {
+      status: { $ne: USER_STATUS.DELETED },
+      deletedAt: null,
+    },
+  });
+});
+
+// 4. Indexing
 UserSchema.index(
   { 'providers.provider': 1, 'providers.providerId': 1 },
   {

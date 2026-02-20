@@ -1,6 +1,7 @@
 import type { Express } from 'express';
 import express from 'express';
 import request from 'supertest';
+import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import { ErrorAuthCodes, ErrorUserCodes } from '@atomecom/shared';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
@@ -54,6 +55,15 @@ class MockCacheRepo implements ICacheRepo {
   async has(key: string): Promise<boolean> {
     return this._data.has(key);
   }
+  async countByPattern(pattern: string): Promise<number> {
+    const p = pattern.replace(/\*/g, '.*');
+    const regex = new RegExp('^' + p + '$');
+    let count = 0;
+    for (const key of this._data.keys()) {
+      if (regex.test(key)) count++;
+    }
+    return count;
+  }
   async deleteByPattern(pattern: string): Promise<void> {
     const p = pattern.replace(/\*/g, '.*');
     const regex = new RegExp('^' + p + '$');
@@ -73,9 +83,13 @@ function createTestApp(): Express {
   const eventBus = new EventBus();
   const userRepo = new MongooseUserRepo();
   const hashService = new BcryptHashAdapter();
-  const userService = new UserService({ userRepo, hashService, eventBus });
-
   const cacheRepo = new MockCacheRepo();
+  const userService = new UserService({
+    userRepo,
+    hashService,
+    eventBus,
+    cache: cacheRepo,
+  });
   const sessionService = new SessionService(cacheRepo);
 
   const mailTokenRepo = new MongooseMailTokenRepo();
@@ -100,10 +114,13 @@ function createTestApp(): Express {
     mailTokenService,
   });
 
-  const authController = new AuthController(authService);
+  const authController = new AuthController(authService, {
+    recordViolation: jest.fn(),
+  } as any);
 
   const app = express();
   app.use(express.json());
+  app.use(cookieParser());
 
   const authRouter = express.Router();
   authRouter.post(
@@ -186,7 +203,11 @@ describe('Auth Module - Integration Tests', () => {
       await delay(500); // Wait for background email
       expect(mockEmailService.sendVerificationEmail).toHaveBeenCalled();
 
-      const refreshToken = regRes.body.data.tokens.refreshToken;
+      const regCookies = regRes.get('Set-Cookie');
+      const refreshToken = (regCookies as string[])?.[0]
+        ?.split(';')[0]
+        ?.split('=')[1];
+      expect(refreshToken).toBeDefined();
 
       // LOGIN
       const loginRes = await request(app).post('/auth/login').send({
@@ -195,22 +216,31 @@ describe('Auth Module - Integration Tests', () => {
       });
       expect(loginRes.status).toBe(200);
       expect(loginRes.body.data.tokens.accessToken).toBeDefined();
-      const newRefreshToken = loginRes.body.data.tokens.refreshToken;
+      const loginCookies = loginRes.get('Set-Cookie');
+      const newRefreshToken = (loginCookies as string[])?.[0]
+        ?.split(';')[0]
+        ?.split('=')[1];
+      expect(newRefreshToken).toBeDefined();
 
       // REFRESH
-      const refreshRes = await request(app).post('/auth/refresh-token').send({
-        refreshToken: newRefreshToken,
-      });
+      const refreshRes = await request(app)
+        .post('/auth/refresh-token')
+        .set('Cookie', [`refreshToken=${newRefreshToken}`]);
       expect(refreshRes.status).toBe(200);
       expect(refreshRes.body.data.tokens.accessToken).toBeDefined();
-      expect(refreshRes.body.data.tokens.refreshToken).not.toBe(
-        newRefreshToken,
-      );
+
+      // Get new refresh token from cookie
+      const cookies = refreshRes.get('Set-Cookie');
+      const nextRefreshToken = (cookies as string[])?.[0]
+        ?.split(';')[0]
+        ?.split('=')[1];
+      expect(nextRefreshToken).toBeDefined();
+      expect(nextRefreshToken).not.toBe(newRefreshToken);
 
       // LOGOUT
-      const logoutRes = await request(app).post('/auth/logout').send({
-        refreshToken: refreshRes.body.data.tokens.refreshToken,
-      });
+      const logoutRes = await request(app)
+        .post('/auth/logout')
+        .set('Cookie', [`refreshToken=${nextRefreshToken}`]);
       expect(logoutRes.status).toBe(204);
     });
 
@@ -253,29 +283,36 @@ describe('Auth Module - Integration Tests', () => {
         password: 'password123',
         name: 'Sec User',
       });
-      const rt1 = regRes.body.data.tokens.refreshToken;
+      // Get RT from cookie
+      const regCookies = regRes.get('Set-Cookie');
+      const rt1 = (regCookies as string[])?.[0]?.split(';')[0]?.split('=')[1];
+      expect(rt1).toBeDefined();
 
       // First Refresh (Valid)
       const refresh1 = await request(app)
         .post('/auth/refresh-token')
-        .send({ refreshToken: rt1 });
+        .set('Cookie', [`refreshToken=${rt1}`]);
       expect(refresh1.status).toBe(200);
-      const rt2 = refresh1.body.data.tokens.refreshToken;
+
+      const refresh1Cookies = refresh1.get('Set-Cookie');
+      const rt2 = (refresh1Cookies as string[])?.[0]
+        ?.split(';')[0]
+        ?.split('=')[1];
+      expect(rt2).toBeDefined();
 
       // Second Refresh with rt1 (REUSE!)
       const refresh2 = await request(app)
         .post('/auth/refresh-token')
-        .send({ refreshToken: rt1 });
+        .set('Cookie', [`refreshToken=${rt1}`]);
       expect(refresh2.status).toBe(401);
 
       const body = refresh2.body;
-      // Depending on how error handler works, it might be in body.message or body.code
       expect(body.message).toBe(ErrorAuthCodes.TOKEN_REUSED_DETECTION);
 
       // Verify rt2 is also revoked now
       const refresh3 = await request(app)
         .post('/auth/refresh-token')
-        .send({ refreshToken: rt2 });
+        .set('Cookie', [`refreshToken=${rt2}`]);
       expect(refresh3.status).toBe(401);
     });
 

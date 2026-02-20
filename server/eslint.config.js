@@ -6,9 +6,10 @@ import prettierConfig from 'eslint-config-prettier';
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
+  { ignores: ['dist/**'] },
   { files: ['**/*.ts'] },
 
-  { languageOptions: { globals: globals.node } },
+  { languageOptions: { globals: { ...globals.node, ...globals.jest } } },
 
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
@@ -25,6 +26,7 @@ export default [
         'error',
         { argsIgnorePattern: '^_' },
       ],
+      '@typescript-eslint/no-empty-object-type': 'off',
       'no-console': 'off',
       'consistent-return': 'error',
     },

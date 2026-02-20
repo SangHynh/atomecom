@@ -1,7 +1,7 @@
 import type { UserEntity } from '@modules/users/domain/user.entity.js';
 import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
-import { ErrorUserCodes, ErrorInfraCodes } from '@atomecom/shared';
+import { ErrorUserCodes, ErrorInfraCodes, USER_STATUS } from '@atomecom/shared';
 import {
   ConflictError,
   InternalServerError,
@@ -15,12 +15,23 @@ export class MongooseUserRepo implements IUserRepository {
     status?: string | undefined;
     keyword?: string | undefined;
     role?: string | undefined;
+    sortField?: string | undefined;
+    sortOrder?: 'asc' | 'desc' | undefined;
     offset: number;
     limit: number;
   }): Promise<{ data: UserEntity[]; totalElements: number }> {
-    const { status, keyword, role, offset = 0, limit = 10 } = params;
+    const {
+      status,
+      keyword,
+      role,
+      sortField,
+      sortOrder,
+      offset = 0,
+      limit = 10,
+    } = params;
 
     const query: any = {};
+
     if (status) query.status = status;
     if (role) query.role = role;
     if (keyword) {
@@ -30,12 +41,15 @@ export class MongooseUserRepo implements IUserRepository {
       ];
     }
 
+    const sortOptions: any = {};
+    if (sortField) {
+      sortOptions[sortField] = sortOrder === 'desc' ? -1 : 1;
+    } else {
+      sortOptions.createdAt = -1;
+    }
+
     const [data, totalElements] = await Promise.all([
-      UserModel.find(query)
-        .sort({ createdAt: -1 })
-        .skip(offset)
-        .limit(limit)
-        .lean(),
+      UserModel.find(query).sort(sortOptions).skip(offset).limit(limit).lean(),
       UserModel.countDocuments(query),
     ]);
 
@@ -140,6 +154,10 @@ export class MongooseUserRepo implements IUserRepository {
     return this._toDomain(savedUser.toJSON())!;
   }
 
+  public async count(filter: any): Promise<number> {
+    return await UserModel.countDocuments(filter);
+  }
+
   // Mapper to Domain Entity
   private _toDomain(doc: any): UserEntity | null {
     if (!doc) return null;
@@ -153,7 +171,7 @@ export class MongooseUserRepo implements IUserRepository {
       error.module = MODULE;
       throw error;
     }
-    const { _id, id, __v, ...rest } = data;
+    const { _id: _unusedId, id: _idValue, __v: _version, ...rest } = data;
     return {
       ...rest,
       id: targetId.toString(),

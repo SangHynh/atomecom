@@ -24,6 +24,8 @@ import type { IOAuthProvider } from '@modules/auth/domain/IOauthProvider.service
 import { BlacklistService } from '@modules/auth/use-cases/blacklist.service.js';
 import { blacklistMiddleware } from '@shared/middlewares/blacklist.middleware.js';
 
+import { UserActivityListener } from '@modules/users/use-cases/user-activity.listener.js';
+
 // 1. INFRA LAYER
 export const db = new MongoDatabase(appConfig!.db.uri);
 export const cache = new RedisCache(appConfig!.cache.uri);
@@ -34,15 +36,20 @@ const userRepo = new MongooseUserRepo();
 const hashService = new BcryptHashAdapter();
 const tokenService = new JwtTokenAdapter();
 const mailTokenRepo = new MongooseMailTokenRepo();
-const googleProvider = new GoogleProvider();
-const facebookProvider = new FacebookProvider();
-const providers: IOAuthProvider[] = [googleProvider, facebookProvider];
+const googleService = new GoogleProvider();
+const facebookService = new FacebookProvider();
+const providers: IOAuthProvider[] = [googleService, facebookService];
 const oauthFactory = new OauthFactory(providers);
 
 // 2. USE-CASES (APPLICATION) LAYER
 const healthService = new HealthService(db, cache);
-const userService = new UserService({ userRepo, hashService, eventBus });
 const sessionService = new SessionService(cache);
+const userService = new UserService({
+  userRepo,
+  hashService,
+  eventBus,
+  cache,
+});
 export const blacklistService = new BlacklistService(cache);
 const mailTokenService = new MailTokenService(mailTokenRepo);
 const authService = new AuthService({
@@ -56,6 +63,7 @@ const authService = new AuthService({
 
 // 4. LISTENERS (EDA)
 new EmailListener({ eventBus, emailService, mailTokenService });
+new UserActivityListener({ eventBus, cache });
 
 // 3. PRESENTATION LAYER
 export const healthControllerImpl = new HealthController(healthService);
@@ -64,5 +72,5 @@ export const authControllerImpl = new AuthController(
   authService,
   blacklistService,
 );
-export const authMiddlewareImpl = authMiddleware(tokenService);
+export const authMiddlewareImpl = authMiddleware(tokenService, eventBus);
 export const blacklistMiddlewareImpl = blacklistMiddleware(blacklistService);

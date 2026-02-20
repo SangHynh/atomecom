@@ -1,4 +1,3 @@
-
 class ModuleSummaryReporter {
   constructor(globalConfig, options) {
     this._globalConfig = globalConfig;
@@ -12,7 +11,7 @@ class ModuleSummaryReporter {
   onRunComplete(contexts, results) {
     const moduleResults = {};
 
-    results.testResults.forEach(suiteResult => {
+    results.testResults.forEach((suiteResult) => {
       // Determine module name from path
       const pathParts = suiteResult.testFilePath.split(/[\/\\]/);
       const modulesIndex = pathParts.indexOf('modules');
@@ -31,7 +30,7 @@ class ModuleSummaryReporter {
           failed: 0,
           total: 0,
           pending: 0,
-          tests: []
+          tests: [],
         };
       }
 
@@ -39,15 +38,18 @@ class ModuleSummaryReporter {
       moduleResults[moduleName].passed += suiteResult.numPassingTests;
       moduleResults[moduleName].failed += suiteResult.numFailingTests;
       moduleResults[moduleName].pending += suiteResult.numPendingTests;
-      moduleResults[moduleName].total += (suiteResult.numPassingTests + suiteResult.numFailingTests + suiteResult.numPendingTests);
+      moduleResults[moduleName].total +=
+        suiteResult.numPassingTests +
+        suiteResult.numFailingTests +
+        suiteResult.numPendingTests;
 
       // Collect specific test names
-      suiteResult.testResults.forEach(test => {
+      suiteResult.testResults.forEach((test) => {
         moduleResults[moduleName].tests.push({
           title: test.fullName,
           status: test.status,
           duration: test.duration,
-          ancestorTitles: test.ancestorTitles
+          ancestorTitles: test.ancestorTitles,
         });
       });
     });
@@ -58,29 +60,31 @@ class ModuleSummaryReporter {
     process.stdout.write('   📊 DETAILED MODULE TEST REPORT       \n');
     process.stdout.write('========================================\n\n');
 
-    Object.keys(moduleResults).sort().forEach(moduleName => {
-      const stats = moduleResults[moduleName];
-      const header = `📦 [Module: ${moduleName}]`;
-      const summary = `Total: ${stats.total} | ✔ Pass: ${stats.passed} | ✖ Fail: ${stats.failed} | ○ Skip: ${stats.pending}`;
-      
-      process.stdout.write(`${header}\n`);
-      process.stdout.write(`${summary}\n`);
-      process.stdout.write('----------------------------------------\n');
+    Object.keys(moduleResults)
+      .sort()
+      .forEach((moduleName) => {
+        const stats = moduleResults[moduleName];
+        const header = `📦 [Module: ${moduleName}]`;
+        const summary = `Total: ${stats.total} | ✔ Pass: ${stats.passed} | ✖ Fail: ${stats.failed} | ○ Skip: ${stats.pending}`;
 
-      stats.tests.forEach(test => {
-        let icon = '✔';
-        if (test.status === 'failed') icon = '✖';
-        if (test.status === 'pending') icon = '○';
-        
-        // Simpler clean line: "  ✔ Test Name (time)"
-        // process.stdout.write(`  ${icon} ${test.title} (${test.duration}ms)\n`);
-        
-        // Or if we want indented hierarchy roughly based on titles:
-        // fullName usually includes "Describe > Test Name"
-        process.stdout.write(`  ${icon} ${test.title} \n`);
+        process.stdout.write(`${header}\n`);
+        process.stdout.write(`${summary}\n`);
+        process.stdout.write('----------------------------------------\n');
+
+        stats.tests.forEach((test) => {
+          let icon = '✔';
+          if (test.status === 'failed') icon = '✖';
+          if (test.status === 'pending') icon = '○';
+
+          // Simpler clean line: "  ✔ Test Name (time)"
+          // process.stdout.write(`  ${icon} ${test.title} (${test.duration}ms)\n`);
+
+          // Or if we want indented hierarchy roughly based on titles:
+          // fullName usually includes "Describe > Test Name"
+          process.stdout.write(`  ${icon} ${test.title} \n`);
+        });
+        process.stdout.write('\n');
       });
-      process.stdout.write('\n');
-    });
 
     process.stdout.write('========================================\n');
     if (results.numFailedTests > 0) {
