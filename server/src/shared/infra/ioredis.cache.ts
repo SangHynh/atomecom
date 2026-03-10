@@ -128,16 +128,25 @@ export class RedisCache implements ICache, ICacheRepo {
       count: 100,
     });
 
-    stream.on('data', async (keys: string[]) => {
+    const deletionPromises: Promise<any>[] = [];
+
+    stream.on('data', (keys: string[]) => {
       if (keys.length > 0) {
         const pipeline = client.pipeline();
         keys.forEach((key) => pipeline.del(key));
-        await pipeline.exec();
+        deletionPromises.push(pipeline.exec());
       }
     });
 
     return new Promise((resolve, reject) => {
-      stream.on('end', resolve);
+      stream.on('end', async () => {
+        try {
+          await Promise.all(deletionPromises);
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+      });
       stream.on('error', reject);
     });
   }
@@ -162,5 +171,36 @@ export class RedisCache implements ICache, ICacheRepo {
       stream.on('end', () => resolve(count));
       stream.on('error', reject);
     });
+  }
+
+  // ─── Locking Implementation ───────────────────────────────────────────────
+
+  public async acquireLock(key: string, ttlMs: number): Promise<boolean> {
+    if (!this._client) throw new InternalServerError('REDIS_NOT_CONNECTED');
+
+    const lockKey = `lock:${key}`;
+    const result = await this._client.set(lockKey, 'locked', 'PX', ttlMs, 'NX');
+    return result === 'OK';
+  }
+
+  public async releaseLock(key: string): Promise<void> {
+    if (!this._client) throw new InternalServerError('REDIS_NOT_CONNECTED');
+
+    const lockKey = `lock:${key}`;
+    await this._client.del(lockKey);
+  }
+
+  public async waitAndAcquire(
+    key: string,
+    ttlMs: number,
+    timeoutMs: number = 5000,
+  ): Promise<boolean> {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const acquired = await this.acquireLock(key, ttlMs);
+      if (acquired) return true;
+      await new Promise((resolve) => setTimeout(resolve, 50)); // Wait 50ms before retry
+    }
+    return false;
   }
 }

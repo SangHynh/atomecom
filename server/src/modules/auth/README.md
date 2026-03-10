@@ -115,7 +115,7 @@ flowchart TD
 
 ## 3. Detailed Logic Flows
 
-### 3.1 Register
+### 3.1 Register (Compensating Transaction Flow)
 
 ```mermaid
 sequenceDiagram
@@ -125,22 +125,28 @@ sequenceDiagram
     participant SS as SessionService
 
     C->>AS: register(RegisterDTO)
-    AS->>US: create(userProps)
+    AS->>US: create(userProps) — Step 1 ✅
     US-->>AS: SafeUserResponseDTO
-    AS->>AS: _createNewSession(user)
-    AS->>SS: saveRefreshTokenToCache(sessionData)
-    AS-->>C: AuthResponseDTO (user + tokens)
 
-    Note over AS, EB: Post-Response Side Effects
-    AS->>EB: emit(USER_CREATED)
-    EB-->>EMAIL: Listener: sendVerificationEmail
+    alt Session Creation Success
+        AS->>AS: _createNewSession(user)
+        AS->>SS: saveRefreshTokenToCache(sessionData) — Step 2 ✅
+        AS-->>C: AuthResponseDTO (user + tokens)
+        Note over AS, EB: Post-Response Side Effects
+        AS->>EB: emit(USER_CREATED)
+        EB-->>EMAIL: Listener: sendVerificationEmail
+    else Session Creation Fails (Redis Down, etc.)
+        AS->>US: 🔴 hardDelete(user.id) — Rollback Step 1
+        AS-->>C: throw InternalServerError
+    end
 ```
 
-1. **User Creation:** **AuthService** calls **UserService** to persist the new user.
-2. **Session Initialization:** If successful, it generates a unique `sessionId` and a pair of JWTs (Access/Refresh).
-3. **Persistence:** The session (refresh token context) is saved to **Redis** for rotation checks.
-4. **Onboarding:** Triggers an async email verification task.
-5. **Response:** Returns the user profile and initial tokens immediately.
+1. **User Creation:** **AuthService** calls **UserService** to persist the new user in MongoDB.
+2. **Compensation:** If the next step (Session Initialization) fails, the created user is **hard-deleted** to prevent orphan accounts without sessions or verification emails.
+3. **Session Initialization:** If successful, it generates a unique `sessionId` and a pair of JWTs (Access/Refresh).
+4. **Persistence:** The session (refresh token context) is saved to **Redis** for rotation checks.
+5. **Onboarding:** Triggers an async email verification task via `USER_CREATED` event.
+6. **Response:** Returns the user profile and initial tokens immediately.
 
 ---
 
@@ -536,13 +542,14 @@ Error codes from `ErrorAuthCodes` and `ErrorUserCodes` enums.
 
 ### Edge Cases & Security
 
-|  #  | Case                 | Input              | Expected                                                |
-| :-: | -------------------- | ------------------ | ------------------------------------------------------- |
-|  1  | Token Reuse          | Used RT            | 401, `TOKEN_REUSED_DETECTION`, Revoke ALL user sessions |
-|  2  | Expired Token        | Expired RT         | 401, `INVALID_REFRESH_TOKEN`                            |
-|  3  | Hijacking Detection  | Modded RT          | 401, `INVALID_REFRESH_TOKEN`                            |
-|  4  | Enumeration Guard    | Non-existent Email | 200, "Generic Success" for Forgot Password              |
-|  5  | Double Verify        | Used Verify Link   | 400, `ACCOUNT_ALREADY_VERIFIED`                         |
-|  6  | Expired Link         | Expired Reset Link | 400, `URL_EXPIRED`                                      |
-|  7  | Banned User          | Social Login       | 403, `USER_ACCOUNT_LOCKED`                              |
-|  8  | Missing Profile Info | Social Login       | 200, `isEmailMissing: true`, User redirected to Profile |
+|  #  | Case                  | Input              | Expected                                                |
+| :-: | --------------------- | ------------------ | ------------------------------------------------------- |
+|  1  | Token Reuse           | Used RT            | 401, `TOKEN_REUSED_DETECTION`, Revoke ALL user sessions |
+|  2  | Expired Token         | Expired RT         | 401, `INVALID_REFRESH_TOKEN`                            |
+|  3  | Hijacking Detection   | Modded RT          | 401, `INVALID_REFRESH_TOKEN`                            |
+|  4  | Enumeration Guard     | Non-existent Email | 200, "Generic Success" for Forgot Password              |
+|  5  | Double Verify         | Used Verify Link   | 400, `ACCOUNT_ALREADY_VERIFIED`                         |
+|  6  | Expired Link          | Expired Reset Link | 400, `URL_EXPIRED`                                      |
+|  7  | Banned User           | Social Login       | 403, `USER_ACCOUNT_LOCKED`                              |
+|  8  | Missing Profile Info  | Social Login       | 200, `isEmailMissing: true`, User redirected to Profile |
+|  9  | Registration Rollback | Session fails      | 500, Created user is hard-deleted (Compensate)          |

@@ -71,6 +71,17 @@ class MockCacheRepo implements ICacheRepo {
       if (regex.test(key)) this._data.delete(key);
     }
   }
+  async acquireLock(_key: string, _ttl: number): Promise<boolean> {
+    return true;
+  }
+  async releaseLock(_key: string): Promise<void> {}
+  async waitAndAcquire(
+    _key: string,
+    _ttl: number,
+    _timeout?: number,
+  ): Promise<boolean> {
+    return true;
+  }
 }
 
 // Mock Email Service

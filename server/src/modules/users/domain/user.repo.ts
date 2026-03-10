@@ -23,6 +23,8 @@ export interface IUserRepository {
     id: string,
     data: Partial<Omit<UserEntity, 'id'>>,
   ): Promise<UserEntity | null>;
+  /** Hard-deletes a record permanently. Use ONLY for compensating transaction rollback. */
+  hardDelete(id: string): Promise<boolean>;
   findByOAuthId(
     provider: string,
     providerId: string,

@@ -24,6 +24,22 @@ import type { IOAuthProvider } from '@modules/auth/domain/IOauthProvider.service
 import { BlacklistService } from '@modules/auth/use-cases/blacklist.service.js';
 import { blacklistMiddleware } from '@shared/middlewares/blacklist.middleware.js';
 
+import { MongooseBrandRepo } from '@modules/products/infra/repositories/mongoose-brand.repo.js';
+import { MongooseCategoryRepo } from '@modules/products/infra/repositories/mongoose-category.repo.js';
+import { MongooseProductRepo } from '@modules/products/infra/repositories/mongoose-product.repo.js';
+import { MongooseSkuRepo } from '@modules/products/infra/repositories/mongoose-sku.repo.js';
+import { MongooseInventoryRepo } from '@modules/inventory/infra/repositories/mongoose-inventory.repo.js';
+import { ProductService } from '@modules/products/use-cases/services/product.service.js';
+import { SkuService } from '@modules/products/use-cases/services/sku.service.js';
+import { CategoryService } from '@modules/products/use-cases/services/category.service.js';
+import { BrandService } from '@modules/products/use-cases/services/brand.service.js';
+import { InventoryService } from '@modules/inventory/use-cases/inventory.service.js';
+import { ProductController } from '@modules/products/presentation/controllers/product.controller.js';
+import { CategoryController } from '@modules/products/presentation/controllers/category.controller.js';
+import { BrandController } from '@modules/products/presentation/controllers/brand.controller.js';
+import { SkuController } from '@modules/products/presentation/controllers/sku.controller.js';
+import { InventoryController } from '@modules/inventory/presentation/inventory.controller.js';
+
 import { UserActivityListener } from '@modules/users/use-cases/user-activity.listener.js';
 
 // 1. INFRA LAYER
@@ -40,6 +56,12 @@ const googleService = new GoogleProvider();
 const facebookService = new FacebookProvider();
 const providers: IOAuthProvider[] = [googleService, facebookService];
 const oauthFactory = new OauthFactory(providers);
+
+const brandRepo = new MongooseBrandRepo();
+const categoryRepo = new MongooseCategoryRepo();
+const productRepo = new MongooseProductRepo();
+const skuRepo = new MongooseSkuRepo();
+const inventoryRepo = new MongooseInventoryRepo();
 
 // 2. USE-CASES (APPLICATION) LAYER
 const healthService = new HealthService(db, cache);
@@ -61,6 +83,26 @@ const authService = new AuthService({
   eventBus,
 });
 
+const categoryService = new CategoryService({
+  categoryRepo,
+  productRepo,
+  cacheRepo: cache,
+});
+const brandService = new BrandService({ brandRepo, productRepo });
+const skuService = new SkuService({ skuRepo });
+const inventoryService = new InventoryService({
+  inventoryRepo,
+  cacheRepo: cache,
+});
+
+const productService = new ProductService({
+  productRepo,
+  skuService,
+  inventoryService,
+  categoryService,
+  brandService,
+});
+
 // 4. LISTENERS (EDA)
 new EmailListener({ eventBus, emailService, mailTokenService });
 new UserActivityListener({ eventBus, cache });
@@ -72,5 +114,13 @@ export const authControllerImpl = new AuthController(
   authService,
   blacklistService,
 );
+export const productControllerImpl = new ProductController(productService);
+export const categoryControllerImpl = new CategoryController(categoryService);
+export const brandControllerImpl = new BrandController(brandService);
+export const skuControllerImpl = new SkuController(skuService);
+export const inventoryControllerImpl = new InventoryController(
+  inventoryService,
+);
+
 export const authMiddlewareImpl = authMiddleware(tokenService, eventBus);
 export const blacklistMiddlewareImpl = blacklistMiddleware(blacklistService);

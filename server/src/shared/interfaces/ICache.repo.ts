@@ -6,4 +6,13 @@ export interface ICacheRepo {
   countByPattern(pattern: string): Promise<number>;
   has(key: string): Promise<boolean>;
   flushAll?(): Promise<void>;
+
+  // Locking mechanism (Clean Architecture compliant)
+  acquireLock(key: string, ttlMs: number): Promise<boolean>;
+  releaseLock(key: string): Promise<void>;
+  waitAndAcquire(
+    key: string,
+    ttlMs: number,
+    timeoutMs?: number,
+  ): Promise<boolean>;
 }

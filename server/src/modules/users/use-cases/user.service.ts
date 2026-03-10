@@ -20,6 +20,7 @@ import {
   InternalServerError,
   NotFoundError,
   UnauthorizedError,
+  BadRequestError,
 } from '@shared/core/error.response.js';
 import { OauthProvider } from '@atomecom/shared';
 import { USER_ROLE } from '@atomecom/shared';
@@ -146,7 +147,6 @@ export class UserService {
   }
 
   public async create(dto: CreateUserDTO): Promise<SafeUserResponseDTO> {
-    // TODO: Transaction
     await Promise.all([
       this._validateEmailUniqueness(dto.email),
       dto.phone ? this._validatePhoneUniqueness(dto.phone) : Promise.resolve(),
@@ -275,6 +275,21 @@ export class UserService {
     return this._toSafeResponse(user);
   }
 
+  /**
+   * Hard-deletes a user permanently.
+   * Use ONLY as a compensating rollback when user creation fails during registration.
+   */
+  public async hardDelete(id: string): Promise<boolean> {
+    const existingUser = await this.findById(id); // Ensure exists, also populates email
+    const result = await this._userRepo.hardDelete(id);
+    if (result) {
+      logger.info(
+        `[${MODULE}][${LAYER}][HardDelete] User ${existingUser.email} hard-deleted (compensated).`,
+      );
+    }
+    return result;
+  }
+
   public async updateProfile(
     id: string,
     dto: {
@@ -284,6 +299,10 @@ export class UserService {
     },
   ): Promise<SafeUserResponseDTO> {
     const existingUser = await this.findById(id, USER_STATUS.ACTIVE);
+
+    if (dto.addresses && dto.addresses.length > 3) {
+      throw new BadRequestError('Maximum of 3 addresses allowed per user.');
+    }
 
     const user = await this._userRepo.update(id, {
       ...dto,

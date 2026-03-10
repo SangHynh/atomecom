@@ -51,6 +51,7 @@ describe('UserService', () => {
       findByOAuthId: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      hardDelete: jest.fn(),
       count: jest.fn(),
     };
 
@@ -505,6 +506,43 @@ describe('UserService', () => {
         verified: 10,
       });
       expect(mockCache.countByPattern).toHaveBeenCalledWith('heartbeat:user:*');
+    });
+  });
+  describe('delete', () => {
+    it('should perform soft delete, mask sensitive data, and emit USER_DELETED event', async () => {
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockUserRepo.update.mockResolvedValue({
+        ...mockUser,
+        status: USER_STATUS.DELETED,
+        email: 'deleted_123_jane@example.com',
+      } as UserEntity);
+
+      const result = await userService.delete(mockUser.id!);
+
+      expect(mockUserRepo.update).toHaveBeenCalledWith(
+        mockUser.id,
+        expect.objectContaining({
+          status: USER_STATUS.DELETED,
+          email: expect.stringContaining('deleted_'),
+          providers: [],
+        }),
+      );
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        'user.deleted',
+        expect.objectContaining({
+          userId: mockUser.id,
+          email: mockUser.email,
+        }),
+      );
+      expect(result?.status).toBe(USER_STATUS.DELETED);
+    });
+
+    it('should throw NotFoundError if user does not exist', async () => {
+      mockUserRepo.findById.mockResolvedValue(null);
+
+      await expect(userService.delete('nonexistent')).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 });

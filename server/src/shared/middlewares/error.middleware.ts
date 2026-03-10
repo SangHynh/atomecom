@@ -4,52 +4,54 @@ import { ZodError, type ZodIssue } from 'zod';
 
 export const errorHandler = (
   err: any,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ) => {
-  const statusCode = err.status || 500;
+  try {
+    const statusCode = err.statusCode || err.status || 500;
+    const message = err.message || 'Internal Server Error';
 
-  // St1: Validation error
-  if (err instanceof ZodError || err.name === 'ZodError') {
-    return res.status(400).json({
+    // St1: Specific error patterns
+    if (err.name === 'ValidationError' || err instanceof ZodError) {
+      return res.status(400).json({
+        status: 'error',
+        statusCode: 400,
+        message: 'VALIDATION_ERROR',
+        errors: err.issues || err.errors || [],
+      });
+    }
+
+    if (err.code === 11000) {
+      return res.status(409).json({
+        status: 'error',
+        statusCode: 409,
+        message: 'DUPLICATE_KEY_ERROR',
+      });
+    }
+
+    // St2: Log error for debug
+    if (statusCode >= 400) {
+      console.log(`[DEBUG-ERR-MID][${err.module || 'SYSTEM'}]:`, err);
+    }
+
+    // St3: Send response
+    const isInternalError = statusCode >= 500;
+    const responseMessage =
+      isInternalError && process.env.NODE_ENV !== 'development'
+        ? 'INTERNAL_SERVER_ERROR'
+        : message;
+
+    return res.status(statusCode).json({
       status: 'error',
-      statusCode: 400,
-      module: 'VALIDATION',
-      layer: 'INTERFACE',
-      message: 'VALIDATION_ERROR',
-      errors: err.issues.map((e: ZodIssue) => ({
-        field: e.path.join('.'),
-        message: e.message.toUpperCase().replace(/ /g, '_'),
-      })),
+      statusCode,
+      module: err.module || 'App',
+      layer: err.layer || 'App',
+      message: responseMessage,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     });
+  } catch (criticalError) {
+    console.error('CRITICAL ERROR IN ERROR HANDLER:', criticalError);
+    return res.status(500).json({ status: 'error', message: 'CRITICAL_ERROR' });
   }
-
-  // St2: Log error
-  if (statusCode >= 500) {
-    console.error(`[Error][${err.module || 'SYSTEM'}]:`, err);
-  }
-
-  // St3: Send response
-  const isInternalError = statusCode >= 500;
-  const responseMessage =
-    isInternalError && !isDev
-      ? 'INTERNAL_SERVER_ERROR' // Hide detail internal errors if not development environment
-      : err.message?.toUpperCase().replace(/ /g, '_') ||
-        'INTERNAL_SERVER_ERROR';
-
-  const responseErrors =
-    isInternalError && !isDev
-      ? [] // Hide internal errors
-      : err.errors || [];
-
-  return res.status(statusCode).json({
-    status: 'error',
-    statusCode,
-    module: err.module || 'App',
-    layer: err.layer || 'App',
-    message: responseMessage,
-    errors: responseErrors,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-  });
 };

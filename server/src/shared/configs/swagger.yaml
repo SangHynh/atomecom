@@ -27,6 +27,17 @@ tags:
   - name: User
     description: Operations about user profile management
 
+  - name: Category
+    description: Operations about categories
+  - name: Brand
+    description: Operations about brands
+  - name: Product
+    description: Operations about products
+  - name: Sku
+    description: Operations about SKUs
+  - name: Inventory
+    description: Operations about inventory and stock
+
 paths:
   # ================= AUTH MODULE =================
   /auth/register:
@@ -339,14 +350,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name: { type: string }
-                avatar: { type: string }
-                addresses:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/UserAddress'
+              $ref: '#/components/schemas/UserUpdateInput'
       responses:
         '200':
           description: Profile updated
@@ -391,6 +395,7 @@ paths:
           required: true
           schema:
             type: string
+            example: '65c3b1e8a1b2c3d4e5f6g7h8'
       responses:
         '200':
           description: User details
@@ -517,6 +522,504 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
 
+  # ================= CATEGORY MODULE =================
+  /categories:
+    get:
+      summary: Get all categories (paginated & filtered)
+      tags: [Category]
+      parameters:
+        - in: query
+          name: path
+          schema: { type: string, nullable: true }
+          description: Filter by parent path
+        - in: query
+          name: level
+          schema: { type: integer }
+          description: Filter by exact level
+        - in: query
+          name: keyword
+          schema: { type: string }
+          description: Search by name
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: List of categories with pagination
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoryListResponse' }
+        'errorCode':
+          description: Throw Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /categories/discovery:
+    get:
+      summary: Get Shallow Tree for discovery (L1 + top 20 L2)
+      tags: [Category]
+      responses:
+        '200':
+          description: Initial discovery tree (Redis Cached)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: 'success' }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Category' }
+
+  /categories/{id}:
+    get:
+      summary: Get category by ID
+      tags: [Category]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7h7' }
+      responses:
+        '200':
+          description: Category details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoryResponse' }
+
+  /admin/categories:
+    post:
+      summary: Create category
+      tags: [Category]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoryResponse' }
+
+  /admin/categories/{id}:
+    patch:
+      summary: Update category properties (non-hierarchy)
+      tags: [Category]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoryResponse' }
+
+  /admin/categories/{id}/move:
+    patch:
+      summary: Move category to a new parent (Tree reorganization)
+      tags: [Category]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [parentPath, version]
+              properties:
+                parentPath:
+                  { type: string, nullable: true, example: ',id1,id2,' }
+                version: { type: integer, example: 1 }
+      responses:
+        '200':
+          description: Category moved successfully
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoryResponse' }
+        '400':
+          description: Invalid move operation (Self-parenting or Max depth)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    delete:
+      summary: Delete category by ID
+      tags: [Category]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Category deleted
+
+  # ================= BRAND MODULE =================
+  /brands:
+    get:
+      summary: Get all brands
+      tags: [Brand]
+      responses:
+        '200':
+          description: List of brands
+
+  /brands/{id}:
+    get:
+      summary: Get brand by ID
+      tags: [Brand]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7h9' }
+      responses:
+        '200':
+          description: Brand details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandResponse' }
+
+  /admin/brands:
+    post:
+      summary: Create brand
+      tags: [Brand]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '201':
+          description: Brand created
+
+  /admin/brands/{id}:
+    put:
+      summary: Update brand by ID
+      tags: [Brand]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200':
+          description: Brand updated
+
+    delete:
+      summary: Delete brand by ID
+      tags: [Brand]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Brand deleted
+
+  # ================= PRODUCT MODULE =================
+  /products:
+    get:
+      summary: Get all products
+      tags: [Product]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: List of products
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductListResponse' }
+
+  /products/{id}:
+    get:
+      summary: Get product by ID
+      tags: [Product]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7h8' }
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductResponse' }
+
+  /admin/products:
+    post:
+      summary: Create product
+      tags: [Product]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateProductInput' }
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuccessResponse' }
+
+  /admin/products/{id}:
+    put:
+      summary: Update product
+      tags: [Product]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200':
+          description: Product updated
+
+    delete:
+      summary: Soft delete product
+      tags: [Product]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Product soft-deleted successfully
+
+  # ================= SKU MODULE =================
+  /skus/{id}:
+    get:
+      summary: Get SKU by ID
+      tags: [Sku]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7i1' }
+      responses:
+        '200':
+          description: SKU details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SkuResponse' }
+
+  /products/{productId}/skus:
+    get:
+      summary: Get SKUs by Product ID
+      tags: [Sku]
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7h8' }
+      responses:
+        '200':
+          description: List of SKUs
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SkuListResponse' }
+
+  /admin/skus/{id}:
+    put:
+      summary: Update SKU details
+      tags: [Sku]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200':
+          description: SKU updated
+
+    delete:
+      summary: Soft delete SKU
+      tags: [Sku]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: SKU deleted
+
+  /admin/skus/{id}/price:
+    patch:
+      summary: Update SKU price
+      tags: [Sku]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                basePrice: { type: number }
+                salePrice: { type: number, nullable: true }
+      responses:
+        '200':
+          description: SKU price updated
+
+  # ================= INVENTORY MODULE =================
+  /inventory/reserve:
+    post:
+      summary: Reserve stock for order
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [skuId, quantity]
+              properties:
+                skuId: { type: string }
+                quantity: { type: integer, example: 1 }
+      responses:
+        '200':
+          description: Stock reserved
+        '400':
+          description: Insufficient stock
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /inventory/release:
+    post:
+      summary: Release reserved stock
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [skuId, quantity]
+              properties:
+                skuId: { type: string }
+                quantity: { type: integer, example: 1 }
+      responses:
+        '200':
+          description: Stock released
+        '400':
+          description: Failed to release stock
+
+  /inventory/{skuId}/add:
+    patch:
+      summary: Add stock quantity (Admin only)
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: skuId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount: { type: integer, example: 10 }
+      responses:
+        '200':
+          description: Stock added successfully
+
+  /inventory/{skuId}:
+    get:
+      summary: Get inventory by SKU ID
+      tags: [Inventory]
+      parameters:
+        - in: path
+          name: skuId
+          required: true
+          schema: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7i1' }
+      responses:
+        '200':
+          description: Inventory details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InventoryResponse' }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -594,22 +1097,37 @@ components:
       type: object
       required: [name, email, password]
       properties:
-        name: { type: string, example: 'Alice' }
+        name: { type: string, example: 'Alice Smith' }
         email: { type: string, format: email, example: 'alice@example.com' }
-        password: { type: string, example: 'password123' }
+        password: { type: string, minLength: 6, example: 'password123' }
         phone: { type: string, example: '0912345678' }
-        role: { type: string, enum: [USER, ADMIN], default: 'USER' }
+        role:
+          {
+            type: string,
+            enum: [USER, ADMIN],
+            default: 'USER',
+            example: 'USER',
+          }
         addresses:
           type: array
           items:
             $ref: '#/components/schemas/UserAddress'
 
+    UserUpdateInput:
+      type: object
+      properties:
+        name: { type: string, example: 'Alice Smith' }
+        phone: { type: string, example: '0987654321' }
+        avatar: { type: string, example: 'https://example.com/avatar.jpg' }
+        status:
+          { type: string, enum: [active, deactive, banned], example: 'active' }
+
     UserAddress:
       type: object
       properties:
-        street: { type: string }
-        city: { type: string }
-        isDefault: { type: boolean }
+        street: { type: string, example: '123 Main St' }
+        city: { type: string, example: 'Hanoi' }
+        isDefault: { type: boolean, example: true }
 
     # --- BASE RESPONSES ---
     MetaData:
@@ -697,7 +1215,7 @@ components:
     User:
       type: object
       properties:
-        id: { type: string, example: '65c3b1e...' }
+        id: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7h8' }
         name: { type: string, example: 'John Doe' }
         email: { type: string, example: 'john@example.com' }
         phone: { type: string, example: '0912345678' }
@@ -712,8 +1230,214 @@ components:
         addresses:
           type: array
           items:
+            $ref: '#/components/schemas/UserAddress'
+        createdAt:
+          {
+            type: string,
+            format: date-time,
+            example: '2024-02-15T10:00:00.000Z',
+          }
+
+    # --- PRODUCT INPUTS ---
+    CreateProductInput:
+      type: object
+      required: [name, categoryId, brandId, skus]
+      properties:
+        name: { type: string, example: 'iPhone 15' }
+        categoryId: { type: string, example: '65c3b1e...' }
+        brandId: { type: string, example: '65c3b1e...' }
+        description: { type: string, example: 'The latest iPhone model' }
+        shortDescription: { type: string, example: 'iPhone 15 128GB' }
+        thumbnail: { type: string, example: 'thumbnail_url.jpg' }
+        status:
+          { type: string, enum: [draft, active, inactive], default: draft }
+        skus:
+          type: array
+          items:
+            type: object
+            required: [skuCode, name, price, stock]
+            properties:
+              skuCode: { type: string, example: 'IPHONE15-128-BLK' }
+              name: { type: string, example: 'iPhone 15 128GB Black' }
+              price:
+                type: object
+                required: [basePrice]
+                properties:
+                  basePrice: { type: number, example: 999 }
+                  salePrice: { type: number, nullable: true }
+              stock: { type: integer, example: 50 }
+              attributes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    key: { type: string, example: 'Color' }
+                    value: { type: string, example: 'Black' }
+
+    # --- CATEGORY SCHEMAS ---
+    Category:
+      type: object
+      properties:
+        id: { type: string, example: '65c3b1e...' }
+        name: { type: string, example: 'Electronics' }
+        slug: { type: string, example: 'electronics' }
+        path: { type: string, example: ',65c3b1e...,65c3b1f...,' }
+        level: { type: integer, example: 1 }
+        status:
+          {
+            type: string,
+            enum: [draft, published, hidden, discontinued],
+            example: 'published',
+          }
+        description: { type: string, example: 'All kinds of gadgets' }
+        icon: { type: string, example: 'laptop' }
+        version: { type: integer, example: 0 }
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/Category' }
+          description: 'Only present in discovery response'
+
+    CategoryResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Category' }
+
+    CategoryListResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/Category' }
+
+    # --- BRAND SCHEMAS ---
+    Brand:
+      type: object
+      properties:
+        id: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7h9' }
+        name: { type: string, example: 'Apple' }
+        slug: { type: string, example: 'apple' }
+        description: { type: string, example: 'Premium electronics brand' }
+        logo: { type: string, example: 'https://example.com/apple-logo.png' }
+        status: { type: string, enum: [active, inactive], example: 'active' }
+
+    BrandResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Brand' }
+
+    BrandListResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/Brand' }
+
+    # --- SKU SCHEMAS ---
+    SkuPriceHistory:
+      type: object
+      properties:
+        basePrice: { type: number, example: 999 }
+        salePrice: { type: number, example: 899, nullable: true }
+        type: { type: string, example: 'MANUAL' }
+        reason: { type: string, example: 'Holiday discount' }
+        appliedAt:
+          {
+            type: string,
+            format: date-time,
+            example: '2024-02-15T10:00:00.000Z',
+          }
+
+    Sku:
+      type: object
+      properties:
+        id: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7i1' }
+        productId: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7h8' }
+        skuCode: { type: string, example: 'IPHONE15-128-BLK' }
+        name: { type: string, example: 'iPhone 15 128GB Black' }
+        price:
+          type: object
+          properties:
+            basePrice: { type: number, example: 999 }
+            salePrice: { type: number, example: 899, nullable: true }
+        priceHistory:
+          type: array
+          items: { $ref: '#/components/schemas/SkuPriceHistory' }
+        attributes:
+          type: array
+          items:
             type: object
             properties:
-              street: { type: string }
-              city: { type: string }
-              isDefault: { type: boolean }
+              key: { type: string, example: 'Color' }
+              value: { type: string, example: 'Black' }
+
+    SkuResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Sku' }
+
+    SkuListResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/Sku' }
+
+    # --- PRODUCT SCHEMAS ---
+    Product:
+      type: object
+      properties:
+        id: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7h8' }
+        name: { type: string, example: 'iPhone 15' }
+        slug: { type: string, example: 'iphone-15' }
+        brandId: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7h9' }
+        categoryId: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7h7' }
+        description: { type: string, example: 'The latest iPhone model' }
+        status: { type: string, example: 'active' }
+        avgRating: { type: number, example: 4.5 }
+        totalReviews: { type: number, example: 120 }
+
+    ProductResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Product' }
+
+    ProductListResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/Product' }
+
+    # --- INVENTORY SCHEMAS ---
+    Inventory:
+      type: object
+      properties:
+        skuId: { type: string, example: '65c3b1e8a1b2c3d4e5f6g7i1' }
+        quantity: { type: integer, example: 100 }
+        reserved: { type: integer, example: 5 }
+        available: { type: integer, example: 95 }
+        lowStockThreshold: { type: integer, example: 10 }
+        location: { type: string, example: 'Warehouse A-12' }
+
+    InventoryResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Inventory' }

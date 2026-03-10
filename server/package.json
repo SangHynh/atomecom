@@ -16,7 +16,9 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "check": "tsc --noEmit",
     "genkey": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
-    "seed:user": "tsx src/modules/users/_test/seed/user.seeder.ts"
+    "seed:user": "tsx src/modules/users/_test/seed/user.seeder.ts",
+    "seed:brand": "tsx src/modules/products/_test/seed/brand.seeder.ts",
+    "seed:category": "tsx src/modules/products/_test/seed/category.seeder.ts"
   },
   "keywords": [],
   "author": "",

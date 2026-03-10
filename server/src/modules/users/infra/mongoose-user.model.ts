@@ -90,7 +90,6 @@ const UserSchema = new Schema<UserEntity & Document>(
 const excludeDeletedMiddleware = function (this: any) {
   const currentQuery = this.getQuery() || {};
 
-  // Use $and to combine conditions and avoid overwriting existing status filters
   this.setQuery({
     $and: [
       currentQuery,

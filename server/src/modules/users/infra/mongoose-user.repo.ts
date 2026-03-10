@@ -31,8 +31,7 @@ export class MongooseUserRepo implements IUserRepository {
       limit = 10,
     } = params;
 
-    const query: any = {};
-
+    const query: any = { status: { $ne: USER_STATUS.DELETED } };
     if (status) query.status = status;
     if (role) query.role = role;
     if (keyword) {
@@ -67,7 +66,7 @@ export class MongooseUserRepo implements IUserRepository {
   ): Promise<UserEntity | null> {
     const result = await UserModel.findOne({
       email,
-      ...(status && { status }),
+      status: status || { $ne: USER_STATUS.DELETED },
     })
       .select('+password')
       .lean();
@@ -81,7 +80,7 @@ export class MongooseUserRepo implements IUserRepository {
   ): Promise<UserEntity | null> {
     const result = await UserModel.findOne({
       phone,
-      ...(status && { status }),
+      status: status || { $ne: USER_STATUS.DELETED },
     })
       .select('+password')
       .lean();
@@ -95,7 +94,7 @@ export class MongooseUserRepo implements IUserRepository {
   ): Promise<UserEntity | null> {
     const result = await UserModel.findOne({
       _id: id,
-      ...(status && { status }),
+      status: status || { $ne: USER_STATUS.DELETED },
     }).lean();
 
     return this._toDomain(result);
@@ -109,7 +108,7 @@ export class MongooseUserRepo implements IUserRepository {
     const result = await UserModel.findOne({
       provider,
       providerId,
-      ...(status && { status }),
+      status: status || { $ne: USER_STATUS.DELETED },
     }).lean();
 
     return this._toDomain(result);
@@ -158,6 +157,12 @@ export class MongooseUserRepo implements IUserRepository {
 
   public async count(filter: any): Promise<number> {
     return await UserModel.countDocuments(filter);
+  }
+
+  /** Hard-deletes a user permanently. Use ONLY for compensating transaction rollback. */
+  public async hardDelete(id: string): Promise<boolean> {
+    const result = await UserModel.deleteOne({ _id: id });
+    return result.deletedCount > 0;
   }
 
   // Mapper to Domain Entity

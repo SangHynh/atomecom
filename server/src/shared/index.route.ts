@@ -8,6 +8,11 @@ import userRouter from '@modules/users/presentation/user.route.js';
 import authRouter from '@modules/auth/presentation/auth.route.js';
 import { NotFoundError } from '@shared/core/error.response.js';
 import docsRouter from '@shared/docs.route.js';
+import productRouter from '@modules/products/presentation/routes/product.route.js';
+import categoryRouter from '@modules/products/presentation/routes/category.route.js';
+import brandRouter from '@modules/products/presentation/routes/brand.route.js';
+import skuRouter from '@modules/products/presentation/routes/sku.route.js';
+import inventoryRouter from '@modules/inventory/presentation/inventory.route.js';
 import toolRouter from './tools.route.js';
 import { isDev } from '@shared/utils/common.js';
 import { ErrorSystemCodes } from '@atomecom/shared';
@@ -21,6 +26,11 @@ router.use('/health', healthRouter);
 
 router.use(`/v1/api`, userRouter);
 router.use(`/v1/api`, authRouter);
+router.use(`/v1/api`, productRouter);
+router.use(`/v1/api`, categoryRouter);
+router.use(`/v1/api`, brandRouter);
+router.use(`/v1/api`, skuRouter);
+router.use(`/v1/api`, inventoryRouter);
 router.use(`/docs`, docsRouter);
 
 // Dev-only routes for testing HTML files

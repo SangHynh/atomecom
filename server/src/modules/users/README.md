@@ -70,7 +70,7 @@ flowchart TD
 sequenceDiagram
     participant C as Controller
     participant S as UserService
-    participant R as UserRepo
+    participant Repo as UserRepo
     participant H as HashService
     participant EB as EventBus
 
@@ -80,8 +80,8 @@ sequenceDiagram
     S->>H: hash(password)
     H-->>S: passwordHash
     S->>S: _toCreateEntity(dto + passwordHash)
-    S->>R: create(entityData)
-    R-->>S: UserEntity (raw)
+    S->>Repo: create(entityData)
+    Repo-->>S: UserEntity (raw)
     S->>EB: emit(USER_CREATED)
     S->>S: _toSafeResponse(user)
     S-->>C: SafeUserResponseDTO
@@ -101,16 +101,16 @@ These methods provide flexible lookups for internal and external modules.
 sequenceDiagram
     participant M as Caller Module
     participant S as UserService
-    participant R as UserRepo
+    participant Repo as UserRepo
 
     M->>S: findById / findByEmail / findByPhone
-    S->>R: Repo Query
+    S->>Repo: Repo Query
     alt Found
-        R-->>S: UserEntity
+        Repo-->>S: UserEntity
         S->>S: _toSafeResponse(user)
         S-->>M: SafeUserResponseDTO
     else Not Found
-        R-->>S: null
+        Repo-->>S: null
         Note over S: findById throws 404<br/>Others return null
         S-->>M: Error / null
     end
@@ -129,19 +129,19 @@ Handles Social Login identities from Google, Facebook, etc.
 sequenceDiagram
     participant AS as AuthService
     participant S as UserService
-    participant R as UserRepo
+    participant Repo as UserRepo
 
     AS->>S: upsertOAuthUser(profile)
-    S->>R: findByOAuthId(provider, providerId)
+    S->>Repo: findByOAuthId(provider, providerId)
     alt Social ID Exists
-        R-->>S: UserEntity
+        Repo-->>S: UserEntity
     else Link by Email
-        S->>R: findByEmail(profile.email)
+        S->>Repo: findByEmail(profile.email)
         alt Account Found
-            S->>R: update(id, { add provider })
+            S->>Repo: update(id, { add provider })
         else New User
             S->>S: Generate Dummy Email (if missing)
-            S->>R: create(OAuthUser)
+            S->>Repo: create(OAuthUser)
         end
     end
     S->>S: _toSafeResponse(user) [Masking Dummy]
@@ -161,11 +161,11 @@ Used by the **Auth Module** during local login.
 sequenceDiagram
     participant A as Auth
     participant S as UserService
-    participant R as UserRepo
+    participant Repo as UserRepo
     participant H as HashService
 
     A->>S: verifyCredentials(email, password)
-    S->>R: findByEmail(email, ACTIVE)
+    S->>Repo: findByEmail(email, ACTIVE)
     S->>H: compare(password, user.password)
     alt Valid
         H-->>S: true
@@ -190,6 +190,26 @@ All update methods use **Optimistic Locking** via the `version` field to prevent
 | `verifyAccount`       | Set email verified flag | Typically called by Auth Module                                                              |
 | `delete`              | Soft delete account     | Updates `status: DELETED`, masks Email/Phone, clears Social Providers. Emits `USER_DELETED`. |
 | `updateUser`          | Generic user update     | Updates provided fields. Emits `USER_STATUS_CHANGED` ONLY if status is modified.             |
+| `updateProfile`       | Update basic info       | Updates name/avatar/addresses. Enforces **Max 3 Addresses** limit.                           |
+
+#### Address Limit Guard (Logic Flow)
+
+```mermaid
+sequenceDiagram
+    participant C as Controller
+    participant S as UserService
+    participant Repo as UserRepo
+
+    C->>S: updateProfile(id, dto)
+    S->>S: findById(id, ACTIVE)
+    alt Address Size > 3
+        S-->>C: throw 400 BadRequestError
+    else Valid
+        S->>Repo: update(id, dto)
+        Repo-->>S: UserEntity
+        S-->>C: SafeUserResponseDTO
+    end
+```
 
 #### Soft Delete Workflow
 
@@ -197,13 +217,13 @@ All update methods use **Optimistic Locking** via the `version` field to prevent
 sequenceDiagram
     participant C as Controller
     participant S as UserService
-    participant R as UserRepo
+    participant Repo as UserRepo
     participant EB as EventBus
 
     C->>S: delete(id)
-    S->>R: findById(id)
+    S->>Repo: findById(id)
     Note over S: Preserve original email for notification.<br/>Mask active sensitive data (email, phone)<br/>& Clear social providers
-    S->>R: update(id, { status: DELETED, deletedAt: now, ... })
+    S->>Repo: update(id, { status: DELETED, deletedAt: now, ... })
     S->>EB: emit(USER_DELETED, { email: originalEmail, ... })
     S-->>C: void
 ```
@@ -214,11 +234,11 @@ sequenceDiagram
 sequenceDiagram
     participant C as AdminController
     participant S as UserService
-    participant R as UserRepo
+    participant Repo as UserRepo
     participant EB as EventBus
 
     C->>S: updateStatusAccount(id, status)
-    S->>R: update(id, { status })
+    S->>Repo: update(id, { status })
     S->>EB: emit(USER_STATUS_CHANGED, { email, status, ... })
     S-->>C: SafeUserResponseDTO
 ```
@@ -233,7 +253,7 @@ Transforms complex queries into paginated results.
 
 1. **Mapping:** Converts page/limit into offset/limit.
 2. **Filtering:** Supports `status`, `role`, and `keyword` search.
-3. **Global Protection:** Automatically excludes users with `DELETED` status or `deletedAt != null` via Model-level Mongoose Middleware. Use cases do not need to handle filtering manually.
+3. **Repository-Level Filtering:** All search methods (`findAll`, `findById`, `findByEmail`, etc.) automatically exclude users with `status: DELETED`. If an explicit `status` is passed, the repository uses it; otherwise, it defaults to `{ $ne: DELETED }`.
 4. **Response:** Encapsulates the results in a `PaginatedResult` object with metadata.
 
 #### Admin Search Workflow
@@ -242,15 +262,14 @@ Transforms complex queries into paginated results.
 sequenceDiagram
     participant C as AdminController
     participant S as UserService
-    participant M as MongooseMiddleware
+    participant Repo as UserRepo
     participant DB as MongoDB
 
     C->>S: findAll(query)
-    S->>M: countDocuments({}) / find({})
-    Note over M: Global Filter Injection:<br/>{ $and: [query, { status: { $ne: DELETED } }] }
-    M->>DB: Exec Query
-    DB-->>M: Results
-    M-->>S: Raw Data
+    S->>Repo: findAll({ ...query, status: { $ne: DELETED } })
+    Repo->>DB: Exec Query
+    DB-->>Repo: Results
+    Repo-->>S: Raw Data
     S-->>C: PaginatedResult
 ```
 
@@ -327,9 +346,39 @@ flowchart LR
 
 ---
 
-## 4. Technical Design
+## 5. Data Guarding & Integrity
 
-### 4.1 Data Schema
+### 5.1 Soft Delete Implementation
+
+The system uses a non-destructive deletion policy. Records are never truly removed from the database.
+
+- **Repository Filter:** Every `find` method includes a check for `{ status: { $ne: DELETED } }` (or `deletedAt: null`).
+- **Identity Masking:** Upon deletion, the user's `email` and `phone` are masked (e.g., `del_123_user@atomecom.com`) and social providers are cleared to release unique indexes for new accounts.
+- **Event Preservation:** The original email is preserved in the `USER_DELETED` event payload before masking, allowing notification services to contact the user one last time.
+
+### 5.2 Address Limit Guard
+
+To prevent resource abuse and database bloating, users are restricted to a maximum of **3 delivery addresses**.
+
+- **Enforcement:** This is checked at the Service level (`UserService.updateProfile`) before persisting any changes.
+
+### 5.3 Safe Response (Data Masking)
+
+The system enforces a "Zero Trust" approach when returning data to the presentation layer:
+
+- **Credential Stripping:** `password` and `__v` are always removed.
+- **Identity Masking:** If a user has `isEmailMissing: true` (common for some OAuth providers), the `email` field is returned as `null` to protect system-generated dummy emails.
+- **Immutability:** Data is mapped to a Safe DTO, preventing accidental mutations in the UI from reaching the storage layer.
+
+### 5.4 Optimistic Locking
+
+Uses a `version` field to detect and prevent "lost updates" when two admins edit the same user concurrently.
+
+---
+
+## 6. Technical Design
+
+### 6.1 Data Schema
 
 Based on `mongoose-user.model.ts`.
 
@@ -348,7 +397,7 @@ Based on `mongoose-user.model.ts`.
 | `isVerified`     | Boolean |    No    | Email verification flag                                           |
 | `version`        | Number  |    No    | Optimistic locking counter; default `0`                           |
 
-### 4.2 Auxiliary Data Schemas (Redis)
+### 6.2 Auxiliary Data Schemas (Redis)
 
 Inside the Users Module, real-time and fast-access data are managed on Redis to optimize performance.
 
@@ -361,7 +410,7 @@ Inside the Users Module, real-time and fast-access data are managed on Redis to 
 > **Data Standardization & Fallback**
 > To prevent parsing crashes, the system enforces a strict JSON schema for session keys. A **robust fallback mechanism** in `UserService` detects legacy "raw string" dates and handles them gracefully without throwing exceptions, ensuring a seamless migration during system updates.
 
-### 4.3 Validation Rules
+### 6.3 Validation Rules
 
 Based on `user.validator.ts`.
 
@@ -373,7 +422,7 @@ Based on `user.validator.ts`.
 | `password` | Create | `min(6)`    | `PASSWORD_MUST_BE_AT_LEAST_6_CHARS`       |
 | `id`       | Params | `ObjectId`  | `INVALID_USER_ID`                         |
 
-### 4.3 Safe Response (The Gatekeeper)
+### 6.4 Safe Response (The Gatekeeper)
 
 The private method `_toSafeResponse` acts as the final security gate for all User data:
 
@@ -381,7 +430,7 @@ The private method `_toSafeResponse` acts as the final security gate for all Use
 2. **Email Masking:** If `isEmailMissing: true`, returns `email: null` regardless of the dummy value in the DB.
 3. **Immutability:** Returns a plain object, preventing accidental DB updates from the presentation layer.
 
-### 4.4 Response Examples
+### 6.5 Response Examples
 
 #### I. Standard User (SafeUserResponseDTO)
 
@@ -436,7 +485,9 @@ Notice `email` is `null` and `isEmailMissing` is `true`.
 }
 ```
 
-## 5. Business Exceptions
+---
+
+## 7. Business Exceptions
 
 Comprehensive list of error codes from `ErrorUserCodes`.
 
@@ -464,7 +515,9 @@ Comprehensive list of error codes from `ErrorUserCodes`.
 
 ---
 
-## 6. Test Cases
+---
+
+## 8. Test Cases
 
 ### Happy Path
 
@@ -475,12 +528,14 @@ Comprehensive list of error codes from `ErrorUserCodes`.
 |  3  | OAuth Link         | Email matching Social | 200, Social link added to existing account    |
 |  4  | Find by ID         | Valid ID              | 200, `SafeUserResponseDTO`, stripped password |
 |  5  | Find by Email      | Existing Email        | 200, `SafeUserResponseDTO`                    |
-|  6  | Find All           | page=1, limit=10      | 200, `PaginatedResult` with correct metadata  |
-|  7  | Search by Keyword  | keyword="John"        | 200, Only users with "John" in name/email     |
-|  8  | Filter by Role     | role="ADMIN"          | 200, Only users with ADMIN role               |
-|  9  | Change Password    | Valid ID + New Pass   | 200, Password hashed, version incremented     |
-| 10  | Change Email       | Valid ID + New Email  | 200, `isVerified: false`, `email` updated     |
-| 11  | Verify Credentials | Correct Email/Pass    | 200, Returns `SafeUserResponseDTO`            |
+|  6  | Find by Phone      | Existing Phone        | 200, `SafeUserResponseDTO`                    |
+|  7  | Find All           | page=1, limit=10      | 200, `PaginatedResult` with correct metadata  |
+|  8  | Search by Keyword  | keyword="John"        | 200, Only users with "John" in name/email     |
+|  9  | Filter by Role     | role="ADMIN"          | 200, Only users with ADMIN role               |
+| 10  | Change Password    | Valid ID + New Pass   | 200, Password hashed, version incremented     |
+| 11  | Change Email       | Valid ID + New Email  | 200, `isVerified: false`, `email` updated     |
+| 12  | Verify Credentials | Correct Email/Pass    | 200, Returns `SafeUserResponseDTO`            |
+| 13  | Soft Delete        | Target User ID        | 204, Status: DELETED, Email masked            |
 
 ### Edge Cases & Errors
 
@@ -495,3 +550,8 @@ Comprehensive list of error codes from `ErrorUserCodes`.
 |  7  | Missing Address    | Street missing      | 400, `STREET_IS_REQUIRED`                    |
 |  8  | Same Email Change  | Current Email       | 200, No conflict (exclude current user)      |
 |  9  | Unauthenticated    | Missing JWT         | 401 (Handled by Global Auth Middleware)      |
+| 10  | Self-Deletion      | Current User ID     | 403, `CANNOT_DELETE_SELF`                    |
+| 11  | Delete Owner       | Owner User ID       | 403, `CANNOT_DELETE_OWNER`                   |
+| 12  | Admin delete Admin | Other Admin ID      | 403, `ONLY_OWNER_CAN_DELETE_ADMINS`          |
+
+---

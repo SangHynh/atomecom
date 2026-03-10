@@ -10,7 +10,7 @@ import type { Express } from 'express';
 import express from 'express';
 import request from 'supertest';
 import mongoose from 'mongoose';
-import { ErrorUserCodes } from '@atomecom/shared';
+import { ErrorUserCodes, ErrorRBACCodes } from '@atomecom/shared';
 import { UserModel } from '@modules/users/infra/mongoose-user.model.js';
 import type { CreateUserDTO } from '@modules/users/use-cases/user.dtos.js';
 import { USER_ROLE } from '@atomecom/shared';
@@ -68,6 +68,17 @@ class MockCacheRepo implements ICacheRepo {
       if (regex.test(key)) this._data.delete(key);
     }
   }
+  async acquireLock(_key: string, _ttl: number): Promise<boolean> {
+    return true;
+  }
+  async releaseLock(_key: string): Promise<void> {}
+  async waitAndAcquire(
+    _key: string,
+    _ttl: number,
+    _timeout?: number,
+  ): Promise<boolean> {
+    return true;
+  }
 }
 
 function createTestApp(): Express {
@@ -108,9 +119,22 @@ function createTestApp(): Express {
     validate(FindUserByPhoneSchema),
     asyncHandler(userController.findByPhone.bind(userController)),
   );
+  userRouter.delete(
+    '/users/:id',
+    validate(FindUserByIdSchema),
+    asyncHandler(userController.delete.bind(userController)),
+  );
 
   const app = express();
   app.use(express.json());
+  // Mock Auth/User context
+  app.use((req, res, next) => {
+    (req as any).user = (req as any).user || {
+      userId: 'admin-id',
+      role: USER_ROLE.OWNER,
+    };
+    next();
+  });
   app.use(BASE_PATH, userRouter);
   app.use(errorHandler);
   return app;
@@ -315,6 +339,36 @@ describe('Users Module - Integration Tests', () => {
 
       expect(res.body.data).toHaveLength(1);
       expect(res.body.data[0].role).toBe(USER_ROLE.ADMIN);
+    });
+  });
+
+  describe('Social & Lifecycle', () => {
+    it('1. Delete user - Soft delete masks data and returns 204', async () => {
+      const user = await UserModel.create({
+        name: 'To Delete',
+        email: 'delete_me@example.com',
+        password: 'h',
+        role: USER_ROLE.USER,
+        status: USER_STATUS.ACTIVE,
+      });
+
+      await request(app).delete(`${BASE_PATH}/users/${user._id}`).expect(204);
+
+      // Verify masking
+      const dbUser = await UserModel.findById(user._id);
+      expect(dbUser?.status).toBe(USER_STATUS.DELETED);
+      expect(dbUser?.email).toContain('deleted_');
+    });
+
+    it('2. Prevent self-deletion - 403 Forbidden', async () => {
+      const adminId = 'admin-id';
+      // In createTestApp we set current user id to 'admin-id'
+
+      const res = await request(app)
+        .delete(`${BASE_PATH}/users/${adminId}`)
+        .expect(403);
+
+      expect(res.body.message).toBe(ErrorRBACCodes.CANNOT_DELETE_SELF);
     });
   });
 

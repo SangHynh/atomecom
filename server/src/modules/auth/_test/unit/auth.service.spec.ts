@@ -44,8 +44,8 @@ describe('AuthService', () => {
     mockUserService = {
       create: jest.fn(),
       verifyCredentials: jest.fn(),
-      findById: jest.fn(),
       findByEmail: jest.fn(),
+      hardDelete: jest.fn().mockResolvedValue(true),
     } as any;
     mockTokenService = {
       generateAccessToken: jest.fn().mockResolvedValue('access'),
@@ -75,5 +75,30 @@ describe('AuthService', () => {
     const res = await authService.login({ email: 'j@ex.com', password: 'p' });
     expect(res.user.id).toBe('user-123');
     expect(mockSessionService.saveRefreshTokenToCache).toHaveBeenCalled();
+  });
+
+  describe('register (Compensating Transaction)', () => {
+    it('should rollback (hardDelete user) if session creation fails', async () => {
+      // Step 1: User creation succeeds
+      mockUserService.create.mockResolvedValue(mockUser as any);
+
+      // Step 2: Session creation fails (e.g., Token Service error)
+      mockTokenService.generateAccessToken.mockRejectedValue(
+        new Error('Token Service Down'),
+      );
+
+      // Execution
+      await expect(
+        authService.register({
+          name: 'John',
+          email: 'john@example.com',
+          password: 'password123',
+        }),
+      ).rejects.toThrow('Token Service Down');
+
+      // Verification: Rollback was called
+      expect(mockUserService.create).toHaveBeenCalled();
+      expect(mockUserService.hardDelete).toHaveBeenCalledWith(mockUser.id);
+    });
   });
 });
