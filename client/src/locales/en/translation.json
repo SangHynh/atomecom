@@ -119,7 +119,11 @@
   "sidebar": {
     "dashboard": "Dashboard",
     "users": "Users",
+    "catalog": "Catalog",
     "products": "Products",
+    "inventory": "Inventory",
+    "categories": "Categories",
+    "brands": "Brands",
     "orders": "Orders",
     "analytics": "Analytics",
     "settings": "Settings"
@@ -333,7 +337,80 @@
   "breadcrumbs": {
     "dashboard": "Dashboard",
     "admin": "Admin",
-    "users": "Users"
+    "users": "Users",
+    "catalog": "Catalog",
+    "brands": "Brands",
+    "categories": "Categories",
+    "products": "Products",
+    "inventory": "Inventory"
+  },
+  "catalog": {
+    "brands": {
+      "title": "Brands Management",
+      "subtitle": "Manage your product manufacturers and brand identities",
+      "new_brand": "New Brand",
+      "create_title": "Create Brand",
+      "create_desc": "Add a new brand to your catalog",
+      "edit_title": "Edit Brand",
+      "edit_desc": "Update brand information",
+      "table": {
+        "columns": {
+          "brand": "Brand",
+          "slug": "Slug",
+          "actions": "Actions"
+        }
+      },
+      "form": {
+        "name": "Brand Name",
+        "name_placeholder": "Enter brand name (e.g. Nike, Apple)",
+        "slug": "Slug",
+        "slug_placeholder": "nike-apple",
+        "logo": "Logo URL",
+        "logo_placeholder": "https://example.com/logo.png",
+        "description": "Description",
+        "description_placeholder": "Enter brand description..."
+      },
+      "actions": {
+        "created_success": "Brand created successfully",
+        "created_failed": "Failed to create brand",
+        "updated_success": "Brand updated successfully",
+        "updated_failed": "Failed to update brand",
+        "deleted_success": "Brand deleted successfully",
+        "deleted_failed": "Failed to delete brand",
+        "delete_confirm": "Are you sure you want to delete this brand?"
+      }
+    },
+    "categories": {
+      "title": "Category Management",
+      "subtitle": "Hierarchical & Multi-level Drill-down",
+      "new_category": "Add Category",
+      "create_title": "Create Category",
+      "create_desc": "Add a new classification to the system",
+      "edit_title": "Edit Category",
+      "edit_desc": "Update category structure or information",
+      "form": {
+        "name": "Category Name",
+        "name_placeholder": "e.g. Phones, Laptops",
+        "slug": "Slug",
+        "slug_placeholder": "phones-laptops",
+        "parent": "Parent Category",
+        "parent_placeholder": "Select parent (leave empty for root)",
+        "description": "Description",
+        "description_placeholder": "Enter category description...",
+        "icon": "Icon (Class/Name)",
+        "icon_placeholder": "lucide icon name or emoji",
+        "status": "Visibility Status"
+      },
+      "actions": {
+        "created_success": "Category created successfully",
+        "created_failed": "Failed to create category",
+        "updated_success": "Category updated successfully",
+        "updated_failed": "Failed to update category",
+        "deleted_success": "Category deleted successfully",
+        "deleted_failed": "Failed to delete category",
+        "delete_confirm": "Are you sure you want to delete this category?"
+      }
+    }
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

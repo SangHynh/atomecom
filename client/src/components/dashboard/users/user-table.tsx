@@ -73,7 +73,7 @@ function SortableTableHead({
         'sticky top-0 z-20 py-4 px-4 font-bold text-[11px] uppercase tracking-wider cursor-pointer group transition-all duration-200 border-b',
         'bg-muted/90 dark:bg-zinc-900 border-border/60 hover:bg-muted',
         isActive
-          ? 'text-violet-600 border-b-violet-500/30'
+          ? 'text-primary border-b-primary/30'
           : 'text-muted-foreground/60 hover:text-muted-foreground border-b-border/30',
         className ?? '',
       )}
@@ -269,7 +269,7 @@ export function UserTable({
               users.map((user, index) => (
                 <TableRow
                   key={user.id}
-                  className="group relative even:bg-violet-500/[0.05] odd:bg-transparent hover:bg-violet-500/10 data-[state=selected]:bg-violet-500/15 transition-all duration-200 border-border/30 cursor-pointer"
+                  className="group relative even:bg-primary/[0.05] odd:bg-transparent hover:bg-primary/10 data-[state=selected]:bg-primary/15 transition-all duration-200 border-border/30 cursor-pointer"
                   onClick={() => onViewDetails(user)}
                 >
                   <TableCell className="py-3.5 px-4">
@@ -283,8 +283,8 @@ export function UserTable({
                         </Avatar>
                         {user.isOnline && (
                           <span className="absolute bottom-0 right-0 flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-background"></span>
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/40 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary border-2 border-background"></span>
                           </span>
                         )}
                       </div>
@@ -331,7 +331,7 @@ export function UserTable({
                         {user.isVerified ? (
                           <Badge
                             variant="outline"
-                            className="w-fit bg-emerald-500/10 text-emerald-600 border-emerald-500/10 text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 shadow-sm shadow-emerald-500/5 ring-1 ring-emerald-500/20"
+                            className="w-fit bg-primary/10 text-primary border-primary/10 text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 shadow-sm shadow-primary/5 ring-1 ring-primary/20"
                           >
                             <CheckCircle2 className="h-3 w-3 mr-1.5" />
                             {t('users.table.status.verified')}
@@ -359,7 +359,7 @@ export function UserTable({
                                   ? 'cursor-pointer hover:scale-105 active:scale-95'
                                   : 'cursor-not-allowed opacity-80',
                                 user.status === USER_STATUS.ACTIVE
-                                  ? 'bg-blue-500/10 text-blue-600 border-blue-500/10 shadow-blue-500/5 ring-blue-500/20'
+                                  ? 'bg-primary/20 text-primary border-primary/20 shadow-primary/5 ring-primary/30'
                                   : user.status === USER_STATUS.BANNED
                                     ? 'bg-rose-500/10 text-rose-600 border-rose-500/10 shadow-rose-500/5 ring-rose-500/20'
                                     : user.status === USER_STATUS.DELETED
@@ -369,7 +369,7 @@ export function UserTable({
                             >
                               <div className="flex items-center gap-1.5">
                                 {user.status === USER_STATUS.ACTIVE ? (
-                                  <CheckCircle2 className="h-3 w-3 text-blue-600" />
+                                  <CheckCircle2 className="h-3 w-3 text-primary" />
                                 ) : user.status === USER_STATUS.BANNED ? (
                                   <Ban className="h-3 w-3 text-rose-600" />
                                 ) : user.status === USER_STATUS.DELETED ? (
@@ -402,16 +402,16 @@ export function UserTable({
                               className={cn(
                                 'rounded-lg text-[11px] font-bold uppercase tracking-widest gap-2 py-2 cursor-pointer transition-colors',
                                 user.status === USER_STATUS.ACTIVE
-                                  ? 'bg-blue-600/10 text-blue-600 focus:bg-blue-600/20 focus:text-blue-700'
-                                  : 'focus:bg-blue-600/10 focus:text-blue-600',
+                                  ? 'bg-primary/10 text-primary focus:bg-primary/20 focus:text-primary'
+                                  : 'focus:bg-primary/10 focus:text-primary',
                               )}
                             >
                               <CheckCircle2
                                 className={cn(
                                   'h-3.5 w-3.5',
                                   user.status === USER_STATUS.ACTIVE
-                                    ? 'text-blue-600'
-                                    : 'text-blue-600/70',
+                                    ? 'text-primary'
+                                    : 'text-primary/70',
                                 )}
                               />
                               <span className="flex-1">
@@ -470,7 +470,7 @@ export function UserTable({
                             <Line
                               type="monotone"
                               dataKey="value"
-                              stroke="#2563eb"
+                              stroke="var(--primary)"
                               strokeWidth={2}
                               dot={false}
                             />
@@ -496,7 +496,7 @@ export function UserTable({
                           variant="ghost"
                           size="icon"
                           onClick={() => onEdit(user)}
-                          className="h-8 w-8 rounded-lg hover:bg-violet-600/10 hover:text-violet-600 transition-colors cursor-pointer"
+                          className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
                           title={t('users.table.actions.edit')}
                         >
                           <Edit className="h-3.5 w-3.5" />
@@ -533,7 +533,7 @@ export function UserTable({
               size="icon"
               disabled={pagination.currentPage <= 1}
               onClick={() => pagination.onPageChange(1)}
-              className="h-8 w-8 rounded-lg border-border/40 hover:bg-violet-500/10 hover:text-violet-600 transition-all disabled:opacity-20 cursor-pointer shadow-sm"
+              className="h-8 w-8 rounded-lg border-border/40 hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-20 cursor-pointer shadow-sm"
               title={t('users.table.pagination.first', 'First Page')}
             >
               <ChevronLeftIcon className="h-4 w-4 -mr-2" />
@@ -546,7 +546,7 @@ export function UserTable({
               onClick={() =>
                 pagination.onPageChange(pagination.currentPage - 1)
               }
-              className="h-8 w-8 rounded-lg border-border/40 hover:bg-violet-500/10 hover:text-violet-600 transition-all disabled:opacity-20 cursor-pointer shadow-sm"
+              className="h-8 w-8 rounded-lg border-border/40 hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-20 cursor-pointer shadow-sm"
             >
               <ChevronLeftIcon className="h-4 w-4" />
             </Button>
@@ -597,7 +597,7 @@ export function UserTable({
                         'h-8 w-8 rounded-lg text-xs font-black transition-all shadow-sm cursor-pointer',
                         current === p
                           ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 border-none'
-                          : 'border-border/40 hover:bg-violet-500/10 hover:text-violet-600',
+                          : 'border-border/40 hover:bg-primary/10 hover:text-primary',
                       )}
                     >
                       {p}
@@ -614,7 +614,7 @@ export function UserTable({
               onClick={() =>
                 pagination.onPageChange(pagination.currentPage + 1)
               }
-              className="h-8 w-8 rounded-lg border-border/40 hover:bg-violet-500/10 hover:text-violet-600 transition-all disabled:opacity-20 cursor-pointer shadow-sm"
+              className="h-8 w-8 rounded-lg border-border/40 hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-20 cursor-pointer shadow-sm"
             >
               <ChevronRightIcon className="h-4 w-4" />
             </Button>

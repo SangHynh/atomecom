@@ -148,7 +148,11 @@
   "sidebar": {
     "dashboard": "Tổng quan",
     "users": "Người dùng",
-    "products": "Sản phẩm",
+    "catalog": "Sản phẩm",
+    "products": "Danh sách",
+    "inventory": "Tồn kho",
+    "categories": "Danh mục",
+    "brands": "Thương hiệu",
     "orders": "Đơn hàng",
     "analytics": "Phân tích",
     "settings": "Cài đặt"
@@ -362,7 +366,85 @@
     "breadcrumbs": {
       "dashboard": "Tổng quan",
       "admin": "Quản trị",
-      "users": "Người dùng"
+      "users": "Người dùng",
+      "catalog": "Sản phẩm",
+      "brands": "Thương hiệu",
+      "categories": "Danh mục",
+      "products": "Danh sách",
+      "inventory": "Tồn kho"
+    }
+  },
+  "catalog": {
+    "brands": {
+      "title": "Quản lý Thương hiệu",
+      "subtitle": "Quản lý các đối tác và thương hiệu sản phẩm",
+      "new_brand": "Thêm thương hiệu",
+      "create_title": "Tạo thương hiệu",
+      "create_desc": "Thêm một thương hiệu mới vào hệ thống",
+      "edit_title": "Sửa thương hiệu",
+      "edit_desc": "Cập nhật thông tin thương hiệu",
+      "table": {
+        "columns": {
+          "brand": "Thương hiệu",
+          "slug": "Đường dẫn (Slug)",
+          "actions": "Thao tác"
+        }
+      },
+      "form": {
+        "name": "Tên thương hiệu",
+        "name_placeholder": "Ví dụ: Nike, Apple",
+        "slug": "Slug",
+        "slug_placeholder": "nike-apple",
+        "logo": "Link Logo",
+        "logo_placeholder": "https://example.com/logo.png",
+        "description": "Mô tả",
+        "description_placeholder": "Nhập mô tả về thương hiệu..."
+      },
+      "actions": {
+        "created_success": "Đã tạo thương hiệu thành công",
+        "created_failed": "Tạo thương hiệu thất bại",
+        "updated_success": "Đã cập nhật thương hiệu",
+        "updated_failed": "Cập nhật thất bại",
+        "deleted_success": "Đã xóa thương hiệu",
+        "deleted_failed": "Xóa thương hiệu thất bại",
+        "delete_confirm": "Bạn có chắc chắn muốn xóa thương hiệu này?"
+      },
+      "empty": {
+        "title": "Không tìm thấy thương hiệu",
+        "desc_filters": "Không tìm thấy kết quả khớp với bộ lọc.",
+        "desc_search": "Không tìm thấy kết quả khớp với tìm kiếm."
+      }
+    },
+    "categories": {
+      "title": "Quản lý Danh mục",
+      "subtitle": "Phân cấp & Duyệt danh mục đa tầng",
+      "new_category": "Thêm danh mục",
+      "create_title": "Tạo danh mục",
+      "create_desc": "Thêm một phân loại mới vào hệ thống",
+      "edit_title": "Sửa danh mục",
+      "edit_desc": "Cập nhật cấu trúc hoặc thông tin danh mục",
+      "form": {
+        "name": "Tên danh mục",
+        "name_placeholder": "Ví dụ: Điện thoại, Laptop",
+        "slug": "Slug",
+        "slug_placeholder": "dien-thoai-laptop",
+        "parent": "Danh mục cha",
+        "parent_placeholder": "Chọn danh mục cấp trên (bỏ trống nếu là gốc)",
+        "description": "Mô tả",
+        "description_placeholder": "Nhập mô tả về danh mục...",
+        "icon": "Biểu tượng (Icon Class)",
+        "icon_placeholder": "lucide icon name hoặc emoji",
+        "status": "Trạng thái hiển thị"
+      },
+      "actions": {
+        "created_success": "Đã tạo danh mục thành công",
+        "created_failed": "Tạo danh mục thất bại",
+        "updated_success": "Đã cập nhật danh mục",
+        "updated_failed": "Cập nhật thất bại",
+        "deleted_success": "Đã xóa danh mục",
+        "deleted_failed": "Xóa danh mục thất bại",
+        "delete_confirm": "Bạn có chắc chắn muốn xóa danh mục này?"
+      }
     }
   },
   "errors": {

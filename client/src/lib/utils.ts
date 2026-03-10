@@ -78,3 +78,19 @@ export function parseUserAgent(userAgent: string): {
 
   return { browser, os, device };
 }
+
+export function generateSlug(text: string): string {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize('NFD') // Split accented characters into their base characters and diacritical marks
+    .replace(/[\u0300-\u036f]/g, '') // Remove all diacritical marks
+    .replace(/đ/g, 'd') // Replace specific Vietnamese characters
+    .replace(/Đ/g, 'd')
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/[^\w-]+/g, '') // Remove all non-word chars (except hyphens)
+    .replace(/--+/g, '-') // Replace multiple hyphens with a single hyphen
+    .replace(/^-+/, '') // Trim hyphens from the start
+    .replace(/-+$/, ''); // Trim hyphens from the end
+}

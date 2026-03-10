@@ -59,8 +59,8 @@ export default function AdminDashboard() {
       change: '+12.5%',
       trend: 'up',
       icon: DollarSign,
-      color: 'text-emerald-500',
-      bg: 'bg-emerald-500/10',
+      color: 'text-primary',
+      bg: 'bg-primary/10',
     },
     {
       name: t('users.stats.active'),
@@ -172,7 +172,7 @@ export default function AdminDashboard() {
                     className={cn(
                       'flex items-center gap-0.5 text-xs font-black px-2 py-1 rounded-full',
                       stat.trend === 'up'
-                        ? 'text-emerald-500 bg-emerald-500/10'
+                        ? 'text-primary bg-primary/10'
                         : 'text-rose-500 bg-rose-500/10',
                     )}
                   >
@@ -399,7 +399,7 @@ export default function AdminDashboard() {
                           className={cn(
                             'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter',
                             order.status === 'Delivered'
-                              ? 'bg-emerald-500/10 text-emerald-500'
+                              ? 'bg-primary/10 text-primary'
                               : order.status === 'Processing'
                                 ? 'bg-amber-500/10 text-amber-500'
                                 : order.status === 'Shipped'
@@ -435,7 +435,7 @@ export default function AdminDashboard() {
                 {
                   name: t('dashboard.performance.api_latency'),
                   value: 12,
-                  color: 'bg-emerald-500',
+                  color: 'bg-primary',
                 },
                 {
                   name: t('dashboard.performance.error_rate'),

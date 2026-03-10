@@ -109,7 +109,7 @@ export function UserDetailContact({
           >
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                <ShieldCheck className="h-3 w-3 text-primary" />
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                   {t('users.details.user_id')}
                 </p>
@@ -138,7 +138,7 @@ export function UserDetailContact({
                 <span className="text-[11px] font-bold text-muted-foreground uppercase">
                   {t('users.details.spent')}
                 </span>
-                <span className="text-[13px] font-black text-emerald-500">
+                <span className="text-[13px] font-black text-primary">
                   $1,250.00
                 </span>
               </div>

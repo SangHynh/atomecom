@@ -112,12 +112,12 @@ export function UserDetailSheet({
                   className={cn(
                     'absolute bottom-1 right-1 flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full border-4 border-background',
                     user.isOnline
-                      ? 'bg-emerald-500'
+                      ? 'bg-primary'
                       : 'bg-zinc-300 dark:bg-zinc-600',
                   )}
                 >
                   {user.isOnline && (
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/40 opacity-75" />
                   )}
                 </span>
               </div>
@@ -148,14 +148,14 @@ export function UserDetailSheet({
                 className={cn(
                   'rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-widest shadow-sm',
                   user.status === 'ACTIVE'
-                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                    ? 'bg-primary/10 text-primary border-primary/20'
                     : 'bg-rose-500/10 text-rose-500 border-rose-500/20',
                 )}
               >
                 {t(`users.table.status.${user.status.toLowerCase()}`)}
               </Badge>
               {user.isVerified && (
-                <Badge className="rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-widest border-none bg-emerald-500/10 text-emerald-600 shadow-sm">
+                <Badge className="rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-widest border-none bg-primary/10 text-primary shadow-sm">
                   <ShieldCheck className="h-3 w-3 mr-1" />
                   {t('users.table.verification.verified', {
                     defaultValue: 'Verified',

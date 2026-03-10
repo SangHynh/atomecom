@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { useStore } from '@/store/useStore';
 
 // Define the API base URL from environment variable or default to localhost
 const BASE_URL =
@@ -73,6 +74,12 @@ const refreshAccessToken = async () => {
   } catch (error) {
     processQueue(error, null);
     setAccessToken(null);
+
+    // Only logout if the refresh token is explicitly invalid (401)
+    // Avoid logging out on network errors or server 500s
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      useStore.getState().logout();
+    }
     throw error;
   } finally {
     isRefreshing = false;
@@ -98,7 +105,7 @@ api.interceptors.request.use(
           config.headers.Authorization = `Bearer ${newToken}`;
         }
       } catch (e) {
-        // If refresh fails, let the request proceed (it will likely 401 and handled there)
+        return Promise.reject(e);
       }
     } else if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;

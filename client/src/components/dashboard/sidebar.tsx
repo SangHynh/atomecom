@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -10,10 +10,15 @@ import {
   ShoppingCart,
   Settings,
   ChevronLeft,
+  ChevronDown,
   BarChart3,
   ShieldCheck,
   Menu,
   X,
+  Box,
+  Tags,
+  ListTree,
+  Archive,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,14 +30,45 @@ interface SidebarProps {
   toggle: () => void;
 }
 
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+  subItems?: Omit<NavItem, 'icon' | 'subItems'>[];
+}
+
 export function Sidebar({ isOpen, toggle }: SidebarProps) {
   const pathname = usePathname();
   const { t } = useTranslation();
+  const [expandedItems, setExpandedItems] = useState<string[]>([
+    '/admin/products',
+  ]);
 
-  const navItems = [
+  const toggleExpand = (href: string) => {
+    setExpandedItems((prev) =>
+      prev.includes(href)
+        ? prev.filter((item) => item !== href)
+        : [...prev, href],
+    );
+  };
+
+  const navItems: NavItem[] = [
     { name: t('sidebar.dashboard'), href: '/admin', icon: LayoutDashboard },
     { name: t('sidebar.users'), href: '/admin/users', icon: Users },
-    { name: t('sidebar.products'), href: '/admin/products', icon: Package },
+    {
+      name: t('sidebar.catalog', 'Catalog'),
+      href: '/admin/catalog', // Dùng làm prefix cho cha
+      icon: Package,
+      subItems: [
+        { name: t('sidebar.products', 'Products'), href: '/admin/products' },
+        { name: t('sidebar.inventory', 'Inventory'), href: '/admin/inventory' },
+        {
+          name: t('sidebar.categories', 'Categories'),
+          href: '/admin/categories',
+        },
+        { name: t('sidebar.brands', 'Brands'), href: '/admin/brands' },
+      ],
+    },
     { name: t('sidebar.orders'), href: '/admin/orders', icon: ShoppingCart },
     { name: t('sidebar.analytics'), href: '/admin/analytics', icon: BarChart3 },
     { name: t('sidebar.settings'), href: '/admin/settings', icon: Settings },
@@ -82,7 +118,7 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
           )}
         >
           <div className="flex items-center gap-3 overflow-hidden z-10">
-            <div className="h-9 w-9 min-w-[36px] rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30 ring-1 ring-white/10 shrink-0 mx-auto group hover:shadow-violet-500/40 hover:scale-105 transition-all duration-300">
+            <div className="h-9 w-9 min-w-[36px] rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30 ring-1 ring-white/10 shrink-0 mx-auto group hover:shadow-primary/40 hover:scale-105 transition-all duration-300">
               <ShieldCheck className="text-white h-5 w-5" />
             </div>
             <AnimatePresence>
@@ -93,7 +129,7 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
                   exit={{ opacity: 0, width: 0 }}
                   className="text-xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 overflow-hidden whitespace-nowrap"
                 >
-                  ATOME<span className="text-violet-600">COM</span>
+                  ATOME<span className="text-primary">COM</span>
                 </motion.span>
               )}
             </AnimatePresence>
@@ -127,45 +163,145 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const hasSubItems = item.subItems && item.subItems.length > 0;
+            const isSubActive =
+              hasSubItems &&
+              item.subItems!.some((sub) => pathname.startsWith(sub.href));
+            const isActive = pathname === item.href || isSubActive;
+            const isExpanded = expandedItems.includes(item.href);
+
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden h-12 z-10',
-                  isActive
-                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30'
-                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:shadow-sm',
-                  !isOpen && 'lg:px-0 lg:justify-center lg:w-12 lg:mx-auto',
+              <div key={item.href} className="flex flex-col gap-1">
+                {hasSubItems ? (
+                  <button
+                    onClick={() => {
+                      if (!isOpen) toggle(); // Mở sidebar ra nếu đang thu gọn
+                      toggleExpand(item.href);
+                    }}
+                    className={cn(
+                      'flex w-full items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden h-12 z-10',
+                      isActive && !isExpanded
+                        ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-lg shadow-primary/30'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:shadow-sm',
+                      !isOpen && 'lg:px-0 lg:justify-center lg:w-12 lg:mx-auto',
+                    )}
+                  >
+                    <item.icon
+                      className={cn(
+                        'h-5 w-5 shrink-0',
+                        isActive && !isExpanded
+                          ? ''
+                          : 'group-hover:scale-110 transition-transform',
+                      )}
+                    />
+                    <AnimatePresence>
+                      {isOpen && (
+                        <>
+                          <motion.span
+                            initial={{ opacity: 0, width: 0 }}
+                            animate={{ opacity: 1, width: 'auto' }}
+                            exit={{ opacity: 0, width: 0 }}
+                            className="font-bold text-sm tracking-tight overflow-hidden whitespace-nowrap flex-1 text-left"
+                          >
+                            {item.name}
+                          </motion.span>
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{
+                              opacity: 1,
+                              rotate: isExpanded ? 180 : 0,
+                            }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <ChevronDown className="h-4 w-4 opacity-50" />
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                    {!isOpen && (
+                      <div className="absolute left-full ml-4 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-md z-[60]">
+                        {item.name}
+                      </div>
+                    )}
+                  </button>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden h-12 z-10',
+                      isActive
+                        ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-lg shadow-primary/30'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:shadow-sm',
+                      !isOpen && 'lg:px-0 lg:justify-center lg:w-12 lg:mx-auto',
+                    )}
+                  >
+                    <item.icon
+                      className={cn(
+                        'h-5 w-5 shrink-0',
+                        isActive
+                          ? ''
+                          : 'group-hover:scale-110 transition-transform',
+                      )}
+                    />
+                    <AnimatePresence>
+                      {isOpen && (
+                        <motion.span
+                          initial={{ opacity: 0, width: 0 }}
+                          animate={{ opacity: 1, width: 'auto' }}
+                          exit={{ opacity: 0, width: 0 }}
+                          className="font-bold text-sm tracking-tight overflow-hidden whitespace-nowrap"
+                        >
+                          {item.name}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                    {!isOpen && (
+                      <div className="absolute left-full ml-4 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-md z-[60]">
+                        {item.name}
+                      </div>
+                    )}
+                  </Link>
                 )}
-              >
-                <item.icon
-                  className={cn(
-                    'h-5 w-5 shrink-0',
-                    isActive
-                      ? ''
-                      : 'group-hover:scale-110 transition-transform',
-                  )}
-                />
+
+                {/* Sub Menu Dropsdown */}
                 <AnimatePresence>
-                  {isOpen && (
-                    <motion.span
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: 'auto' }}
-                      exit={{ opacity: 0, width: 0 }}
-                      className="font-bold text-sm tracking-tight overflow-hidden whitespace-nowrap"
+                  {hasSubItems && isOpen && isExpanded && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex flex-col gap-1 pl-11 pr-2 relative"
                     >
-                      {item.name}
-                    </motion.span>
+                      {/* Sub-menu connecting line */}
+                      <div className="absolute left-6 top-0 bottom-4 w-px bg-border/50" />
+
+                      {item.subItems!.map((subItem) => {
+                        const isSubItemActive =
+                          pathname === subItem.href ||
+                          pathname.startsWith(subItem.href + '/');
+                        return (
+                          <Link
+                            key={subItem.href}
+                            href={subItem.href}
+                            className={cn(
+                              'flex items-center py-2 px-3 text-sm rounded-lg transition-colors relative',
+                              isSubItemActive
+                                ? 'text-primary font-semibold bg-primary/10'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                            )}
+                          >
+                            {/* Line pointer */}
+                            <div className="absolute left-[-20px] top-1/2 w-3 h-px bg-border/50" />
+                            {subItem.name}
+                          </Link>
+                        );
+                      })}
+                    </motion.div>
                   )}
                 </AnimatePresence>
-                {!isOpen && (
-                  <div className="absolute left-full ml-4 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-md z-[60]">
-                    {item.name}
-                  </div>
-                )}
-              </Link>
+              </div>
             );
           })}
         </nav>

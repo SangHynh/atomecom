@@ -218,8 +218,8 @@ export function UserDetailActions({
             {/* Email Verified Toggle */}
             <div className="flex items-center justify-between p-3 gap-3">
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-[10px] font-black uppercase tracking-widest text-foreground/80 truncate">
@@ -246,7 +246,7 @@ export function UserDetailActions({
                 disabled={isUpdating}
                 className={cn(
                   'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none disabled:opacity-50',
-                  user.isVerified ? 'bg-emerald-500' : 'bg-muted-foreground/30',
+                  user.isVerified ? 'bg-primary' : 'bg-muted-foreground/30',
                 )}
               >
                 <span

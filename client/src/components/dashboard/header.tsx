@@ -34,11 +34,11 @@ export function AdminHeader({ onMenuClick, isOpen }: HeaderProps) {
         {/* Search Bar - Fixed Responsiveness with Safe Margin */}
         <div
           className={cn(
-            'hidden md:flex items-center gap-3 bg-muted/20 hover:bg-muted/30 border border-border/40 px-4 py-2 rounded-2xl w-full max-w-[280px] lg:max-w-lg focus-within:ring-4 focus-within:ring-violet-500/10 focus-within:border-violet-500/40 focus-within:bg-background transition-all duration-300 group shadow-sm',
+            'hidden md:flex items-center gap-3 bg-muted/20 hover:bg-muted/30 border border-border/40 px-4 py-2 rounded-2xl w-full max-w-[280px] lg:max-w-lg focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary/40 focus-within:bg-background transition-all duration-300 group shadow-sm',
             !isOpen && 'lg:ml-10',
           )}
         >
-          <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-violet-500 group-focus-within:scale-110 transition-all duration-300" />
+          <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary group-focus-within:scale-110 transition-all duration-300" />
           <input
             type="text"
             placeholder={t('header.search_placeholder')}
@@ -57,8 +57,8 @@ export function AdminHeader({ onMenuClick, isOpen }: HeaderProps) {
           <LanguageSelector />
           <ThemeToggle />
           <button className="p-2 rounded-xl hover:bg-muted transition-all relative group">
-            <Bell className="h-5 w-5 text-muted-foreground group-hover:text-violet-500 transition-colors" />
-            <span className="absolute top-2 right-2.5 h-2 w-2 bg-violet-500 rounded-full border-2 border-background shadow-sm" />
+            <Bell className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="absolute top-2 right-2.5 h-2 w-2 bg-primary rounded-full border-2 border-background shadow-sm" />
           </button>
         </div>
 
@@ -96,10 +96,10 @@ export function AdminHeader({ onMenuClick, isOpen }: HeaderProps) {
               {t('header.my_account')}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="focus:bg-violet-500/10 focus:text-violet-500 rounded-lg cursor-pointer font-medium transition-colors">
+            <DropdownMenuItem className="focus:bg-primary/10 focus:text-primary rounded-lg cursor-pointer font-medium transition-colors">
               {t('header.profile')}
             </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-violet-500/10 focus:text-violet-500 rounded-lg cursor-pointer font-medium transition-colors">
+            <DropdownMenuItem className="focus:bg-primary/10 focus:text-primary rounded-lg cursor-pointer font-medium transition-colors">
               {t('header.settings')}
             </DropdownMenuItem>
             <DropdownMenuItem

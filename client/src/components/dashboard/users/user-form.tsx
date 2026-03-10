@@ -169,7 +169,7 @@ export function UserForm({
               <div className="h-px flex-1 bg-gradient-to-l from-primary/40 to-transparent" />
             </div>
             {isSelf && user && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-widest">
                 {t('users.form.editing_own_profile', {
                   defaultValue: 'Your Profile',
                 })}
@@ -189,12 +189,12 @@ export function UserForm({
                   </FormLabel>
                   <FormControl>
                     <div className="relative group">
-                      <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 group-focus-within:text-violet-500 group-focus-within:scale-110 transition-all duration-300 z-10" />
+                      <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 group-focus-within:text-primary group-focus-within:scale-110 transition-all duration-300 z-10" />
                       <Input
                         placeholder="Ex: John Doe"
                         {...field}
                         disabled={!!user && !isSelf}
-                        className="h-10 pl-9 bg-background border-border/50 hover:border-border/70 focus-visible:bg-background focus-visible:border-violet-500/50 focus-visible:ring-2 focus-visible:ring-violet-500/20 focus-visible:shadow-[0_0_12px_rgba(139,92,246,0.15)] focus-visible:ring-offset-0 rounded-xl transition-all duration-300 text-sm placeholder:text-muted-foreground/40"
+                        className="h-10 pl-9 bg-background border-border/50 hover:border-border/70 focus-visible:bg-background focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)] focus-visible:ring-offset-0 rounded-xl transition-all duration-300 text-sm placeholder:text-muted-foreground/40"
                       />
                     </div>
                   </FormControl>
@@ -216,13 +216,13 @@ export function UserForm({
                   </FormLabel>
                   <FormControl>
                     <div className="relative group">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 group-focus-within:text-violet-500 group-focus-within:scale-110 transition-all duration-300 z-10" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 group-focus-within:text-primary group-focus-within:scale-110 transition-all duration-300 z-10" />
                       <Input
                         type="email"
                         placeholder="example@atomecom.com"
                         {...field}
                         disabled={!!user && !isSelf}
-                        className="h-10 pl-9 bg-background border-border/50 hover:border-border/70 focus-visible:bg-background focus-visible:border-violet-500/50 focus-visible:ring-2 focus-visible:ring-violet-500/20 focus-visible:shadow-[0_0_12px_rgba(139,92,246,0.15)] focus-visible:ring-offset-0 rounded-xl transition-all duration-300 text-sm placeholder:text-muted-foreground/40"
+                        className="h-10 pl-9 bg-background border-border/50 hover:border-border/70 focus-visible:bg-background focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)] focus-visible:ring-offset-0 rounded-xl transition-all duration-300 text-sm placeholder:text-muted-foreground/40"
                       />
                     </div>
                   </FormControl>
@@ -241,12 +241,12 @@ export function UserForm({
             className="space-y-4"
           >
             <div className="flex items-center gap-2">
-              <div className="h-px flex-1 bg-gradient-to-r from-violet-500/40 to-transparent" />
+              <div className="h-px flex-1 bg-gradient-to-r from-primary/40 to-transparent" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/80 shrink-0 flex items-center gap-1.5">
-                <ShieldAlert className="h-4 w-4 text-violet-500/80" />
+                <ShieldAlert className="h-4 w-4 text-primary/80" />
                 {t('users.details.security_session')}
               </h3>
-              <div className="h-px flex-1 bg-gradient-to-l from-violet-500/40 to-transparent" />
+              <div className="h-px flex-1 bg-gradient-to-l from-primary/40 to-transparent" />
             </div>
 
             <FormField
@@ -268,8 +268,8 @@ export function UserForm({
                   >
                     <FormControl>
                       <div className="relative group">
-                        <ShieldAlert className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 group-focus-within:text-violet-500 group-focus-within:scale-110 transition-all duration-300 z-10 pointer-events-none" />
-                        <SelectTrigger className="h-10 pl-9 bg-background border-border/50 hover:border-border/70 focus:bg-background focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 focus:shadow-[0_0_12px_rgba(139,92,246,0.15)] rounded-xl transition-all duration-300 text-sm">
+                        <ShieldAlert className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 group-focus-within:text-primary group-focus-within:scale-110 transition-all duration-300 z-10 pointer-events-none" />
+                        <SelectTrigger className="h-10 pl-9 bg-background border-border/50 hover:border-border/70 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)] rounded-xl transition-all duration-300 text-sm">
                           <SelectValue
                             placeholder={t('users.form.role_placeholder')}
                           />
@@ -312,14 +312,14 @@ export function UserForm({
                   </FormLabel>
                   <FormControl>
                     <div className="relative group">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 group-focus-within:text-violet-500 group-focus-within:scale-110 transition-all duration-300 z-10" />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 group-focus-within:text-primary group-focus-within:scale-110 transition-all duration-300 z-10" />
                       <Input
                         type={showPassword ? 'text' : 'password'}
                         placeholder={
                           user ? 'Leave blank to keep current' : '••••••••'
                         }
                         {...field}
-                        className="h-10 pl-9 pr-10 bg-background border-border/50 hover:border-border/70 focus-visible:bg-background focus-visible:border-violet-500/50 focus-visible:ring-2 focus-visible:ring-violet-500/20 focus-visible:shadow-[0_0_12px_rgba(139,92,246,0.15)] focus-visible:ring-offset-0 rounded-xl transition-all duration-300 text-sm placeholder:text-muted-foreground/40"
+                        className="h-10 pl-9 pr-10 bg-background border-border/50 hover:border-border/70 focus-visible:bg-background focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)] focus-visible:ring-offset-0 rounded-xl transition-all duration-300 text-sm placeholder:text-muted-foreground/40"
                       />
                       <Button
                         type="button"
@@ -354,7 +354,7 @@ export function UserForm({
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between rounded-xl border border-border/40 px-4 py-3 bg-muted/20 hover:bg-muted/30 hover:border-border/70 transition-all">
                     <div className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                      <ShieldCheck className="h-4 w-4 text-primary" />
                       <FormLabel className="text-xs font-black uppercase tracking-wide cursor-pointer mb-0">
                         {t('users.form.verified', {
                           defaultValue: 'Email Verified',
@@ -370,7 +370,7 @@ export function UserForm({
                         className={cn(
                           'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                           field.value
-                            ? 'bg-emerald-500 shadow-md shadow-emerald-500/30'
+                            ? 'bg-primary shadow-md shadow-primary/30'
                             : 'bg-muted-foreground/30',
                         )}
                       >
@@ -397,7 +397,7 @@ export function UserForm({
         >
           <Button
             type="submit"
-            className="w-full h-11 rounded-xl font-bold text-sm tracking-wide shadow-lg shadow-primary/20 transition-all bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 hover:shadow-violet-500/30 hover:shadow-xl hover:scale-[1.015] active:scale-[0.985] border-none"
+            className="w-full h-11 rounded-xl font-bold text-sm tracking-wide shadow-lg shadow-primary/20 transition-all bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary hover:shadow-primary/30 hover:shadow-xl hover:scale-[1.015] active:scale-[0.985] border-none"
             disabled={isLoading}
           >
             {isLoading ? (

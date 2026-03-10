@@ -47,7 +47,11 @@ function ResetPasswordForm() {
   }, [token, t]);
 
   const onSubmit: SubmitHandler<ResetPasswordSchema> = (data) =>
-    resetPassword({ token: data.token, newPassword: data.newPassword });
+    resetPassword({
+      token: data.token,
+      newPassword: data.newPassword,
+      confirmPassword: data.confirmPassword,
+    });
 
   return (
     <Form {...form}>

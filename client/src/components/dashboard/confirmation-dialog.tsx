@@ -19,7 +19,7 @@ interface ConfirmationDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  description: string;
+  description: string | React.ReactNode;
   confirmText?: string;
   cancelText?: string;
   variant?: 'danger' | 'warning' | 'info' | 'primary' | 'ban';
@@ -87,8 +87,11 @@ export function ConfirmationDialog({
               <DialogTitle className="text-xl font-black tracking-tight uppercase leading-none">
                 {title}
               </DialogTitle>
-              <DialogDescription className="text-[11px] font-bold text-muted-foreground/70 leading-relaxed px-4">
-                {description}
+              <DialogDescription
+                asChild
+                className="text-[11px] font-bold text-muted-foreground/70 leading-relaxed px-4"
+              >
+                <div>{description}</div>
               </DialogDescription>
             </div>
           </div>

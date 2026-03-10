@@ -50,7 +50,7 @@ export function UserDetailSecurity({ user }: UserDetailSecurityProps) {
           {user.isOnline ? (
             <Badge
               variant="outline"
-              className="text-[10px] font-black px-1.5 py-0 border-emerald-500/20 bg-emerald-500/5 text-emerald-600 animate-pulse"
+              className="text-[10px] font-black px-1.5 py-0 border-primary/30 bg-primary/10 text-primary animate-pulse shadow-sm shadow-primary/10"
             >
               ONLINE
             </Badge>
@@ -101,8 +101,8 @@ export function UserDetailSecurity({ user }: UserDetailSecurityProps) {
         </div>
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <Clock className="h-4 w-4 text-emerald-600" />
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-primary" />
             </div>
             <div>
               <div className="text-[11px] font-black uppercase tracking-widest text-foreground/90">

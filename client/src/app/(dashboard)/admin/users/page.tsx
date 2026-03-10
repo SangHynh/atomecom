@@ -194,12 +194,12 @@ export default function UsersPage() {
       <div className="flex flex-col gap-2 mb-3">
         {/* Mobile-only search row */}
         <div className="relative group w-full sm:hidden">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40 group-focus-within:text-violet-500 group-focus-within:scale-110 transition-all duration-300 z-10" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40 group-focus-within:text-primary group-focus-within:scale-110 transition-all duration-300 z-10" />
           <Input
             placeholder={t('users.page.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 bg-muted/20 border-border/40 hover:border-border/70 rounded-xl font-medium transition-all duration-300 w-full text-xs placeholder:text-muted-foreground/40 focus-visible:bg-background focus-visible:border-violet-500/50 focus-visible:ring-2 focus-visible:ring-violet-500/20 focus-visible:shadow-[0_0_12px_rgba(139,92,246,0.15)] focus-visible:ring-offset-0"
+            className="pl-9 h-9 bg-muted/20 border-border/40 hover:border-border/70 rounded-xl font-medium transition-all duration-300 w-full text-xs placeholder:text-muted-foreground/40 focus-visible:bg-background focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)] focus-visible:ring-offset-0"
           />
           {searchQuery && (
             <button
@@ -215,12 +215,12 @@ export default function UsersPage() {
         <div className="flex items-center gap-1.5 overflow-x-auto py-3 -my-3 px-2 -mx-2 scrollbar-none">
           {/* Desktop search - inline */}
           <div className="relative group hidden sm:flex items-center shrink-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 group-focus-within:text-violet-500 group-focus-within:scale-110 transition-all duration-300 z-10" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 group-focus-within:text-primary group-focus-within:scale-110 transition-all duration-300 z-10" />
             <Input
               placeholder={t('users.page.search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-8 h-9 w-60 lg:w-80 bg-muted/20 hover:bg-muted/35 border-border/40 hover:border-border/70 rounded-xl font-medium transition-all duration-300 text-sm focus-visible:bg-background focus-visible:border-violet-500/50 focus-visible:ring-2 focus-visible:ring-violet-500/20 focus-visible:shadow-[0_0_12px_rgba(139,92,246,0.15)] focus-visible:ring-offset-0 placeholder:text-muted-foreground/40"
+              className="pl-9 pr-8 h-9 w-60 lg:w-80 bg-muted/20 hover:bg-muted/35 border-border/40 hover:border-border/70 rounded-xl font-medium transition-all duration-300 text-sm focus-visible:bg-background focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)] focus-visible:ring-offset-0 placeholder:text-muted-foreground/40"
             />
             {searchQuery && (
               <button
@@ -268,7 +268,7 @@ export default function UsersPage() {
                 className={cn(
                   'h-8 px-3 rounded-xl border font-bold uppercase tracking-wider gap-2 transition-all duration-200 text-[11px] shrink-0 active:scale-95 cursor-pointer shadow-sm',
                   activeFilterCount > 0
-                    ? 'border-violet-500/40 bg-violet-500/10 text-violet-500 shadow-sm shadow-violet-500/15 hover:bg-violet-500/20'
+                    ? 'border-primary/40 bg-primary/10 text-primary shadow-sm shadow-primary/15 hover:bg-primary/20'
                     : 'border-border/50 bg-background hover:bg-muted/40 hover:border-border/70 text-foreground',
                 )}
               >
@@ -300,12 +300,12 @@ export default function UsersPage() {
                 className={cn(
                   'font-bold text-[13px] rounded-xl px-2.5 py-1.5 gap-2.5 transition-all cursor-pointer',
                   roleFilter === 'all'
-                    ? 'bg-violet-500/10 text-violet-600 font-black'
+                    ? 'bg-primary/10 text-primary font-black'
                     : 'focus:bg-muted/60',
                 )}
               >
                 {roleFilter === 'all' && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-violet-500 shrink-0" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
                 )}
                 {t('users.page.all_roles')}
               </DropdownMenuItem>
@@ -333,13 +333,13 @@ export default function UsersPage() {
                 }}
                 className={cn(
                   'font-bold text-[13px] rounded-xl px-2.5 py-1.5 gap-2.5 transition-all cursor-pointer',
-                  roleFilter === USER_ROLE.USER
-                    ? 'bg-blue-500/10 text-blue-600 font-black'
+                  statusFilter === USER_ROLE.USER
+                    ? 'bg-primary/10 text-primary font-black'
                     : 'focus:bg-muted/60',
                 )}
               >
                 {roleFilter === USER_ROLE.USER && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
                 )}
                 {t('users.page.customers')}
               </DropdownMenuItem>
@@ -357,12 +357,12 @@ export default function UsersPage() {
                 className={cn(
                   'font-bold text-[13px] rounded-xl px-2.5 py-1.5 gap-2.5 transition-all cursor-pointer',
                   statusFilter === 'all'
-                    ? 'bg-violet-500/10 text-violet-600 font-black'
+                    ? 'bg-primary/10 text-primary font-black'
                     : 'focus:bg-muted/60',
                 )}
               >
                 {statusFilter === 'all' && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-violet-500 shrink-0" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
                 )}
                 {t('users.page.all_accounts')}
               </DropdownMenuItem>
@@ -374,12 +374,12 @@ export default function UsersPage() {
                 className={cn(
                   'font-bold text-[13px] rounded-xl px-2.5 py-1.5 gap-2.5 transition-all',
                   statusFilter === USER_STATUS.ACTIVE
-                    ? 'bg-emerald-500/10 text-emerald-600 font-black'
+                    ? 'bg-primary/20 text-primary font-black'
                     : 'focus:bg-muted/60',
                 )}
               >
                 {statusFilter === USER_STATUS.ACTIVE && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
                 )}
                 {t('users.page.active')}
               </DropdownMenuItem>
@@ -437,8 +437,8 @@ export default function UsersPage() {
             className={cn(
               'h-8 w-8 p-0 rounded-lg border-border/50 bg-background transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer',
               activeFilterCount > 0
-                ? 'text-violet-500 border-violet-500/30 hover:bg-violet-500/10'
-                : 'hover:text-violet-500 hover:bg-violet-500/10 text-foreground',
+                ? 'text-primary border-primary/30 hover:bg-primary/10'
+                : 'hover:text-primary hover:bg-primary/10 text-foreground',
             )}
             onClick={clearFilters}
             title={t('users.page.reset_filters')}
@@ -450,7 +450,7 @@ export default function UsersPage() {
 
           <Button
             variant="outline"
-            className="h-8 w-8 p-0 rounded-lg border-border/50 bg-background/50 backdrop-blur-md hover:text-violet-500 hover:bg-violet-500/5 transition-all shrink-0 cursor-pointer"
+            className="h-8 w-8 p-0 rounded-lg border-border/50 bg-background/50 backdrop-blur-md hover:text-primary hover:bg-primary/5 transition-all shrink-0 cursor-pointer"
             title={t('dashboard.actions.download_report')}
           >
             <Download className="h-3 w-3" />
@@ -460,7 +460,7 @@ export default function UsersPage() {
             <DropdownMenuTrigger asChild className="hidden sm:flex">
               <Button
                 variant="outline"
-                className="h-8 w-8 p-0 rounded-lg border-border/50 bg-background/50 backdrop-blur-md hover:text-violet-500 hover:bg-violet-500/5 transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer"
+                className="h-8 w-8 p-0 rounded-lg border-border/50 bg-background/50 backdrop-blur-md hover:text-primary hover:bg-primary/5 transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer"
                 title={t('users.page.view')}
               >
                 <MoreHorizontal className="h-3 w-3" />
@@ -505,7 +505,7 @@ export default function UsersPage() {
           {/* Add button: icon-only on mobile, icon+text on desktop */}
           <Button
             onClick={handleCreateUser}
-            className="rounded-lg h-8 px-2 sm:px-3.5 gap-0 sm:gap-2 shadow-lg shadow-violet-500/20 active:scale-95 transition-all bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white border-none shrink-0 cursor-pointer"
+            className="rounded-lg h-8 px-2 sm:px-3.5 gap-0 sm:gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-all bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white border-none shrink-0 cursor-pointer"
           >
             <UserPlus className="h-3.5 w-3.5" />
             <span className="hidden sm:inline text-[11px] font-black uppercase tracking-tight">
