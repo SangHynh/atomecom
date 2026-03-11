@@ -1,3 +1,4 @@
+import type { AuthRequest } from '@shared/interfaces/AuthRequest.js';
 import winston from 'winston';
 import morgan from 'morgan';
 import chalk from 'chalk';
@@ -80,7 +81,7 @@ export const httpLogger = morgan((tokens, req, res) => {
     `${tokens['response-time']?.(req, res) || 0}ms`,
   );
   const remoteAddr = chalk.dim(tokens['remote-addr']?.(req, res) || 'unknown');
-  const traceId = chalk.dim(`[${(req as any).traceId || 'no-id'}]`);
+  const traceId = chalk.dim(`[${(req as AuthRequest).traceId || 'no-id'}]`);
   const message = `${traceId} ${remoteAddr} ${method} ${url} ${statusColor(status)} - ${responseTime}`;
 
   logger.http(message);

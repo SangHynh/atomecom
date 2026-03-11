@@ -1,7 +1,9 @@
 import express from 'express';
 import path from 'path';
+import appConfig from '@shared/configs/app.config.js';
 
 const toolRouter = express.Router();
+const appCfg = appConfig!;
 
 const templatePath = path.join(process.cwd(), 'src/shared/templates');
 
@@ -9,7 +11,7 @@ toolRouter.get('/google', (req, res) => {
   req.app.set('views', templatePath);
 
   res.render('test-google-oauth', {
-    googleClientId: process.env.GOOGLE_CLIENT_ID,
+    googleClientId: appCfg.security.oauth.googleClientId,
     layout: false,
   });
 });
@@ -26,7 +28,7 @@ toolRouter.get('/facebook', (req, res) => {
   req.app.set('views', templatePath);
 
   res.render('test-facebook-oauth', {
-    facebookAppId: process.env.FACEBOOK_APP_ID,
+    facebookAppId: appCfg.security.oauth.facebookAppId,
     layout: false,
   });
 });

@@ -1,5 +1,6 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
 import { ForbiddenError } from '@shared/core/error.response.js';
+import type { AuthRequest } from '@shared/interfaces/AuthRequest.js';
 import { USER_ROLE, ErrorRBACCodes } from '@atomecom/shared';
 
 /**
@@ -7,9 +8,9 @@ import { USER_ROLE, ErrorRBACCodes } from '@atomecom/shared';
  * @param allowedRoles Array of roles that are permitted to access the route.
  */
 export const requireRole = (allowedRoles: USER_ROLE[]) => {
-  return (req: Request, _res: Response, next: NextFunction) => {
+  return (req: AuthRequest, _res: Response, next: NextFunction) => {
     try {
-      const user = (req as any).user;
+      const user = req.user;
 
       if (!user || !user.role) {
         throw new ForbiddenError(ErrorRBACCodes.ACCESS_DENIED_NO_ROLE);

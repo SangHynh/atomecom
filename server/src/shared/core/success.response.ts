@@ -1,4 +1,5 @@
-import { type Response } from 'express';
+import type { Response } from 'express';
+import type { AuthRequest } from '@shared/interfaces/AuthRequest.js';
 import appConfig from '@config/app.config.js';
 import type { PaginatedResult } from '@shared/interfaces/pagination.model.js';
 
@@ -64,7 +65,7 @@ class SuccessResponse<T = any> {
     res: Response,
     headers: Record<string, string | string[]> = {},
   ): Response {
-    const req = (res as any).req;
+    const req = res.req as AuthRequest;
     const traceId = req?.traceId;
     if (traceId) {
       this.metadata.trace_id = traceId;

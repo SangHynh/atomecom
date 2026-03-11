@@ -151,6 +151,27 @@ export class RedisCache implements ICache, ICacheRepo {
     });
   }
 
+  public async getKeysByPattern(pattern: string): Promise<string[]> {
+    const client = this._client;
+    if (!client) {
+      throw new InternalServerError('REDIS_NOT_CONNECTED');
+    }
+
+    const allKeys: string[] = [];
+    const stream = client.scanStream({
+      match: pattern,
+      count: 100,
+    });
+
+    return new Promise((resolve, reject) => {
+      stream.on('data', (keys: string[]) => {
+        allKeys.push(...keys);
+      });
+      stream.on('end', () => resolve(allKeys));
+      stream.on('error', reject);
+    });
+  }
+
   public async countByPattern(pattern: string): Promise<number> {
     const client = this._client;
     if (!client) {

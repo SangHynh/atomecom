@@ -1,4 +1,5 @@
-export const isDev = process.env.NODE_ENV === 'development';
+import appConfig from '@shared/configs/app.config.js';
+export const isDev = appConfig!.app.isProduction === false;
 
 /* Measures the execution time of a function. */
 export const timeit = async <T>(

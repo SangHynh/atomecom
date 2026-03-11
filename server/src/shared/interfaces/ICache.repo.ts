@@ -3,6 +3,7 @@ export interface ICacheRepo {
   get<T>(key: string): Promise<T | null>;
   del(key: string): Promise<void>;
   deleteByPattern(pattern: string): Promise<void>;
+  getKeysByPattern(pattern: string): Promise<string[]>;
   countByPattern(pattern: string): Promise<number>;
   has(key: string): Promise<boolean>;
   flushAll?(): Promise<void>;

@@ -1,10 +1,13 @@
-import { isDev } from '@shared/utils/common.js';
-import { type Request, type Response, type NextFunction } from 'express';
-import { ZodError, type ZodIssue } from 'zod';
+import { type Response, type NextFunction } from 'express';
+import { ZodError } from 'zod';
+import appConfig from '@shared/configs/app.config.js';
+import type { AuthRequest } from '../interfaces/AuthRequest.js';
+
+const appCfg = appConfig!;
 
 export const errorHandler = (
   err: any,
-  req: Request,
+  req: AuthRequest,
   res: Response,
   _next: NextFunction,
 ) => {
@@ -31,16 +34,12 @@ export const errorHandler = (
     }
 
     // St2: Log error for debug
-    if (statusCode >= 400) {
-      console.log(`[DEBUG-ERR-MID][${err.module || 'SYSTEM'}]:`, err);
-    }
 
     // St3: Send response
     const isInternalError = statusCode >= 500;
+    const isProduction = appCfg.app.isProduction;
     const responseMessage =
-      isInternalError && process.env.NODE_ENV !== 'development'
-        ? 'INTERNAL_SERVER_ERROR'
-        : message;
+      isInternalError && isProduction ? 'INTERNAL_SERVER_ERROR' : message;
 
     return res.status(statusCode).json({
       status: 'error',
@@ -48,7 +47,7 @@ export const errorHandler = (
       module: err.module || 'App',
       layer: err.layer || 'App',
       message: responseMessage,
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+      stack: !isProduction ? err.stack : undefined,
     });
   } catch (criticalError) {
     console.error('CRITICAL ERROR IN ERROR HANDLER:', criticalError);

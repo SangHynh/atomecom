@@ -1,15 +1,16 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
 import { UnauthorizedError } from '@shared/core/error.response.js';
 import type { ITokenService } from '@modules/auth/domain/IToken.service.js';
 import type { EventBus } from '@shared/infra/event-bus.js';
 import { DomainEvents } from '@shared/constants/event.constants.js';
 import { ErrorAuthCodes } from '@atomecom/shared';
+import type { AuthRequest } from '@shared/interfaces/AuthRequest.js';
 
 export const authMiddleware = (
   tokenService: ITokenService,
   eventBus: EventBus,
 ) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       // 1. Get access token from header
       const authHeader = req.headers.authorization;
@@ -26,7 +27,7 @@ export const authMiddleware = (
       }
 
       // 3. Assign payload to req.user
-      (req as any).user = payload;
+      req.user = payload;
 
       // 4. Record Activity (Heartbeat) via Event Bus (EDA)
       // This decouples Auth from activity tracking logic

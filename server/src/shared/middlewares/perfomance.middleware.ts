@@ -1,9 +1,11 @@
-import { type Request, type Response, type NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
+import type { AuthRequest } from '../interfaces/AuthRequest.js';
+
 export const performanceMiddleware = (
-  req: Request,
+  req: AuthRequest,
   _res: Response,
   next: NextFunction,
 ) => {
-  (req as any).startTime = performance.now();
+  req.startTime = performance.now();
   next();
 };
