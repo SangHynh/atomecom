@@ -6,9 +6,7 @@ import { ConflictError } from '@shared/core/error.response.js';
 import mongoose from 'mongoose';
 
 export class MongooseProductRepo implements IProductRepository {
-  constructor() {
-    console.log('[DEBUG-REPO] MongooseProductRepo constructor called');
-  }
+  constructor() {}
   public async findAll(params: {
     categoryId?: string;
     brandId?: string;

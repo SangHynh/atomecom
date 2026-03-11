@@ -1,4 +1,5 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
+import type { AuthRequest } from '@shared/interfaces/AuthRequest.js';
 import type { InventoryService } from '../use-cases/inventory.service.js';
 import { OK } from '@shared/core/success.response.js';
 import { BadRequestError } from '@shared/core/error.response.js';
@@ -6,7 +7,11 @@ import { BadRequestError } from '@shared/core/error.response.js';
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
-  public reserve = async (req: Request, res: Response, _next: NextFunction) => {
+  public reserve = async (
+    req: AuthRequest,
+    res: Response,
+    _next: NextFunction,
+  ) => {
     const { skuId, quantity } = req.body;
     const success = await this.inventoryService.reserveProductStock(
       skuId,
@@ -20,7 +25,11 @@ export class InventoryController {
     }).send(res);
   };
 
-  public release = async (req: Request, res: Response, _next: NextFunction) => {
+  public release = async (
+    req: AuthRequest,
+    res: Response,
+    _next: NextFunction,
+  ) => {
     const { skuId, quantity } = req.body;
     const success = await this.inventoryService.releaseProductStock(
       skuId,
@@ -35,7 +44,7 @@ export class InventoryController {
   };
 
   public addStock = async (
-    req: Request,
+    req: AuthRequest,
     res: Response,
     _next: NextFunction,
   ) => {
@@ -46,7 +55,7 @@ export class InventoryController {
   };
 
   public findBySkuId = async (
-    req: Request,
+    req: AuthRequest,
     res: Response,
     _next: NextFunction,
   ) => {

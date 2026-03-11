@@ -8,6 +8,9 @@ import {
   UnauthorizedError,
 } from '@shared/core/error.response.js';
 import { ErrorAuthCodes } from '@atomecom/shared';
+import appConfig from '@shared/configs/app.config.js';
+
+const appCfg = appConfig!;
 
 const MODULE = 'Auth';
 const JWT_ALGORITHM: jwt.Algorithm = 'HS256';
@@ -18,29 +21,13 @@ export class JwtTokenAdapter implements ITokenService {
   private readonly _refreshExpires: string;
 
   constructor() {
-    const accessSecret = process.env.ACCESS_TOKEN_SECRET;
-    const refreshSecret = process.env.REFRESH_TOKEN_SECRET;
+    const { accessSecret, refreshSecret, accessExpires, refreshExpires } =
+      appCfg.security.jwt;
 
-    const missingConfigs = [];
-    if (!accessSecret)
-      missingConfigs.push({
-        field: 'ACCESS_TOKEN_SECRET',
-        message: 'MISSING_ACCESS_TOKEN_SECRET',
-      });
-    if (!refreshSecret)
-      missingConfigs.push({
-        field: 'REFRESH_TOKEN_SECRET',
-        message: 'MISSING_REFRESH_TOKEN_SECRET',
-      });
-
-    if (missingConfigs.length > 0) {
-      throw new InternalServerError('JWT_CONFIG_ERROR', missingConfigs);
-    }
-
-    this._accessSecret = accessSecret!;
-    this._refreshSecret = refreshSecret!;
-    this._accessExpires = process.env.ACCESS_TOKEN_EXPIRES_IN || '15m';
-    this._refreshExpires = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
+    this._accessSecret = accessSecret;
+    this._refreshSecret = refreshSecret;
+    this._accessExpires = accessExpires;
+    this._refreshExpires = refreshExpires;
   }
 
   public async generateAccessToken(payload: TokenPayload): Promise<string> {

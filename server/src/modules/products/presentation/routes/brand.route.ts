@@ -1,10 +1,15 @@
 import express from 'express';
-import { USER_ROLE } from '@atomecom/shared';
 import {
   brandControllerImpl,
   authMiddlewareImpl,
 } from '../../../../container.js';
 import { requireRole } from '@shared/middlewares/role.middleware.js';
+import { validate } from '@shared/middlewares/validate.middleware.js';
+import {
+  CreateBrandRequestSchema,
+  UpdateBrandRequestSchema,
+  USER_ROLE,
+} from '@atomecom/shared';
 
 const router = express.Router();
 
@@ -17,6 +22,7 @@ router.post(
   '/admin/brands',
   authMiddlewareImpl,
   requireRole([USER_ROLE.ADMIN, USER_ROLE.OWNER]),
+  validate(CreateBrandRequestSchema),
   brandControllerImpl.create,
 );
 
@@ -24,6 +30,7 @@ router.put(
   '/admin/brands/:id',
   authMiddlewareImpl,
   requireRole([USER_ROLE.ADMIN, USER_ROLE.OWNER]),
+  validate(UpdateBrandRequestSchema),
   brandControllerImpl.update,
 );
 

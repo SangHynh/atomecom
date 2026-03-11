@@ -24,6 +24,9 @@ import { OauthProvider } from '@atomecom/shared';
 import { USER_STATUS } from '@atomecom/shared';
 import logger from '@shared/utils/logger.js';
 import { getExpiresAt, getExpiresInSeconds } from '@shared/utils/time.js';
+import appConfig from '@shared/configs/app.config.js';
+
+const appCfg = appConfig!;
 
 const LAYER = 'Service';
 const MODULE = 'Auth';
@@ -92,7 +95,6 @@ export class AuthService {
     );
     const tokens = await this._createNewSession(user as SafeUserResponseDTO);
     return this._mapToAuthResponse(user as SafeUserResponseDTO, tokens);
-    // TODO: LIMIT SESSIONS PER USER
   }
 
   public async refresh(refreshToken: string): Promise<AuthResponseDTO> {
@@ -271,7 +273,7 @@ export class AuthService {
 
     // Step 3: Calculate refresh token expiration and remaining TTL
     // if expiresAt is provided, use it to calculate remaining TTL, else use the default value
-    const rfConfig = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
+    const rfConfig = appCfg.security.jwt.refreshExpires;
     const remainingSeconds = getExpiresInSeconds(rfConfig, expiresAt);
 
     // Step 4: Generate token pair concurrently
@@ -294,7 +296,7 @@ export class AuthService {
    * and persisting the session context to Redis.
    */
   private async _createNewSession(user: SafeUserResponseDTO) {
-    const rfConfig = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
+    const rfConfig = appCfg.security.jwt.refreshExpires;
 
     // 1. Determine the absolute expiration timestamp first
     const expiresAt = getExpiresAt(rfConfig);
@@ -302,6 +304,15 @@ export class AuthService {
     // 2. Calculate remaining TTL in seconds based on that timestamp
     // This ensures consistency between the database record and cache(Redis) expiration
     const ttl = getExpiresInSeconds(rfConfig, expiresAt);
+
+    // 2.5 Enforce session limit (Max 5)
+    const sessionCount = await this._sessionService.countSessions(user.id);
+    if (sessionCount >= 5) {
+      logger.info(
+        `[${MODULE}][${LAYER}][SessionLimit] User ${user.id} reached limit (${sessionCount}), revoking oldest session...`,
+      );
+      await this._sessionService.revokeOldestSession(user.id);
+    }
 
     // 3. Generate a new set of tokens linked to this session
     // We pass expiresAt to synchronize JWT 'exp' with our session data
@@ -316,6 +327,7 @@ export class AuthService {
         refreshToken,
         refreshTokensUsed: [],
         expiresAt,
+        createdAt: Date.now(),
       },
       ttl,
     );
@@ -330,11 +342,7 @@ export class AuthService {
     user: SafeUserResponseDTO,
     tokens: { accessToken: string; refreshToken: string },
   ): AuthResponseDTO {
-    /**
-     * TODO: Refactor to HttpOnly Cookie for Refresh Token to mitigate XSS risks.
-     * Currently returning both tokens in the response body for initial development speed.
-     */
-    // safe response from user service (no password)
+    // access token in body, refresh token in cookie (handled by controller)
     return {
       user,
       tokens,

@@ -7,7 +7,6 @@ export class MongooseMailTokenRepo implements IMailTokenRepo {
    * Create a new mail token record in the database
    */
   public async create(mailTokenEntity: MailTokenEntity): Promise<void> {
-    console.log('Repo creating token:', mailTokenEntity);
     await MailTokenModel.create({
       userId: mailTokenEntity.userId,
       email: mailTokenEntity.email,

@@ -11,6 +11,9 @@ import { OauthProvider, ErrorAuthCodes } from '@atomecom/shared';
 import logger from '@shared/utils/logger.js';
 import { OAuth2Client } from 'google-auth-library';
 import axios from 'axios';
+import appConfig from '@shared/configs/app.config.js';
+
+const appCfg = appConfig!;
 
 export class GoogleProvider implements IOAuthProvider {
   private readonly _client: OAuth2Client;
@@ -18,7 +21,7 @@ export class GoogleProvider implements IOAuthProvider {
   public readonly name = OauthProvider.GOOGLE;
 
   constructor() {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientId = appCfg.security.oauth.googleClientId;
     if (!clientId) {
       logger.warn(
         '[OAuth][Google] GOOGLE_CLIENT_ID is not configured. Google login will be unavailable.',

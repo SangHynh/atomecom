@@ -1,6 +1,20 @@
 import { ResendMailService } from '../../infra/resend-mail.service.js';
 import { Resend } from 'resend';
-import Handlebars from 'handlebars';
+import appConfig from '@shared/configs/app.config.js';
+
+// Mock appConfig
+jest.mock('@shared/configs/app.config.js', () => ({
+  __esModule: true,
+  default: {
+    email: {
+      apiKey: 're_123456789',
+      fromEmail: 'onboarding@resend.dev',
+      clientHost: 'http://localhost:3000',
+      projectName: 'Atomecom',
+      logoUrl: '',
+    },
+  },
+}));
 
 // Mock Resend library
 jest.mock('resend', () => {
@@ -42,11 +56,9 @@ describe('ResendMailService', () => {
   let mockResendInstance: any;
 
   beforeEach(() => {
-    // Reset environment variables for each test
-    process.env.RESEND_FROM_EMAIL = 'onboarding@resend.dev';
-    process.env.CLIENT_HOST = 'http://localhost:3000';
-    process.env.PROJECT_NAME = 'Atomecom';
-    process.env.EMAIL_API_KEY = 're_123456789';
+    // Reset the mock behavior if needed
+    (appConfig!.email as any).apiKey = 're_123456789';
+    (appConfig!.email as any).fromEmail = 'onboarding@resend.dev';
 
     mailService = new ResendMailService();
     mockResendInstance = (Resend as jest.Mock).mock.results[0]?.value;
@@ -152,14 +164,14 @@ describe('ResendMailService', () => {
 
   describe('Validation & Errors', () => {
     it('should throw error if EMAIL_API_KEY is missing', () => {
-      delete process.env.EMAIL_API_KEY;
+      (appConfig!.email as any).apiKey = '';
       expect(() => new ResendMailService()).toThrow(
         'MISSING_EMAIL_API_KEY_IN_ENV',
       );
     });
 
     it('should throw error if required config is missing during send', async () => {
-      delete process.env.RESEND_FROM_EMAIL;
+      (appConfig!.email as any).fromEmail = '';
       // We need to re-instantiate because these are read in constructor/fields
       mailService = new ResendMailService();
 

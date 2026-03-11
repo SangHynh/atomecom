@@ -16,6 +16,13 @@ import { ProductModel } from '../../infra/models/mongoose-product.model.js';
 import { SkuModel } from '../../infra/models/mongoose-sku.model.js';
 import mongoose from 'mongoose';
 import { errorHandler } from '@shared/middlewares/error.middleware.js';
+import { validate } from '@shared/middlewares/validate.middleware.js';
+import {
+  CreateProductRequestSchema,
+  UpdateProductRequestSchema,
+  USER_ROLE,
+} from '@atomecom/shared';
+import { PRODUCT_STATUS } from '@shared/enum/productStatus.enum.js';
 import {
   connect,
   closeDatabase,
@@ -42,6 +49,9 @@ class MockCacheRepo implements ICacheRepo {
     return 0;
   }
   async deleteByPattern(_: string): Promise<void> {}
+  async getKeysByPattern(_: string): Promise<string[]> {
+    return [];
+  }
   async acquireLock(_key: string, _ttl: number): Promise<boolean> {
     return true;
   }
@@ -85,13 +95,31 @@ function createTestApp(): Express {
   const app = express();
   app.use(express.json());
 
-  app.post('/products', (req, res, next) =>
-    productController.create(req, res, next),
-  );
+  // Mock Auth
+  const mockAuth = (req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', role: USER_ROLE.ADMIN };
+    next();
+  };
+
+  // Public
   app.get('/products/:id', (req, res, next) =>
     productController.findById(req, res, next),
   );
-  app.delete('/products/:id', (req, res, next) =>
+
+  // Admin
+  app.post(
+    '/admin/products',
+    mockAuth,
+    validate(CreateProductRequestSchema),
+    (req, res, next) => productController.create(req, res, next),
+  );
+  app.put(
+    '/admin/products/:id',
+    mockAuth,
+    validate(UpdateProductRequestSchema),
+    (req, res, next) => productController.update(req, res, next),
+  );
+  app.delete('/admin/products/:id', mockAuth, (req, res, next) =>
     productController.delete(req, res, next),
   );
 
@@ -140,25 +168,43 @@ describe('Product Module Integration', () => {
       thumbnail: 'iphone15-thumb.png',
       categoryId: cat.id,
       brandId: brand.id,
-      basePrice: 999,
+      status: PRODUCT_STATUS.PUBLISHED,
+      images: [],
+      specs: [],
+      seo: {
+        title: 'iPhone 15',
+        description: 'iPhone 15 status',
+        keywords: [],
+      },
       skus: [
         {
           skuCode: 'IP15-BLK-128',
           name: 'iPhone 15 Black 128GB',
+          attributes: [],
+          images: [],
+          initialQuantity: 50,
           price: { basePrice: 999, salePrice: 999 },
-          quantity: 50,
         },
         {
           skuCode: 'IP15-BLU-128',
           name: 'iPhone 15 Blue 128GB',
+          attributes: [],
+          images: [],
+          initialQuantity: 30,
           price: { basePrice: 999, salePrice: 999 },
-          quantity: 30,
         },
       ],
     };
 
     // 2. Execute: Create Product
-    const res = await request(app).post('/products').send(createDto);
+    const res = await request(app).post('/admin/products').send(createDto);
+
+    if (res.status !== 201) {
+      console.error(
+        'Create product failed:',
+        JSON.stringify(res.body, null, 2),
+      );
+    }
 
     expect(res.status).toBe(201);
     expect(res.body.data.name).toBe(createDto.name);
@@ -213,12 +259,31 @@ describe('Product Module Integration', () => {
       thumbnail: 'test.png',
       categoryId: cat.id,
       brandId: brand.id,
+      images: [],
+      specs: [],
+      seo: {
+        title: 'test',
+        description: 'test',
+        keywords: [],
+      },
+      status: PRODUCT_STATUS.DRAFT,
       skus: [
-        { skuCode: 'EXISTING-SKU', price: { basePrice: 100, salePrice: 100 } },
+        {
+          skuCode: 'EXISTING-SKU',
+          name: 'Existing SKU',
+          attributes: [],
+          images: [],
+          initialQuantity: 10,
+          price: { basePrice: 100, salePrice: 100 },
+        },
       ],
     };
 
-    const res = await request(app).post('/products').send(createDto);
+    const res = await request(app).post('/admin/products').send(createDto);
+
+    if (res.status !== 409) {
+      console.error('Rollback test failed:', JSON.stringify(res.body, null, 2));
+    }
 
     expect(res.status).toBe(409); // Conflict
 
@@ -268,7 +333,15 @@ describe('Product Module Integration', () => {
     } as any);
 
     // 2. Execute: Delete
-    const res = await request(app).delete(`/products/${product.id}`);
+    const res = await request(app).delete(`/admin/products/${product.id}`);
+
+    if (res.status !== 200) {
+      console.error(
+        'Delete product failed:',
+        JSON.stringify(res.body, null, 2),
+      );
+    }
+
     expect(res.status).toBe(200);
 
     // 3. Verify: Soft deleted

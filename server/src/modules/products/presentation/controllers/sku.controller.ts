@@ -1,4 +1,5 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
+import type { AuthRequest } from '@shared/interfaces/AuthRequest.js';
 import type { SkuService } from '../../use-cases/services/sku.service.js';
 import type {
   UpdateSkuDTO,
@@ -10,7 +11,7 @@ export class SkuController {
   constructor(private readonly _skuService: SkuService) {}
 
   public findById = async (
-    req: Request,
+    req: AuthRequest,
     res: Response,
     _next: NextFunction,
   ) => {
@@ -20,7 +21,7 @@ export class SkuController {
   };
 
   public findByProductId = async (
-    req: Request,
+    req: AuthRequest,
     res: Response,
     _next: NextFunction,
   ) => {
@@ -29,7 +30,11 @@ export class SkuController {
     return new OK({ data: result }).send(res);
   };
 
-  public update = async (req: Request, res: Response, _next: NextFunction) => {
+  public update = async (
+    req: AuthRequest,
+    res: Response,
+    _next: NextFunction,
+  ) => {
     const { id } = req.params as { id: string };
     const dto = req.body as UpdateSkuDTO;
     const result = await this._skuService.update(id, dto);
@@ -40,7 +45,7 @@ export class SkuController {
   };
 
   public updatePrice = async (
-    req: Request,
+    req: AuthRequest,
     res: Response,
     _next: NextFunction,
   ) => {
@@ -53,7 +58,11 @@ export class SkuController {
     }).send(res);
   };
 
-  public delete = async (req: Request, res: Response, _next: NextFunction) => {
+  public delete = async (
+    req: AuthRequest,
+    res: Response,
+    _next: NextFunction,
+  ) => {
     const { id } = req.params as { id: string };
     await this._skuService.delete(id);
     return new OK({ message: 'SKU deleted successfully' }).send(res);

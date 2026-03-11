@@ -3,8 +3,13 @@ import {
   skuControllerImpl,
   authMiddlewareImpl,
 } from '../../../../container.js';
+import { validate } from '@shared/middlewares/validate.middleware.js';
 import { requireRole } from '@shared/middlewares/role.middleware.js';
-import { USER_ROLE } from '@atomecom/shared';
+import {
+  UpdateSkuRequestSchema,
+  UpdateSkuPriceRequestSchema,
+  USER_ROLE,
+} from '@atomecom/shared';
 
 const router = express.Router();
 
@@ -17,6 +22,7 @@ router.put(
   '/admin/skus/:id',
   authMiddlewareImpl,
   requireRole([USER_ROLE.ADMIN, USER_ROLE.OWNER]),
+  validate(UpdateSkuRequestSchema),
   skuControllerImpl.update,
 );
 
@@ -24,6 +30,7 @@ router.patch(
   '/admin/skus/:id/price',
   authMiddlewareImpl,
   requireRole([USER_ROLE.ADMIN, USER_ROLE.OWNER]),
+  validate(UpdateSkuPriceRequestSchema),
   skuControllerImpl.updatePrice,
 );
 

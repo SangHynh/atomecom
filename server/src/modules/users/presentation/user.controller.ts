@@ -3,6 +3,7 @@ import { Created, OK, NoContent } from '@shared/core/success.response.js';
 import type { Request, Response, NextFunction } from 'express';
 import { ForbiddenError } from '@shared/core/error.response.js';
 import { USER_ROLE, ErrorRBACCodes } from '@atomecom/shared';
+import type { AuthRequest } from '@shared/interfaces/AuthRequest.js';
 
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -51,8 +52,12 @@ export class UserController {
     return new OK({ data: result }).send(res);
   };
 
-  public create = async (req: Request, res: Response, _next: NextFunction) => {
-    const currentUser = (req as any).user;
+  public create = async (
+    req: AuthRequest,
+    res: Response,
+    _next: NextFunction,
+  ) => {
+    const currentUser = req.user;
     const targetRole = req.body.role;
 
     // 1. Prevent creation of OWNER via API
@@ -72,9 +77,13 @@ export class UserController {
     return new Created({ data: result }).send(res);
   };
 
-  public delete = async (req: Request, res: Response, _next: NextFunction) => {
+  public delete = async (
+    req: AuthRequest,
+    res: Response,
+    _next: NextFunction,
+  ) => {
     const { id } = req.params as { id: string };
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
 
     // 1. Fetch target user to check hierarchy
     const targetUser = await this.userService.findById(id);
@@ -101,15 +110,23 @@ export class UserController {
     return new NoContent('USER_DELETED_SUCCESS').send(res);
   };
 
-  public getMe = async (req: Request, res: Response, _next: NextFunction) => {
-    const { userId } = (req as any).user;
+  public getMe = async (
+    req: AuthRequest,
+    res: Response,
+    _next: NextFunction,
+  ) => {
+    const { userId } = req.user!;
     const result = await this.userService.findById(userId);
     return new OK({ data: result }).send(res);
   };
 
-  public update = async (req: Request, res: Response, _next: NextFunction) => {
+  public update = async (
+    req: AuthRequest,
+    res: Response,
+    _next: NextFunction,
+  ) => {
     const { id } = req.params as { id: string };
-    const currentUser = (req as any).user;
+    const currentUser = req.user!;
     // 1. Fetch target user
     const targetUser = await this.userService.findById(id);
 
@@ -210,11 +227,11 @@ export class UserController {
   };
 
   public updateMe = async (
-    req: Request,
+    req: AuthRequest,
     res: Response,
     _next: NextFunction,
   ) => {
-    const { userId } = (req as any).user;
+    const { userId } = req.user!;
     const result = await this.userService.updateProfile(userId, req.body);
     return new OK({
       message: 'PROFILE_UPDATED_SUCCESS',

@@ -68,6 +68,15 @@ class MockCacheRepo implements ICacheRepo {
       if (regex.test(key)) this._data.delete(key);
     }
   }
+  async getKeysByPattern(pattern: string): Promise<string[]> {
+    const p = pattern.replace(/\*/g, '.*');
+    const regex = new RegExp('^' + p + '$');
+    const keys: string[] = [];
+    for (const key of this._data.keys()) {
+      if (regex.test(key)) keys.push(key);
+    }
+    return keys;
+  }
   async acquireLock(_key: string, _ttl: number): Promise<boolean> {
     return true;
   }

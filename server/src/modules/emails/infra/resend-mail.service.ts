@@ -6,8 +6,10 @@ import Handlebars from 'handlebars';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { ErrorInfraCodes } from '@atomecom/shared';
+import appConfig from '@shared/configs/app.config.js';
 
-// TODO: Refactor error codes to enum
+const appCfg = appConfig!;
+
 // Resolve template directory relative to project root for best compatibility
 // This avoids issues with ESM vs CommonJS (import.meta vs __dirname)
 const _templateDir = path.resolve(
@@ -20,16 +22,16 @@ const LAYER = 'Infrastructure';
 
 export class ResendMailService implements IEmailService {
   private _resend: Resend;
-  private readonly FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
-  private readonly CLIENT_HOST = process.env.CLIENT_HOST;
-  private readonly PROJECT_NAME = process.env.PROJECT_NAME || 'System';
-  private readonly LOGO_URL = process.env.EMAIL_LOGO_URL || '';
+  private readonly FROM_EMAIL = appCfg.email.fromEmail;
+  private readonly CLIENT_HOST = appCfg.email.clientHost;
+  private readonly PROJECT_NAME = appCfg.email.projectName;
+  private readonly LOGO_URL = appCfg.email.logoUrl;
 
   // Point to the internal templates folder
   private readonly TEMPLATE_DIR = _templateDir;
 
   constructor() {
-    const apiKey = process.env.EMAIL_API_KEY;
+    const apiKey = appCfg.email.apiKey;
     if (!apiKey) {
       throw new InternalServerError(
         ErrorInfraCodes.MISSING_EMAIL_API_KEY_IN_ENV,

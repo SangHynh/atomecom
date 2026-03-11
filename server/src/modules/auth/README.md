@@ -4,16 +4,18 @@
 
 The **Auth** module handles authentication, session management, and identity verification. It acts as the security gateway for the system. Its boundaries and goals are:
 
-| Goal                      | Description                                                                        |
-| ------------------------- | ---------------------------------------------------------------------------------- |
-| **Authentication**        | Support User Registration and Login (Email/Password)                               |
-| **Social Login (OAuth)**  | Integration with external providers (Google, Facebook) for seamless authentication |
-| **Session Management**    | Manage JWT-based sessions with Token Rotation and Revocation                       |
-| **Identity Verification** | Handle Email Verification via unique opaque tokens                                 |
-| **Account Recovery**      | Manage Forgot/Reset Password flows securely                                        |
-| **Security Enforcement**  | Prevent Refresh Token reuse and handle session hijacking detection                 |
-| **IP Protection**         | Implement honeypot-triggered IP blacklisting and escalation/throttling             |
-| **Real-time Activity**    | Track "Active Now" status using lightweight Redis Heartbeats                       |
+| Goal                      | Description                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------- |
+| **Authentication**        | Support User Registration and Login (Email/Password)                                        |
+| **Social Login (OAuth)**  | Integration with external providers (Google, Facebook) for seamless authentication          |
+| **Session Management**    | Manage JWT-based sessions with Token Rotation, Revocation, and **Session Limits (Max 5)**   |
+| **Token Security**        | Secure Refresh Token storage using **HttpOnly Cookies** to prevent XSS                      |
+| **Identity Verification** | Handle Email Verification via unique opaque tokens                                          |
+| **Account Recovery**      | Manage Forgot/Reset Password flows securely                                                 |
+| **Security Enforcement**  | Prevent Refresh Token reuse and handle session hijacking detection                          |
+| **IP Protection**         | Implement honeypot-triggered IP blacklisting and escalation/throttling                      |
+| **Real-time Activity**    | Track "Active Now" status using lightweight Redis Heartbeats                                |
+| **Technical Integrity**   | Enforcement of type-safe `AuthRequest` and centralized `appConfig` to eliminate code smells |
 
 ---
 
@@ -371,6 +373,7 @@ Tracks active sessions and used refresh tokens for security rotation. Based on `
 | `refreshToken`      | String   |   Yes    | Currently valid Refresh Token                  |
 | `refreshTokensUsed` | String[] |   Yes    | History of used tokens in this session (Max 5) |
 | `expiresAt`         | Number   |   Yes    | Absolute expiration timestamp (ms)             |
+| `createdAt`         | Number   |   Yes    | Timestamp when the session was created         |
 
 #### IP Blacklist (Redis)
 
@@ -500,6 +503,14 @@ The system implements a reactive defense mechanism against automated scanning:
    - **2nd Violation**: Throttled to 1 request per minute.
    - **3rd Violation**: Fully banned for 24 hours.
 3. **Internal Storage**: Managed in Redis via a unified cache repository.
+
+#### VII. Session Limiting (Device Control)
+
+To prevent account sharing and reduce the risk of session proliferation, the system enforces a strict limit on active sessions:
+
+1. **Policy**: A user can have at most **5 concurrent active sessions**.
+2. **Enforcement**: During the login flow (or any flow that creates a new session like Social Login or VerifyEmail), the `AuthService` checks the current session count for that user via `SessionService`.
+3. **Eviction**: If the count is >= 5, the system automatically identifies the **oldest session** (using the `createdAt` field) and revokes it immediately before granting the new session.
 
 ---
 

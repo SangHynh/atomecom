@@ -8,6 +8,7 @@ export interface AuthSession {
   refreshToken: string;
   refreshTokensUsed: string[];
   expiresAt: number;
+  createdAt: number;
   lastRefreshToken?: string;
   lastTokenValidUntil?: number;
 }
@@ -116,6 +117,41 @@ export class SessionService {
     // Safety check: Ensure the repo supports pattern deletion before execution.
     if (this._cache.deleteByPattern) {
       await this._cache.deleteByPattern(pattern);
+    }
+  }
+
+  /**
+   * Counts the number of active sessions for a specific user.
+   */
+  public async countSessions(userId: string): Promise<number> {
+    const pattern = `auth:user:${userId}:session:*`;
+    return this._cache.countByPattern(pattern);
+  }
+
+  /**
+   * Revokes the oldest session for a user to enforce the session limit.
+   */
+  public async revokeOldestSession(userId: string): Promise<void> {
+    const pattern = `auth:user:${userId}:session:*`;
+    const keys = await this._cache.getKeysByPattern(pattern);
+
+    if (keys.length === 0) return;
+
+    // Fetch all session data to find the oldest one
+    const baseSessions = await Promise.all(
+      keys.map((key) => this._cache.get<AuthSession>(key)),
+    );
+
+    const activeSessions = baseSessions.filter((s): s is AuthSession => !!s);
+
+    if (activeSessions.length === 0) return;
+
+    // Sort by createdAt ascending (oldest first)
+    activeSessions.sort((a, b) => a.createdAt - b.createdAt);
+
+    const oldest = activeSessions[0];
+    if (oldest) {
+      await this.revokeRefreshToken(userId, oldest.sessionId);
     }
   }
 }

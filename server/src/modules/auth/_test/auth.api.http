@@ -40,7 +40,7 @@ Content-Type: application/json
 ### GET RESULT TOKENS
 @refreshToken = 
 
-### 4. Logout (TODO: Implement later)
+### 4. Logout
 POST {{url_dev}}/auth/logout
 Content-Type: application/json
 

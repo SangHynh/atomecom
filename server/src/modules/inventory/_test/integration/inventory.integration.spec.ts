@@ -35,6 +35,9 @@ class MockCacheRepo implements ICacheRepo {
     return 0;
   }
   async deleteByPattern(_: string): Promise<void> {}
+  async getKeysByPattern(_: string): Promise<string[]> {
+    return [];
+  }
 
   async acquireLock(key: string, _ttl: number): Promise<boolean> {
     if (this._locks.has(key)) return false;
@@ -113,12 +116,11 @@ describe('Inventory Module Integration', () => {
       .send({ skuId, quantity: 3 });
 
     if (res.status !== 200) {
-      console.log('Reserve Error Body:', JSON.stringify(res.body, null, 2));
+      // Failed reservation
     }
     expect(res.status).toBe(200);
 
     const detail = await request(app).get(`/inventory/${skuId}`);
-    console.log('Detail Body:', JSON.stringify(detail.body, null, 2));
     expect(detail.body.data.available).toBe(7);
     expect(detail.body.data.reserved).toBe(3);
   });

@@ -1,10 +1,16 @@
 import express from 'express';
-import { USER_ROLE } from '@atomecom/shared';
 import {
   categoryControllerImpl,
   authMiddlewareImpl,
 } from '../../../../container.js';
 import { requireRole } from '@shared/middlewares/role.middleware.js';
+import { validate } from '@shared/middlewares/validate.middleware.js';
+import {
+  CreateCategoryRequestSchema,
+  UpdateCategoryRequestSchema,
+  MoveCategoryRequestSchema,
+  USER_ROLE,
+} from '@atomecom/shared';
 
 const router = express.Router();
 
@@ -20,6 +26,7 @@ router.post(
   '/admin/categories',
   authMiddlewareImpl,
   requireRole([USER_ROLE.ADMIN, USER_ROLE.OWNER]),
+  validate(CreateCategoryRequestSchema),
   categoryControllerImpl.create,
 );
 
@@ -27,6 +34,7 @@ router.patch(
   '/admin/categories/:id',
   authMiddlewareImpl,
   requireRole([USER_ROLE.ADMIN, USER_ROLE.OWNER]),
+  validate(UpdateCategoryRequestSchema),
   categoryControllerImpl.update,
 );
 
@@ -34,6 +42,7 @@ router.patch(
   '/admin/categories/:id/move',
   authMiddlewareImpl,
   requireRole([USER_ROLE.ADMIN, USER_ROLE.OWNER]),
+  validate(MoveCategoryRequestSchema),
   categoryControllerImpl.move,
 );
 

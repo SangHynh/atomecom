@@ -97,12 +97,14 @@ export class ProductService {
     const product = await this._productRepo.create(productData);
 
     // --- Step 2: Create SKUs and Inventory (with compensation on failure) ---
-    try {
-      await this._createSkusAndInventory(product.id, dto.skus);
-    } catch (error) {
-      // Compensate: hard-delete the product to prevent orphan records
-      await this._compensateDeleteProduct(product.id);
-      throw error;
+    if (dto.skus && dto.skus.length > 0) {
+      try {
+        await this._createSkusAndInventory(product.id, dto.skus);
+      } catch (error) {
+        // Compensate: hard-delete the product to prevent orphan records
+        await this._compensateDeleteProduct(product.id);
+        throw error;
+      }
     }
 
     return product;
@@ -148,14 +150,20 @@ export class ProductService {
   private async _validateCreateInputs(dto: CreateProductDTO): Promise<void> {
     await this._ensureProductSlugIsUnique(dto.slug);
 
+    /* - Removed restriction to allow separate Inventory management -
     if (!dto.skus || dto.skus.length === 0) {
       throw new BadRequestError('Product must have at least one SKU');
     }
+    */
 
-    for (const skuDto of dto.skus) {
-      const existingSku = await this._skuService.findBySkuCode(skuDto.skuCode);
-      if (existingSku) {
-        throw new ConflictError(`SkuCode "${skuDto.skuCode}" already exists`);
+    if (dto.skus && dto.skus.length > 0) {
+      for (const skuDto of dto.skus) {
+        const existingSku = await this._skuService.findBySkuCode(
+          skuDto.skuCode,
+        );
+        if (existingSku) {
+          throw new ConflictError(`SkuCode "${skuDto.skuCode}" already exists`);
+        }
       }
     }
   }
@@ -253,7 +261,7 @@ export class ProductService {
       try {
         const inventoryData = this._buildInventoryEntity(
           sku.id,
-          skuDto.quantity || 0,
+          skuDto.initialQuantity || 0,
         );
         await this._inventoryService.create(inventoryData);
       } catch (error) {

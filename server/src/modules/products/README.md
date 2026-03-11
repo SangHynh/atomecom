@@ -13,6 +13,7 @@ The **Product** module manages the core catalog of the e-commerce system, includ
 | **High Performance**       | Slug indexing for fast lookups & Fragment Caching with Redis for <1ms navigation.      |
 | **Data Integrity**         | Separate Move API with Subject-Descendant atomic updates and automatic rollback.       |
 | **Price Auditing**         | Tracking all price movements via a mandatory `priceHistory` log.                       |
+| **Standardized Errors**    | Unified `asyncHandler` and `ErrorResponse` patterns for predictable API behavior.      |
 
 ---
 

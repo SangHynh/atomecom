@@ -17,7 +17,7 @@ export interface CreateProductDTO {
     keywords: string[];
   };
   status?: PRODUCT_STATUS;
-  skus: CreateSkuDTO[];
+  skus?: CreateSkuDTO[];
 }
 
 export interface UpdateProductDTO {

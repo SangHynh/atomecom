@@ -26,6 +26,7 @@ describe('SessionService', () => {
     refreshToken: 'current-rt',
     refreshTokensUsed: ['old-rt-1'],
     expiresAt: Date.now() + 100000,
+    createdAt: Date.now(),
   };
 
   describe('handleRefreshToken', () => {

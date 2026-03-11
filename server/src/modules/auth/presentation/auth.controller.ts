@@ -7,6 +7,9 @@ import logger from '@shared/utils/logger.js';
 import { getVeryImportantSystemHash } from '@shared/utils/very-important.util.js';
 import { getExpiresInSeconds } from '@shared/utils/time.js';
 import { UnauthorizedError } from '@shared/core/error.response.js';
+import appConfig from '@shared/configs/app.config.js';
+
+const appCfg = appConfig!;
 
 export class AuthController {
   constructor(
@@ -90,7 +93,7 @@ export class AuthController {
     }
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: appCfg.app.isProduction,
       sameSite: 'strict',
       path: '/',
     });
@@ -100,9 +103,17 @@ export class AuthController {
   public verifyEmail = async (req: Request, res: Response) => {
     const { token } = req.query as { token: string };
     const result = await this.authService.verifyEmail(token);
+
+    this._setRefreshTokenCookie(res, result.tokens.refreshToken);
+
+    const responseData = {
+      ...result,
+      tokens: { accessToken: result.tokens.accessToken },
+    };
+
     return new OK({
       message: 'ACCOUNT_VERIFICATION_SUCCESS',
-      data: result,
+      data: responseData,
     }).send(res);
   };
 
@@ -152,12 +163,10 @@ export class AuthController {
   };
 
   private _setRefreshTokenCookie(res: Response, token: string) {
-    const expiresIn = getExpiresInSeconds(
-      process.env.REFRESH_TOKEN_EXPIRES_IN || '7d',
-    );
+    const expiresIn = getExpiresInSeconds(appCfg.security.jwt.refreshExpires);
     res.cookie('refreshToken', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: appCfg.app.isProduction,
       sameSite: 'strict',
       path: '/',
       maxAge: expiresIn * 1000,
