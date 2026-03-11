@@ -1,12 +1,17 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { categoryService, CategoryFilter } from '@/services/category.service';
-import { Category } from '@atomecom/shared';
+import { AxiosError } from 'axios';
+import { z } from 'zod';
+import { categoryService } from '@/services/category.service';
+import { Category, SuccessResponse, categorySchema } from '@atomecom/shared';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
-export const useCategories = (filters: CategoryFilter = {}) => {
+type CreateCategoryPayload = z.infer<typeof categorySchema>;
+type UpdateCategoryPayload = CreateCategoryPayload & { version: number };
+
+export const useCategories = (filters: Record<string, unknown> = {}) => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
@@ -32,7 +37,7 @@ export const useCategories = (filters: CategoryFilter = {}) => {
   });
 
   const createCategoryMutation = useMutation({
-    mutationFn: (data: Partial<Category>) =>
+    mutationFn: (data: CreateCategoryPayload) =>
       categoryService.createCategory(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
@@ -42,7 +47,7 @@ export const useCategories = (filters: CategoryFilter = {}) => {
         }),
       );
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ message: string }>) => {
       toast.error(
         error.response?.data?.message ||
           t('catalog.categories.actions.created_failed', {
@@ -53,7 +58,7 @@ export const useCategories = (filters: CategoryFilter = {}) => {
   });
 
   const updateCategoryMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Category> }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateCategoryPayload }) =>
       categoryService.updateCategory(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
@@ -63,7 +68,7 @@ export const useCategories = (filters: CategoryFilter = {}) => {
         }),
       );
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ message: string }>) => {
       toast.error(
         error.response?.data?.message ||
           t('catalog.categories.actions.updated_failed', {
@@ -79,7 +84,7 @@ export const useCategories = (filters: CategoryFilter = {}) => {
       data,
     }: {
       id: string;
-      data: { parentPath: string | null; version: number };
+      data: { parentId: string | null; version: number };
     }) => categoryService.moveCategory(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
@@ -89,7 +94,7 @@ export const useCategories = (filters: CategoryFilter = {}) => {
         }),
       );
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ message: string }>) => {
       toast.error(
         error.response?.data?.message ||
           t('catalog.categories.actions.moved_failed', {
@@ -109,7 +114,7 @@ export const useCategories = (filters: CategoryFilter = {}) => {
         }),
       );
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ message: string }>) => {
       toast.error(
         error.response?.data?.message ||
           t('catalog.categories.actions.deleted_failed', {

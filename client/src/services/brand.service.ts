@@ -1,16 +1,12 @@
 import { api } from '@/lib/axios';
-import { Brand, SuccessResponse, PaginatedResult } from '@atomecom/shared';
+import { z } from 'zod';
+import { Brand, SuccessResponse, brandSchema } from '@atomecom/shared';
 
-export interface BrandFilter {
-  keyword?: string;
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
+type CreateBrandPayload = z.infer<typeof brandSchema>;
+type UpdateBrandPayload = z.infer<typeof brandSchema> & { version: number };
 
 export const brandService = {
-  getBrands: async (filters: BrandFilter = {}) => {
+  getBrands: async (filters: Record<string, unknown> = {}) => {
     const response = await api.get<SuccessResponse<Brand[]>>('/brands', {
       params: filters,
     });
@@ -22,7 +18,7 @@ export const brandService = {
     return response.data;
   },
 
-  createBrand: async (data: Partial<Brand>) => {
+  createBrand: async (data: CreateBrandPayload) => {
     const response = await api.post<SuccessResponse<Brand>>(
       '/admin/brands',
       data,
@@ -30,7 +26,7 @@ export const brandService = {
     return response.data;
   },
 
-  updateBrand: async (id: string, data: Partial<Brand>) => {
+  updateBrand: async (id: string, data: UpdateBrandPayload) => {
     const response = await api.put<SuccessResponse<Brand>>(
       `/admin/brands/${id}`,
       data,

@@ -1,18 +1,14 @@
 import { api } from '@/lib/axios';
-import { Category, SuccessResponse } from '@atomecom/shared';
+import { z } from 'zod';
+import { Category, SuccessResponse, categorySchema } from '@atomecom/shared';
 
-export interface CategoryFilter {
-  keyword?: string;
-  path?: string | null;
-  level?: number;
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
+type CreateCategoryPayload = z.infer<typeof categorySchema>;
+type UpdateCategoryPayload = z.infer<typeof categorySchema> & {
+  version: number;
+};
 
 export const categoryService = {
-  getCategories: async (filters: CategoryFilter = {}) => {
+  getCategories: async (filters: Record<string, unknown> = {}) => {
     const response = await api.get<SuccessResponse<Category[]>>('/categories', {
       params: filters,
     });
@@ -47,7 +43,7 @@ export const categoryService = {
     return response.data;
   },
 
-  createCategory: async (data: Partial<Category>) => {
+  createCategory: async (data: CreateCategoryPayload) => {
     const response = await api.post<SuccessResponse<Category>>(
       '/admin/categories',
       data,
@@ -55,7 +51,7 @@ export const categoryService = {
     return response.data;
   },
 
-  updateCategory: async (id: string, data: Partial<Category>) => {
+  updateCategory: async (id: string, data: UpdateCategoryPayload) => {
     const response = await api.patch<SuccessResponse<Category>>(
       `/admin/categories/${id}`,
       data,
@@ -65,7 +61,7 @@ export const categoryService = {
 
   moveCategory: async (
     id: string,
-    data: { parentPath: string | null; version: number },
+    data: { parentId: string | null; version: number },
   ) => {
     const response = await api.patch<SuccessResponse<Category>>(
       `/admin/categories/${id}/move`,

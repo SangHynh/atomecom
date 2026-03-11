@@ -4,12 +4,23 @@ import {
   useQueryClient,
   keepPreviousData,
 } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
+import { z } from 'zod';
 import { UserService } from '@/services/user.service';
-import { ErrorUserCodes } from '@atomecom/shared';
+import {
+  ErrorUserCodes,
+  User,
+  SuccessResponse,
+  createUserSchema,
+  updateUserSchema,
+} from '@atomecom/shared';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
-export const useUsers = (filters?: any) => {
+type CreateUserRequest = z.infer<typeof createUserSchema>;
+type UpdateUserRequest = z.infer<typeof updateUserSchema>;
+
+export const useUsers = (filters?: Record<string, unknown>) => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
@@ -32,7 +43,7 @@ export const useUsers = (filters?: any) => {
       queryClient.invalidateQueries({ queryKey: ['user-stats'] });
       toast.success(t('users.actions.created_success'));
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ message: string }>) => {
       const code = error?.response?.data?.message;
       toast.error(
         code
@@ -43,23 +54,26 @@ export const useUsers = (filters?: any) => {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateUserRequest }) =>
       UserService.updateUser(id, data),
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: ['users', filters] });
       const previousUsers = queryClient.getQueryData(['users', filters]);
-      queryClient.setQueryData(['users', filters], (old: any) => {
-        if (!old) return old;
-        return {
-          ...old,
-          data: old.data.map((user: any) =>
-            user.id === id ? { ...user, ...data } : user,
-          ),
-        };
-      });
+      queryClient.setQueryData(
+        ['users', filters],
+        (old: SuccessResponse<User[]> | undefined) => {
+          if (!old) return old;
+          return {
+            ...old,
+            data: old.data.map((user) =>
+              user.id === id ? { ...user, ...data } : user,
+            ),
+          };
+        },
+      );
       return { previousUsers };
     },
-    onError: (err: any, _variables, context: any) => {
+    onError: (err: AxiosError<{ message: string }>, _variables, context) => {
       if (context?.previousUsers) {
         queryClient.setQueryData(['users', filters], context.previousUsers);
       }
@@ -86,7 +100,7 @@ export const useUsers = (filters?: any) => {
       queryClient.invalidateQueries({ queryKey: ['user-stats'] });
       toast.success(t('users.actions.deleted_success'));
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ message: string }>) => {
       const code = error?.response?.data?.message;
       toast.error(
         code

@@ -1,10 +1,17 @@
+'use client';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { brandService, BrandFilter } from '@/services/brand.service';
-import { Brand } from '@atomecom/shared';
+import { AxiosError } from 'axios';
+import { z } from 'zod';
+import { brandService } from '@/services/brand.service';
+import { Brand, SuccessResponse, brandSchema } from '@atomecom/shared';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
-export const useBrands = (filters: BrandFilter = {}) => {
+type CreateBrandPayload = z.infer<typeof brandSchema>;
+type UpdateBrandPayload = CreateBrandPayload & { version: number };
+
+export const useBrands = (filters: Record<string, unknown> = {}) => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
@@ -14,7 +21,7 @@ export const useBrands = (filters: BrandFilter = {}) => {
   });
 
   const createBrandMutation = useMutation({
-    mutationFn: (data: Partial<Brand>) => brandService.createBrand(data),
+    mutationFn: (data: CreateBrandPayload) => brandService.createBrand(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
       toast.success(
@@ -23,7 +30,7 @@ export const useBrands = (filters: BrandFilter = {}) => {
         }),
       );
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ message: string }>) => {
       toast.error(
         error.response?.data?.message ||
           t('catalog.brands.actions.created_failed', {
@@ -34,7 +41,7 @@ export const useBrands = (filters: BrandFilter = {}) => {
   });
 
   const updateBrandMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Brand> }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateBrandPayload }) =>
       brandService.updateBrand(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
@@ -44,7 +51,7 @@ export const useBrands = (filters: BrandFilter = {}) => {
         }),
       );
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ message: string }>) => {
       toast.error(
         error.response?.data?.message ||
           t('catalog.brands.actions.updated_failed', {
@@ -64,7 +71,7 @@ export const useBrands = (filters: BrandFilter = {}) => {
         }),
       );
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ message: string }>) => {
       toast.error(
         error.response?.data?.message ||
           t('catalog.brands.actions.deleted_failed', {

@@ -1,13 +1,18 @@
 import { api } from '@/lib/axios';
+import { z } from 'zod';
 import {
   User,
-  CreateUserRequestSchema,
-  UpdateUserRequestSchema,
+  createUserSchema,
+  updateUserSchema,
+  SuccessResponse,
 } from '@atomecom/shared';
 
+type CreateUserRequest = z.infer<typeof createUserSchema>;
+type UpdateUserRequest = z.infer<typeof updateUserSchema>;
+
 export const UserService = {
-  getUsers: async (params?: any) => {
-    const response = await api.get<any>('users', {
+  getUsers: async (params?: Record<string, unknown>) => {
+    const response = await api.get<SuccessResponse<User[]>>('users', {
       params,
     });
     const { data, metadata } = response.data;
@@ -25,17 +30,20 @@ export const UserService = {
   },
 
   getUserById: async (id: string) => {
-    const response = await api.get<{ data: User }>(`users/${id}`);
+    const response = await api.get<SuccessResponse<User>>(`users/${id}`);
     return response.data;
   },
 
-  createUser: async (data: any) => {
-    const response = await api.post<{ data: User }>('users', data);
+  createUser: async (data: CreateUserRequest) => {
+    const response = await api.post<SuccessResponse<User>>('users', data);
     return response.data;
   },
 
-  updateUser: async (id: string, data: any) => {
-    const response = await api.patch<{ data: User }>(`users/${id}`, data);
+  updateUser: async (id: string, data: UpdateUserRequest) => {
+    const response = await api.patch<SuccessResponse<User>>(
+      `users/${id}`,
+      data,
+    );
     return response.data;
   },
 
@@ -44,15 +52,15 @@ export const UserService = {
   },
 
   getUserStats: async () => {
-    const response = await api.get<{
-      data: {
+    const response = await api.get<
+      SuccessResponse<{
         total: number;
         active: number;
         banned: number;
         deactive: number;
         verified: number;
-      };
-    }>('users/stats');
+      }>
+    >('users/stats');
     return response.data;
   },
 };
