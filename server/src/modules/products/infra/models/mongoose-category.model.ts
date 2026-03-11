@@ -44,8 +44,6 @@ const CategorySchema = new Schema<CategoryEntity & Document>(
 );
 
 CategorySchema.index({ deletedAt: 1 });
-CategorySchema.index({ path: 1 }); // Essential for prefix regex queries
-CategorySchema.index({ slug: 1 }); // Redundant but good for clarity as unique is already at field level
 
 const excludeDeletedMiddleware = function (this: any) {
   const query = this.getQuery();

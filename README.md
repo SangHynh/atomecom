@@ -30,23 +30,23 @@ Atomecom is a **full-stack e-commerce platform** designed with enterprise-grade 
 
 ### ✅ Completed
 
-- **Authentication System** — Register, Login, JWT + Refresh Token, OAuth2 (Google & Facebook), Email Verification, Password Reset, Session Management, Token Blacklist
-- **User Management** — Full CRUD, Role-based Access Control (RBAC), Admin dashboard with detailed user views
-- **Product Catalog** — Products, SKUs, Brands, Categories with full CRUD operations
-- **Inventory Management** — Stock tracking with Redis caching for high-performance reads
-- **Admin Dashboard** — Studio-grade UI with Bento Grid layout, dark mode, smooth animations
-- **Brand & Category Management** — Complete Studio Overlay experience with live preview
-- **Email System** — Event-driven email notifications via Resend
-- **API Documentation** — Swagger/OpenAPI specs
-- **Security** — 12 middleware layers (Helmet, CORS, Rate Limiting, RBAC, Input Validation...)
-- **Storefront** — Landing page with Hero, Flash Sale, Featured Products, Trending Tabs
+- **Authentication System** — Register, Login, JWT + Refresh Token, Email Verification, Password Reset
+- **User Management** — Full CRUD, Role-based Access Control (RBAC)
+- **Product Catalog** — Products, SKUs, Brands, Categories with robust REST APIs
+- **Inventory Tracking** — Stock management linked to SKUs with Redis caching
+- **Admin Dashboard (Frontend)** — Studio-grade Bento Grid layout with Framer Motion animations
+- **End-to-end Type Safety** — 100% strict TypeScript types shared between Client and Server using Zod
+- **Email System** — Asynchronous notifications using Resend & Handlebars
+- **API Documentation** — Well-documented using Swagger/OpenAPI
+- **Hardened Security** — 0 Vulnerabilities, 12 Middleware layers (Helmet, CORS, RateLimiter), Strict RBAC.
+- **Storefront Landing** — Fully responsive storefront preview
 
-### 🚧 In Progress
+### 🚧 In Progress (Next Steps)
 
 - Cart & Checkout flow
-- Order Management
-- Payment Integration
-- Dashboard analytics with real data
+- Order Management System
+- Payment Gateway Integration (domestic & international)
+- Customer Review module
 
 ## Tech Stack
 
