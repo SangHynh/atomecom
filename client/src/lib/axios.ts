@@ -39,8 +39,13 @@ const isTokenExpired = (token: string, leewaySeconds: number = 30) => {
   }
 };
 
+interface FailedRequest {
+  resolve: (token: string | null) => void;
+  reject: (error: any) => void;
+}
+
 let isRefreshing = false;
-let failedQueue: any[] = [];
+let failedQueue: FailedRequest[] = [];
 
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
