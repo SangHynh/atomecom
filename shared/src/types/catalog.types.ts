@@ -18,8 +18,9 @@ export interface Category {
   slug: string;
   path: string;
   level: number; // Computed from path: path.split(',').filter(Boolean).length
+  parentId?: string;
   description?: string;
-  icon?: string;
+  image?: string;
   status: PRODUCT_STATUS;
   attributeDefinitions: Array<{
     key: string;

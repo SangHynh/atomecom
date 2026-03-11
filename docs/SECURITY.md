@@ -10,7 +10,8 @@ We use a dual-token strategy (Access Token & Refresh Token) to balance security 
 
 - **Storage**:
   - `Access Token`: Stored in **memory only** (via `axios` closure). This prevents XSS attacks from easily stealing the token.
-  - `Refresh Token`: Stored in an **HTTP-only, Secure Cookie** with `SameSite: strict`. This prevents client-side JavaScript access and cross-site request forgery.
+  - `Refresh Token`: Stored in an **HTTP-only, Secure Cookie** with `SameSite: strict`. This protects against both XSS (cannot be read by JS) and CSRF (SameSite policy).
+- **Session Limit**: Users are restricted to a maximum of **5 concurrent active sessions**. New logins beyond this limit trigger the revocation of the oldest session.
 - **Axios Interceptors**:
   - **Proactive Refresh**: Before each request, the client checks the Access Token's expiration. If it's within **30 seconds** of expiring, it triggers an early refresh to prevent 401 errors.
   - **Queueing Mechanism**: If multiple requests hit a 401 simultaneously, they are queued (`failedQueue`) and only **one** refresh request is sent. Once resolved, all queued requests retry with the new token.
@@ -25,7 +26,7 @@ We use a dual-token strategy (Access Token & Refresh Token) to balance security 
   - Every refresh produces a **new** refresh token and invalidates the old one.
   - **Leeway Window**: The system maintains a **30-second leeway** for the most recently rotated token. This prevents race conditions where legitimate parallel requests might use a "just-replaced" token.
   - **Panic Button**: If a token is reused outside the leeway window, the system immediately **revokes all active sessions** for that user.
-- **Revocation Mechanism**: Sessions can be revoked individually (logout) or globally (breach detection) by deleting the session key in Redis.
+- **Revocation Mechanism**: Sessions can be revoked individually (logout) or globally (breach detection) by deleting the session key in Redis. This is also triggered automatically by the **Session Limit Manager** when a user exceeds 5 devices.
 
 ## 2. Anti-Bot & Deceptive Response Noise
 
@@ -80,6 +81,8 @@ For high-security one-time operations, we avoid JWTs in favor of **Opaque Tokens
 - **Sensitive Data Filtering**: The application follows a strict **Safe Response** policy. Sensitive fields, such as `password` (even hashed) or internal system flags (`__v`), are explicitly stripped from domain objects before being returned in API responses.
 - **Dummy Email Mechanism**: For social logins missing an email, we use a placeholder (`provider_id@atomecom.dummy`) to satisfy DB constraints but mask it as `null` in API responses to trigger a "Complete Profile" flow.
 - **Error Sanitization**: Stack traces and internal implementation details are hidden in production; only standardized error codes are returned to prevent information leakage.
+- **Type Safety**: The system has transitioned away from `as any` type assertions by implementing a dedicated `AuthRequest` interface. This ensures robust typing for request-scoped data like `user`, `traceId`, and `startTime` across all controllers and middlewares.
+- **Centralized Configuration**: All environment variables are strictly managed through a nested `appConfig` object. Business logic is prohibited from accessing `process.env` directly, ensuring a single source of truth and consistent validation for all system settings.
 
 ## 8. Reactive IP Penalization (Honeypot Throttling)
 
