@@ -11,6 +11,7 @@ interface BreadcrumbItem {
   label: string;
   href: string;
   active: boolean;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 interface BreadcrumbsProps {
@@ -75,10 +76,10 @@ export function Breadcrumbs({ extraItems }: BreadcrumbsProps) {
   }
 
   return (
-    <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6">
+    <nav className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/40 mb-6">
       <Link
         href="/admin"
-        className="hover:text-primary transition-colors flex items-center gap-1"
+        className="hover:text-foreground transition-colors flex items-center gap-1"
       >
         <Home className="h-3 w-3" />
         {t('breadcrumbs.admin', { defaultValue: 'Admin' })}
@@ -86,14 +87,14 @@ export function Breadcrumbs({ extraItems }: BreadcrumbsProps) {
 
       {breadcrumbItems.map((item, index) => (
         <React.Fragment key={`${item.href}-${index}`}>
-          <ChevronRight className="h-3 w-3 opacity-50" />
+          <ChevronRight className="h-3 w-3 opacity-30" />
           <Link
             href={item.href}
             className={cn(
-              'transition-colors hover:text-primary',
+              'transition-colors hover:text-foreground',
               item.active
-                ? 'text-foreground font-black'
-                : 'text-muted-foreground',
+                ? 'text-foreground font-bold'
+                : 'text-muted-foreground/40',
             )}
             onClick={(e) => {
               if (item.href === '#') e.preventDefault();

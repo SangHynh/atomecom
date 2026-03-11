@@ -12,9 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { AlertCircle, Trash2, Info, AlertTriangle, Ban } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
-interface ConfirmationDialogProps {
+interface StudioConfirmationDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -26,7 +25,7 @@ interface ConfirmationDialogProps {
   isLoading?: boolean;
 }
 
-export function ConfirmationDialog({
+export function StudioConfirmationDialog({
   isOpen,
   onClose,
   onConfirm,
@@ -36,9 +35,7 @@ export function ConfirmationDialog({
   cancelText,
   variant = 'danger',
   isLoading = false,
-}: ConfirmationDialogProps) {
-  const { t } = useTranslation();
-
+}: StudioConfirmationDialogProps) {
   const Icon =
     variant === 'danger'
       ? Trash2
@@ -72,19 +69,19 @@ export function ConfirmationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[400px] rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl bg-background/95 backdrop-blur-xl">
+      <DialogContent className="sm:max-w-[400px] rounded-sm p-0 overflow-hidden border-[0.5px] border-border/40 shadow-none bg-background/95 backdrop-blur-xl z-[200]">
         <div className="p-8 space-y-6">
           <div className="flex flex-col items-center text-center space-y-4">
             <div
               className={cn(
-                'h-16 w-16 rounded-[1.5rem] flex items-center justify-center border-2 animate-in zoom-in-50 duration-300',
+                'h-16 w-16 rounded-sm flex items-center justify-center border-[0.5px] animate-in zoom-in-50 duration-300',
                 colors[variant],
               )}
             >
               <Icon className="h-8 w-8" />
             </div>
             <div className="space-y-2">
-              <DialogTitle className="text-xl font-black tracking-tight uppercase leading-none">
+              <DialogTitle className="text-xl font-bold tracking-tight uppercase leading-none">
                 {title}
               </DialogTitle>
               <DialogDescription
@@ -100,10 +97,10 @@ export function ConfirmationDialog({
           <Button
             variant="outline"
             onClick={onClose}
-            className="rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all h-11 border-border/50 hover:bg-muted/50"
+            className="rounded-md font-bold text-[10px] uppercase tracking-wide active:scale-95 transition-all h-11 border border-border/10 hover:bg-muted/50 shadow-none text-muted-foreground"
             disabled={isLoading}
           >
-            {cancelText || t('common.cancel', { defaultValue: 'Hủy' })}
+            {cancelText || 'Hủy'}
           </Button>
           <Button
             onClick={() => {
@@ -111,15 +108,12 @@ export function ConfirmationDialog({
               onClose();
             }}
             className={cn(
-              'rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all border-none shadow-lg h-11',
+              'rounded-md font-bold text-[10px] uppercase tracking-wide active:scale-95 transition-all border border-transparent shadow-none h-11',
               buttonClass[variant],
             )}
             disabled={isLoading}
           >
-            {isLoading
-              ? '...'
-              : confirmText ||
-                t('common.confirm', { defaultValue: 'Xác nhận' })}
+            {isLoading ? '...' : confirmText || 'Xác nhận'}
           </Button>
         </div>
       </DialogContent>

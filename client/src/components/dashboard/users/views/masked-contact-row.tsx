@@ -44,17 +44,17 @@ export function MaskedContactRow({
 
   return (
     <div className="flex items-center gap-3 group">
-      <div className="h-9 w-9 rounded-xl bg-muted/50 flex items-center justify-center group-hover:bg-blue-600/10 transition-colors">
-        <span className="text-muted-foreground group-hover:text-blue-600 transition-colors">
+      <div className="h-9 w-9 rounded-md bg-muted/50 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+        <span className="text-muted-foreground group-hover:text-primary transition-colors">
           {icon}
         </span>
       </div>
       <div className="flex-1">
-        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/40">
           {label}
         </p>
         <div className="flex items-center gap-2">
-          <p className="text-xs font-bold">{displayValue}</p>
+          <p className="text-xs font-semibold">{displayValue}</p>
           {canView && value && (
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button

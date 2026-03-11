@@ -58,7 +58,7 @@ export function StudioOverlay({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: 30 }}
             className={cn(
-              'relative w-full h-full md:h-[90vh] bg-background/80 border border-white/20 dark:border-white/5 rounded-none md:rounded-2xl shadow-[0_32px_128px_-16px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col',
+              'relative w-full h-full md:h-[90vh] bg-background/80 border-[0.5px] border-border/40 rounded-none md:rounded-sm shadow-none overflow-hidden flex flex-col',
               reverseLayout ? 'md:flex-row-reverse' : 'md:flex-row',
               maxWidth,
             )}
@@ -69,7 +69,7 @@ export function StudioOverlay({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="rounded-lg bg-background/50 hover:bg-muted font-bold uppercase tracking-widest text-[9px] gap-1.5 px-3 h-8 shadow-sm border border-border/20"
+                  className="rounded-sm bg-background/50 hover:bg-muted font-bold uppercase tracking-widest text-[9px] gap-1.5 px-3 h-8 shadow-none border-[0.5px] border-border/40"
                   onClick={onBack}
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
@@ -79,7 +79,7 @@ export function StudioOverlay({
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-lg bg-background/50 hover:bg-rose-500 hover:text-white backdrop-blur transition-all shadow-sm h-8 w-8 border border-border/20"
+                className="rounded-sm bg-background/50 hover:bg-foreground hover:text-background backdrop-blur transition-all shadow-none h-8 w-8 border-[0.5px] border-border/40"
                 onClick={onClose}
               >
                 <X className="h-4 w-4" />

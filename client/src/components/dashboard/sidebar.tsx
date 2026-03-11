@@ -6,23 +6,17 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Users,
-  Package,
+  PackageSearch,
   ShoppingCart,
   Settings,
   ChevronLeft,
   ChevronDown,
   BarChart3,
   ShieldCheck,
-  Menu,
-  X,
-  Box,
-  Tags,
-  ListTree,
-  Archive,
+  Warehouse,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 
 interface SidebarProps {
@@ -39,9 +33,8 @@ interface NavItem {
 
 export function Sidebar({ isOpen, toggle }: SidebarProps) {
   const pathname = usePathname();
-  const { t } = useTranslation();
   const [expandedItems, setExpandedItems] = useState<string[]>([
-    '/admin/products',
+    '/admin/catalog',
   ]);
 
   const toggleExpand = (href: string) => {
@@ -53,25 +46,22 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
   };
 
   const navItems: NavItem[] = [
-    { name: t('sidebar.dashboard'), href: '/admin', icon: LayoutDashboard },
-    { name: t('sidebar.users'), href: '/admin/users', icon: Users },
+    { name: 'Tổng quan', href: '/admin', icon: LayoutDashboard },
+    { name: 'Người dùng', href: '/admin/users', icon: Users },
     {
-      name: t('sidebar.catalog', 'Catalog'),
-      href: '/admin/catalog', // Dùng làm prefix cho cha
-      icon: Package,
+      name: 'Danh mục hàng hóa',
+      href: '/admin/catalog',
+      icon: PackageSearch,
       subItems: [
-        { name: t('sidebar.products', 'Products'), href: '/admin/products' },
-        { name: t('sidebar.inventory', 'Inventory'), href: '/admin/inventory' },
-        {
-          name: t('sidebar.categories', 'Categories'),
-          href: '/admin/categories',
-        },
-        { name: t('sidebar.brands', 'Brands'), href: '/admin/brands' },
+        { name: 'Sản phẩm', href: '/admin/products' },
+        { name: 'Phân loại', href: '/admin/categories' },
+        { name: 'Thương hiệu', href: '/admin/brands' },
       ],
     },
-    { name: t('sidebar.orders'), href: '/admin/orders', icon: ShoppingCart },
-    { name: t('sidebar.analytics'), href: '/admin/analytics', icon: BarChart3 },
-    { name: t('sidebar.settings'), href: '/admin/settings', icon: Settings },
+    { name: 'Quản lý tồn kho', href: '/admin/inventory', icon: Warehouse },
+    { name: 'Đơn hàng', href: '/admin/orders', icon: ShoppingCart },
+    { name: 'Thống kê dữ liệu', href: '/admin/analytics', icon: BarChart3 },
+    { name: 'Thiết lập hệ thống', href: '/admin/settings', icon: Settings },
   ];
 
   return (
@@ -79,7 +69,7 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
       {/* Mobile Backdrop */}
       <div
         className={cn(
-          'fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300',
+          'fixed inset-0 bg-background/40 backdrop-blur-md z-40 lg:hidden transition-opacity duration-500',
           isOpen
             ? 'opacity-100 pointer-events-auto'
             : 'opacity-0 pointer-events-none',
@@ -91,77 +81,53 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
       <motion.aside
         initial={false}
         animate={{
-          width: isOpen
-            ? 280
-            : typeof window !== 'undefined' && window.innerWidth >= 1024
-              ? 80
-              : 280,
+          width: isOpen ? 260 : 80,
           x: isOpen
             ? 0
-            : typeof window !== 'undefined' && window.innerWidth >= 1024
-              ? 0
-              : -280,
+            : typeof window !== 'undefined' && window.innerWidth < 1024
+              ? -260
+              : 0,
         }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 40 }}
         className={cn(
-          'fixed inset-y-0 left-0 bg-background dark:bg-zinc-950 border-r border-border z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex flex-col',
+          'fixed inset-y-0 left-0 bg-background border-r-[0.5px] border-border/40 z-50 flex flex-col shadow-none',
         )}
       >
-        {/* Mobile Spacer - Avoids Toggle overlap */}
-        <div className="h-16 lg:hidden shrink-0" />
-
         {/* Logo Area */}
-        <div
-          className={cn(
-            'flex items-center h-16 shrink-0 transition-all duration-300 px-6',
-            isOpen ? 'justify-between' : 'justify-center px-0',
-          )}
-        >
-          <div className="flex items-center gap-3 overflow-hidden z-10">
-            <div className="h-9 w-9 min-w-[36px] rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30 ring-1 ring-white/10 shrink-0 mx-auto group hover:shadow-primary/40 hover:scale-105 transition-all duration-300">
-              <ShieldCheck className="text-white h-5 w-5" />
+        <div className="h-20 flex items-center px-6 shrink-0 relative">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="h-10 w-10 min-w-[40px] rounded-sm bg-foreground flex items-center justify-center shrink-0 border border-transparent group hover:bg-transparent hover:border-foreground/20 transition-all duration-500">
+              <ShieldCheck className="text-background group-hover:text-foreground h-5 w-5 transition-colors" />
             </div>
             <AnimatePresence>
               {isOpen && (
                 <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="text-xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 overflow-hidden whitespace-nowrap"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="font-bold text-2xl tracking-tight text-foreground whitespace-nowrap pt-1"
                 >
-                  ATOME<span className="text-primary">COM</span>
+                  AtomEcom.
                 </motion.span>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Desktop Toggle Button - Floating Position */}
-          <div className="hidden lg:block">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggle}
-              className={cn(
-                'rounded-full hover:bg-muted/50 flex items-center justify-center transition-all bg-background border border-border/50 shadow-sm z-[70]',
-                isOpen
-                  ? 'h-8 w-8 relative'
-                  : 'h-7 w-7 absolute -right-3.5 top-4.5',
-              )}
-            >
-              <motion.div
-                animate={{ rotate: isOpen ? 0 : 180 }}
-                transition={{ duration: 0.3 }}
-              >
-                <ChevronLeft
-                  className={cn('h-4 w-4', !isOpen && 'h-3.5 w-3.5')}
-                />
-              </motion.div>
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggle}
+            className={cn(
+              'absolute -right-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background border border-border/40 shadow-none hover:bg-muted hidden lg:flex items-center justify-center transition-transform duration-500',
+              !isOpen && 'rotate-180',
+            )}
+          >
+            <ChevronLeft className="h-4 w-4 text-muted-foreground/40" />
+          </Button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto custom-scrollbar overflow-x-hidden">
           {navItems.map((item) => {
             const hasSubItems = item.subItems && item.subItems.length > 0;
             const isSubActive =
@@ -171,130 +137,106 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
             const isExpanded = expandedItems.includes(item.href);
 
             return (
-              <div key={item.href} className="flex flex-col gap-1">
+              <div key={item.href} className="space-y-1">
                 {hasSubItems ? (
                   <button
                     onClick={() => {
-                      if (!isOpen) toggle(); // Mở sidebar ra nếu đang thu gọn
+                      if (!isOpen) toggle();
                       toggleExpand(item.href);
                     }}
                     className={cn(
-                      'flex w-full items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden h-12 z-10',
+                      'flex w-full items-center gap-4 px-3 h-11 rounded-sm transition-all duration-300 group relative',
                       isActive && !isExpanded
-                        ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-lg shadow-primary/30'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:shadow-sm',
-                      !isOpen && 'lg:px-0 lg:justify-center lg:w-12 lg:mx-auto',
+                        ? 'bg-foreground text-background'
+                        : 'text-muted-foreground/60 hover:text-foreground hover:bg-muted/30',
+                      !isOpen && 'justify-center px-0',
                     )}
                   >
                     <item.icon
                       className={cn(
-                        'h-5 w-5 shrink-0',
-                        isActive && !isExpanded
-                          ? ''
-                          : 'group-hover:scale-110 transition-transform',
+                        'h-4 w-4 shrink-0 transition-transform duration-500',
+                        !isActive && 'group-hover:scale-110',
                       )}
                     />
                     <AnimatePresence>
                       {isOpen && (
                         <>
                           <motion.span
-                            initial={{ opacity: 0, width: 0 }}
-                            animate={{ opacity: 1, width: 'auto' }}
-                            exit={{ opacity: 0, width: 0 }}
-                            className="font-bold text-sm tracking-tight overflow-hidden whitespace-nowrap flex-1 text-left"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="text-[10px] font-bold uppercase tracking-wider flex-1 text-left pt-0.5"
                           >
                             {item.name}
                           </motion.span>
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{
-                              opacity: 1,
-                              rotate: isExpanded ? 180 : 0,
-                            }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <ChevronDown className="h-4 w-4 opacity-50" />
-                          </motion.div>
+                          <ChevronDown
+                            className={cn(
+                              'h-3 w-3 transition-transform duration-500',
+                              isExpanded && 'rotate-180',
+                            )}
+                          />
                         </>
                       )}
                     </AnimatePresence>
-                    {!isOpen && (
-                      <div className="absolute left-full ml-4 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-md z-[60]">
-                        {item.name}
-                      </div>
-                    )}
                   </button>
                 ) : (
                   <Link
                     href={item.href}
                     className={cn(
-                      'flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden h-12 z-10',
+                      'flex items-center gap-4 px-3 h-11 rounded-sm transition-all duration-300 group relative',
                       isActive
-                        ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-lg shadow-primary/30'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:shadow-sm',
-                      !isOpen && 'lg:px-0 lg:justify-center lg:w-12 lg:mx-auto',
+                        ? 'bg-foreground text-background'
+                        : 'text-muted-foreground/60 hover:text-foreground hover:bg-muted/30',
+                      !isOpen && 'justify-center px-0',
                     )}
                   >
-                    <item.icon
-                      className={cn(
-                        'h-5 w-5 shrink-0',
-                        isActive
-                          ? ''
-                          : 'group-hover:scale-110 transition-transform',
-                      )}
-                    />
+                    <item.icon className="h-4 w-4 shrink-0 transition-transform duration-500 group-hover:scale-110" />
                     <AnimatePresence>
                       {isOpen && (
                         <motion.span
-                          initial={{ opacity: 0, width: 0 }}
-                          animate={{ opacity: 1, width: 'auto' }}
-                          exit={{ opacity: 0, width: 0 }}
-                          className="font-bold text-sm tracking-tight overflow-hidden whitespace-nowrap"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="text-[10px] font-bold uppercase tracking-wider pt-0.5"
                         >
                           {item.name}
                         </motion.span>
                       )}
                     </AnimatePresence>
-                    {!isOpen && (
-                      <div className="absolute left-full ml-4 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-md z-[60]">
-                        {item.name}
-                      </div>
-                    )}
                   </Link>
                 )}
 
-                {/* Sub Menu Dropsdown */}
                 <AnimatePresence>
                   {hasSubItems && isOpen && isExpanded && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="flex flex-col gap-1 pl-11 pr-2 relative"
+                      className="flex flex-col gap-1 pl-11 pr-2 mt-1 relative"
                     >
-                      {/* Sub-menu connecting line */}
-                      <div className="absolute left-6 top-0 bottom-4 w-px bg-border/50" />
-
-                      {item.subItems!.map((subItem) => {
-                        const isSubItemActive =
-                          pathname === subItem.href ||
-                          pathname.startsWith(subItem.href + '/');
+                      <div className="absolute left-6 top-0 bottom-4 w-[1px] bg-border/20" />
+                      {item.subItems!.map((sub) => {
+                        const isSubActive = pathname === sub.href;
                         return (
                           <Link
-                            key={subItem.href}
-                            href={subItem.href}
+                            key={sub.href}
+                            href={sub.href}
                             className={cn(
-                              'flex items-center py-2 px-3 text-sm rounded-lg transition-colors relative',
-                              isSubItemActive
-                                ? 'text-primary font-semibold bg-primary/10'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                              'h-9 flex items-center px-4 text-[9px] font-bold uppercase tracking-wide rounded-sm transition-all relative',
+                              isSubActive
+                                ? 'text-foreground bg-muted/20'
+                                : 'text-muted-foreground/40 hover:text-foreground hover:bg-muted/10',
                             )}
                           >
-                            {/* Line pointer */}
-                            <div className="absolute left-[-20px] top-1/2 w-3 h-px bg-border/50" />
-                            {subItem.name}
+                            <div
+                              className={cn(
+                                'absolute left-[-20px] top-1/2 w-4 h-[1px] transiton-colors duration-500',
+                                isSubActive
+                                  ? 'bg-foreground/20'
+                                  : 'bg-border/10',
+                              )}
+                            />
+                            {sub.name}
                           </Link>
                         );
                       })}
@@ -305,6 +247,30 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
             );
           })}
         </nav>
+
+        {/* Status Area */}
+        <div className="p-4 border-t border-border/40 shrink-0">
+          <div
+            className={cn(
+              'h-12 flex items-center gap-4 transition-all duration-500 rounded-sm border-[0.5px] border-transparent hover:bg-muted/5 group cursor-pointer',
+              isOpen ? 'px-4' : 'justify-center px-0',
+            )}
+          >
+            <div className="h-6 w-6 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            </div>
+            {isOpen && (
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/40">
+                  Trạng thái kết nối
+                </span>
+                <span className="text-[8px] font-semibold text-emerald-500/60 uppercase">
+                  Đang hoạt động tốt
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
       </motion.aside>
     </>
   );
