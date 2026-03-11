@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import { Plus_Jakarta_Sans, DM_Serif_Display } from 'next/font/google';
 import './globals.css';
 import QueryProvider from '@/providers/query-provider';
 import { Toaster } from 'sonner';
@@ -10,6 +10,13 @@ import AuthInitializer from '@/components/providers/auth-initializer';
 const jakarta = Plus_Jakarta_Sans({
   variable: '--font-jakarta',
   subsets: ['latin'],
+  display: 'swap',
+});
+
+const dmSerif = DM_Serif_Display({
+  variable: '--font-editorial',
+  subsets: ['latin'],
+  weight: '400',
   display: 'swap',
 });
 
@@ -60,7 +67,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${jakarta.variable} antialiased`}
+        className={`${jakarta.variable} ${dmSerif.variable} antialiased`}
         suppressHydrationWarning
       >
         <ThemeProvider
@@ -81,16 +88,19 @@ export default function RootLayout({
               theme="system"
               toastOptions={{
                 classNames: {
-                  toast: 'group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg',
+                  toast:
+                    'group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg',
                   description: 'group-[.toast]:text-muted-foreground',
-                  actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
-                  cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
+                  actionButton:
+                    'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
+                  cancelButton:
+                    'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
                 },
                 style: {
-                    padding: '12px',
-                    fontSize: '12px',
-                    width: '300px',
-                }
+                  padding: '12px',
+                  fontSize: '12px',
+                  width: '300px',
+                },
               }}
             />
             {/* 🍯 Security Honeypot: Do not remove */}

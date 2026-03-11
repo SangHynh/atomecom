@@ -28,7 +28,7 @@ export default function DashboardLayout({
         {/* Mobile-only Menu Toggle */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="lg:hidden fixed top-3 left-4 z-[45] p-2 hover:bg-muted/30 rounded-xl transition-colors text-muted-foreground flex items-center justify-center w-10 h-10 group"
+          className="lg:hidden fixed top-3 left-4 z-[45] p-2 hover:bg-muted/30 rounded-sm transition-colors text-muted-foreground flex items-center justify-center w-10 h-10 group"
         >
           <div className="relative w-6 h-6 flex items-center justify-center">
             <AnimatePresence initial={false}>

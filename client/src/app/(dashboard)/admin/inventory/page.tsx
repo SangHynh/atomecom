@@ -1,30 +1,70 @@
 'use client';
 
 import React from 'react';
-import { Archive } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { InventoryHeader } from '@/components/dashboard/inventory/inventory-header';
+import { InventoryFilters } from '@/components/dashboard/inventory/inventory-filters';
+import { InventoryTable } from '@/components/dashboard/inventory/inventory-table';
+import { StudioPagination } from '@/components/dashboard/studio/studio-pagination';
+import { useTableParams } from '@/hooks/use-table-params';
+import { useDebounce } from '@/hooks/use-debounce';
+import { useSkus } from '@/hooks/use-skus';
+import { extractData, extractPagination } from '@/lib/api-utils';
 
 export default function InventoryPage() {
+  // ─── Table & URL State ─────────────────────────────────────
+  const { params, setParams } = useTableParams({
+    limit: 20,
+    sortField: 'skuCode',
+    sortOrder: 'asc',
+  });
+
+  const debouncedSearch = useDebounce(params.q, 500);
+
+  // ─── Data Fetching ─────────────────────────────────────────
+  const {
+    data: skusResponse,
+    isLoading,
+    isFetching,
+  } = useSkus({
+    keyword: debouncedSearch || undefined,
+    page: params.page,
+    limit: params.limit,
+    status: params.status !== 'all' ? params.status : undefined,
+  });
+
+  const skus = extractData(skusResponse) || [];
+  const pagination = extractPagination(skusResponse);
+
+  // ─── Render ────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full bg-slate-50/50 dark:bg-zinc-950/50">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-20">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-            <Archive className="w-5 h-5" />
+    <div className="h-full flex flex-col p-6 md:p-8 bg-background relative overflow-hidden animate-in fade-in duration-500">
+      {/* 1. Page Header */}
+      <InventoryHeader />
+
+      {/* 2. Filter Bar (self-managed via useTableParams) */}
+      <InventoryFilters />
+
+      {/* 3. Main Content */}
+      <div className="flex-1 overflow-hidden relative min-h-[400px] flex flex-col border-[0.5px] border-border/40 rounded-sm bg-background/50 shadow-none">
+        {isLoading && !isFetching ? (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+            <Loader2 className="h-8 w-8 text-foreground/20 animate-spin" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Tồn kho</h1>
-            <p className="text-sm text-muted-foreground hidden sm:block">
-              Kiểm soát số lượng và tình trạng giữ chỗ (Reserved)
-            </p>
-          </div>
+        ) : null}
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <InventoryTable data={skus} />
         </div>
-      </div>
-      <div className="flex-1 p-6 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Trang đang xây dựng</h2>
-          <p className="text-muted-foreground">
-            Bảng quản lý Tồn kho sẽ xuất hiện tại đây.
-          </p>
+
+        {/* 4. Pagination */}
+        <div className="border-t border-border/40 bg-background/80 backdrop-blur-md px-6 shrink-0 h-14 flex items-center">
+          <StudioPagination
+            pagination={pagination}
+            currentCount={skus.length}
+            itemName="Biến thể (SKU)"
+            onPageChange={(p) => setParams({ page: p })}
+          />
         </div>
       </div>
     </div>

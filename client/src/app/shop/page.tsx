@@ -14,15 +14,11 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useProducts } from '@/hooks/use-products';
+import { useCategories } from '@/hooks/use-categories';
+import { Loader2 } from 'lucide-react';
 
-const CATEGORIES = [
-  'Tất cả',
-  'Smartphone',
-  'Smartwatch',
-  'Laptop',
-  'Audio',
-  'Accessories',
-];
+// CATEGORIES dummy data removed
 const SORT_OPTIONS = [
   'Mới nhất',
   'Giá: Thấp đến Cao',
@@ -30,95 +26,24 @@ const SORT_OPTIONS = [
   'Bán chạy nhất',
 ];
 
-const ALL_PRODUCTS = [
-  {
-    id: '1',
-    name: 'Atomecom Quantum Watch',
-    price: 25000000,
-    category: 'Smartwatch',
-    image: '/luxury_watch_product_1771597650327.png',
-    isNew: true,
-    rating: 4.9,
-  },
-  {
-    id: '2',
-    name: 'Nebula Pro Audio',
-    price: 12000000,
-    category: 'Audio',
-    image:
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1000&auto=format&fit=crop',
-    rating: 4.8,
-  },
-  {
-    id: '3',
-    name: 'Titanium X Smartphone',
-    price: 45000000,
-    category: 'Smartphone',
-    image:
-      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=1000&auto=format&fit=crop',
-    isNew: true,
-    rating: 5.0,
-  },
-  {
-    id: '4',
-    name: 'Zenith Laptop Pro',
-    price: 68000000,
-    category: 'Laptop',
-    image:
-      'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=1000&auto=format&fit=crop',
-    rating: 4.7,
-  },
-  {
-    id: '5',
-    name: 'Minimal Wallet',
-    price: 1500000,
-    category: 'Accessories',
-    image:
-      'https://images.unsplash.com/photo-1627123424574-724758594e93?q=80&w=1000&auto=format&fit=crop',
-    rating: 4.8,
-  },
-  {
-    id: '6',
-    name: 'Ocean Bottle',
-    price: 900000,
-    category: 'Accessories',
-    image:
-      'https://images.unsplash.com/photo-1602143393494-13e6180630ba?q=80&w=1000&auto=format&fit=crop',
-    rating: 4.5,
-  },
-  {
-    id: '7',
-    name: 'Cyber Mouse G',
-    price: 2200000,
-    category: 'Accessories',
-    image:
-      'https://images.unsplash.com/photo-1527664557558-a2b352fcf203?q=80&w=1000&auto=format&fit=crop',
-    rating: 4.6,
-  },
-  {
-    id: '8',
-    name: 'Ultrawide Vision',
-    price: 18000000,
-    category: 'Displays',
-    image:
-      'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=1000&auto=format&fit=crop',
-    rating: 4.9,
-  },
-];
-
 export default function ShopPage() {
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  const filteredProducts = ALL_PRODUCTS.filter((p) => {
-    const matchesCategory =
-      activeCategory === 'Tất cả' || p.category === activeCategory;
-    const matchesSearch = p.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+  const { products, isLoading } = useProducts({
+    keyword: searchQuery || undefined,
+    limit: 20,
+    status: 'PUBLISHED',
   });
+
+  const { categories: apiCategories } = useCategories({ limit: 100 });
+  const categoriesList = [
+    'Tất cả',
+    ...(apiCategories?.map((c) => c.name) || []),
+  ];
+
+  const filteredProducts = products;
 
   return (
     <div className="min-h-screen bg-background selection:bg-primary/10">
@@ -166,7 +91,7 @@ export default function ShopPage() {
                 Danh mục
               </h3>
               <div className="flex flex-col gap-2">
-                {CATEGORIES.map((cat) => (
+                {categoriesList.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setActiveCategory(cat)}
@@ -178,13 +103,6 @@ export default function ShopPage() {
                     )}
                   >
                     {cat}
-                    <span className="text-[10px] opacity-60">
-                      (
-                      {cat === 'Tất cả'
-                        ? ALL_PRODUCTS.length
-                        : ALL_PRODUCTS.filter((p) => p.category === cat).length}
-                      )
-                    </span>
                   </button>
                 ))}
               </div>
@@ -267,7 +185,15 @@ export default function ShopPage() {
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.4, delay: idx * 0.05 }}
                   >
-                    <ProductCard {...p} />
+                    <ProductCard
+                      id={p.id}
+                      name={p.name}
+                      price={(p as any).skus?.[0]?.price?.basePrice || 0}
+                      category={(p as any).category?.name || 'Sản phẩm'}
+                      image={p.thumbnail || '/placeholder.png'}
+                      isNew={idx < 2}
+                      rating={4.5 + (idx % 1) * 0.5}
+                    />
                   </motion.div>
                 ))}
               </AnimatePresence>

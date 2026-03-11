@@ -144,10 +144,10 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="px-4 py-2 rounded-xl border border-border/50 bg-background/50 backdrop-blur-sm text-sm font-bold flex items-center gap-2 hover:bg-muted transition-all">
+          <button className="px-4 py-2 rounded-sm border-[0.5px] border-border/40 bg-background/50 backdrop-blur-sm text-sm font-bold flex items-center gap-2 hover:bg-muted transition-all shadow-none">
             <Clock className="h-4 w-4" /> {t('dashboard.actions.last_24h')}
           </button>
-          <button className="px-4 py-2 rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all">
+          <button className="px-4 py-2 rounded-sm bg-foreground text-background shadow-none text-sm font-bold flex items-center gap-2 hover:bg-foreground/90 transition-all uppercase tracking-widest text-[10px]">
             {t('dashboard.actions.download_report')}
           </button>
         </div>
@@ -165,12 +165,12 @@ export default function AdminDashboard() {
             <Card className="border-border/40 bg-background/60 backdrop-blur-md overflow-hidden group hover:border-primary/40 transition-all duration-300">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
-                  <div className={cn('p-2 rounded-xl', stat.bg)}>
+                  <div className={cn('p-2 rounded-sm', stat.bg)}>
                     <stat.icon className={cn('h-5 w-5', stat.color)} />
                   </div>
                   <div
                     className={cn(
-                      'flex items-center gap-0.5 text-xs font-black px-2 py-1 rounded-full',
+                      'flex items-center gap-0.5 text-xs font-black px-2 py-1 rounded-sm uppercase tracking-wider',
                       stat.trend === 'up'
                         ? 'text-primary bg-primary/10'
                         : 'text-rose-500 bg-rose-500/10',
@@ -210,7 +210,7 @@ export default function AdminDashboard() {
                 {t('dashboard.sales.desc')}
               </p>
             </div>
-            <button className="p-2 rounded-lg hover:bg-muted transition-colors">
+            <button className="p-2 rounded-sm hover:bg-muted transition-colors">
               <MoreVertical className="h-5 w-5 text-muted-foreground" />
             </button>
           </CardHeader>
@@ -377,7 +377,7 @@ export default function AdminDashboard() {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary border border-primary/20">
+                          <div className="h-8 w-8 rounded-sm bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary border-[0.5px] border-primary/20">
                             {order.customer.charAt(0)}
                           </div>
                           <div>
@@ -397,7 +397,7 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4">
                         <span
                           className={cn(
-                            'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter',
+                            'inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-black uppercase tracking-tighter',
                             order.status === 'Delivered'
                               ? 'bg-primary/10 text-primary'
                               : order.status === 'Processing'
@@ -467,7 +467,7 @@ export default function AdminDashboard() {
           </Card>
 
           <div className="grid grid-cols-2 gap-6">
-            <Card className="border-border/40 bg-primary shadow-xl shadow-primary/20 text-primary-foreground">
+            <Card className="border-border/40 bg-primary shadow-none shadow-primary/20 text-primary-foreground">
               <CardContent className="p-6">
                 <Layers className="h-8 w-8 mb-4 opacity-50" />
                 <h4 className="text-sm font-bold uppercase tracking-widest opacity-80">
