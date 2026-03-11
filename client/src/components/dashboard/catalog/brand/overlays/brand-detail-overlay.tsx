@@ -21,9 +21,9 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Brand, PRODUCT_STATUS } from '@atomecom/shared';
-import { BrandForm } from './brand-form';
-import { BrandStudioPreview } from './brand-studio-preview';
-import { StudioOverlay } from '../studio-overlay';
+import { BrandForm } from '../form/brand-form';
+import { BrandStudioPreview } from '../views/brand-studio-preview';
+import { StudioOverlay } from '@/components/dashboard/studio/studio-overlay';
 
 interface BrandDetailOverlayProps {
   brand: Brand | null;
@@ -79,7 +79,7 @@ export function BrandDetailOverlay({
           className="p-6 md:p-8 lg:p-10 flex flex-col flex-1"
         >
           <div className="flex items-center gap-3 mb-8">
-            <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+            <div className="p-3 bg-primary/10 rounded-sm text-primary">
               <Settings className="h-6 w-6" />
             </div>
             <div>
@@ -97,12 +97,11 @@ export function BrandDetailOverlay({
             </div>
           </div>
 
-          <div className="bg-muted/5 border border-border/20 p-4 rounded-xl mb-4">
+          <div className="bg-muted/5 border-[0.5px] border-border/40 p-4 rounded-sm mb-4">
             <BrandForm
-              initialData={brand}
+              initialData={logo ? ({ ...brand, logo } as Brand) : brand}
               isLoading={isUpdating}
-              logo={logo}
-              onSubmit={(data) =>
+              onSubmit={(data: any) =>
                 onUpdate(brand.id, data, () => setIsEditing(false))
               }
             />
@@ -122,7 +121,7 @@ export function BrandDetailOverlay({
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2 opacity-30">
                   <Info className="h-3.5 w-3.5" />
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em]">
+                  <span className="text-[9px] font-bold uppercase tracking-wider">
                     {t('catalog.brands.detail.overview', {
                       defaultValue: 'Overview',
                     })}
@@ -150,7 +149,7 @@ export function BrandDetailOverlay({
                 ].map((stat, i) => (
                   <div
                     key={i}
-                    className="bg-muted/10 border border-border/10 px-3 py-2 rounded-xl min-w-[100px]"
+                    className="bg-muted/10 border border-border/10 px-3 py-2 rounded-md min-w-[100px]"
                   >
                     <div className="flex items-center gap-2 mb-1 opacity-40">
                       <stat.icon className={`h-3 w-3 ${stat.color}`} />
@@ -169,11 +168,11 @@ export function BrandDetailOverlay({
 
           {/* Management & Highlights row */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <section className="lg:col-span-3 bg-primary/5 border border-primary/10 rounded-2xl p-5 relative overflow-hidden flex items-center justify-between">
+            <section className="lg:col-span-3 bg-muted/5 border-[0.5px] border-border/40 rounded-sm p-5 relative overflow-hidden flex items-center justify-between">
               <div className="relative z-10 flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <Edit className="h-3 w-3 text-primary" />
-                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-primary">
+                  <span className="text-[8px] font-bold uppercase tracking-wider text-primary">
                     Management
                   </span>
                 </div>
@@ -186,7 +185,7 @@ export function BrandDetailOverlay({
               </div>
               <Button
                 onClick={() => setIsEditing(true)}
-                className="relative z-10 bg-primary hover:bg-primary/90 text-white rounded-lg px-4 h-9 shadow-lg shadow-primary/10 font-bold uppercase tracking-widest text-[9px]"
+                className="relative z-10 bg-primary hover:bg-primary/90 text-white rounded-md px-4 h-9 shadow-none font-bold uppercase tracking-wide text-[9px]"
               >
                 {t('common.edit', { defaultValue: 'Edit' })}
               </Button>
@@ -195,7 +194,7 @@ export function BrandDetailOverlay({
             <section className="lg:col-span-2">
               <div className="flex items-center gap-2 mb-3 opacity-30">
                 <Package className="h-3.5 w-3.5" />
-                <span className="text-[9px] font-black uppercase tracking-[0.2em]">
+                <span className="text-[9px] font-bold uppercase tracking-wider">
                   Highlights
                 </span>
               </div>
@@ -203,7 +202,7 @@ export function BrandDetailOverlay({
                 {['High Quality', 'Eco', 'Global', 'Best Seller'].map((tag) => (
                   <span
                     key={tag}
-                    className="px-3 py-1 rounded-lg bg-background border border-border/30 text-[9px] font-bold uppercase tracking-tighter"
+                    className="px-3 py-1 rounded-md bg-background border border-border/10 text-[9px] font-bold uppercase tracking-tight"
                   >
                     {tag}
                   </span>
@@ -214,9 +213,9 @@ export function BrandDetailOverlay({
 
           {/* Danger Zone */}
           <section className="pt-6 border-t border-border/40">
-            <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-4 flex items-center justify-between gap-4">
+            <div className="bg-rose-500/5 border-[0.5px] border-rose-500/20 rounded-sm p-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-rose-500/10 text-rose-600">
+                <div className="p-2 rounded-sm bg-rose-500/10 text-rose-600">
                   <AlertTriangle className="h-4 w-4" />
                 </div>
                 <div>
@@ -234,7 +233,7 @@ export function BrandDetailOverlay({
                   handleClose();
                   onDelete(brand.id);
                 }}
-                className="border-rose-500/20 text-rose-600 hover:bg-rose-500 hover:text-white rounded-lg px-4 h-8 text-[9px] font-bold uppercase tracking-widest"
+                className="border-rose-500/20 text-rose-600 hover:bg-rose-500 hover:text-white rounded-sm px-4 h-8 text-[9px] font-bold uppercase tracking-widest"
               >
                 Xóa ngay
               </Button>

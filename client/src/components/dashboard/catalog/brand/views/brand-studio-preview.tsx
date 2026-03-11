@@ -42,7 +42,7 @@ export function BrandStudioPreview({
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className={cn(
-          'relative z-10 aspect-square w-full rounded-3xl bg-white dark:bg-zinc-900 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] p-1.5 ring-1 ring-white/10 overflow-hidden group',
+          'relative z-10 aspect-square w-full rounded-sm border-[0.5px] border-border/40 bg-white dark:bg-zinc-900 shadow-none p-1.5 ring-1 ring-white/10 overflow-hidden group',
           isEditing && 'cursor-pointer',
         )}
         onClick={() =>
@@ -67,13 +67,13 @@ export function BrandStudioPreview({
             }}
           />
         )}
-        <Avatar className="h-full w-full rounded-[22px]">
+        <Avatar className="h-full w-full rounded-sm">
           <AvatarImage
             src={brand?.logo}
             alt={brand?.name || 'Preview'}
             className="object-cover group-hover:scale-110 transition-transform duration-1000"
           />
-          <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-white font-black text-5xl">
+          <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-white font-bold text-5xl">
             {brand?.name?.charAt(0).toUpperCase() || (
               <Sparkles className="h-8 w-8 text-white/50" />
             )}
@@ -83,10 +83,10 @@ export function BrandStudioPreview({
         {/* Upload Overlay (UI) */}
         {isEditing && (
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-2">
-            <div className="p-3 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white">
+            <div className="p-3 rounded-sm bg-white/20 backdrop-blur-md border-[0.5px] border-white/30 text-white">
               <Camera className="h-6 w-6" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-white shadow-sm">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white">
               Thay đổi ảnh
             </span>
           </div>
@@ -100,23 +100,23 @@ export function BrandStudioPreview({
           <Badge
             variant="outline"
             className={cn(
-              'text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border-none shadow-sm',
-              (brand as any)?.status === PRODUCT_STATUS.PUBLISHED &&
+              'text-[10px] font-bold uppercase tracking-wider px-4 py-1.5 rounded-md border-none shadow-none',
+              brand?.status === PRODUCT_STATUS.PUBLISHED &&
                 'bg-primary/10 text-primary',
-              (brand as any)?.status === PRODUCT_STATUS.DRAFT &&
+              brand?.status === PRODUCT_STATUS.DRAFT &&
                 'bg-primary/10 text-primary',
-              (brand as any)?.status === PRODUCT_STATUS.HIDDEN &&
+              brand?.status === PRODUCT_STATUS.HIDDEN &&
                 'bg-amber-500/10 text-amber-600',
-              (brand as any)?.status === PRODUCT_STATUS.DISCONTINUED &&
+              brand?.status === PRODUCT_STATUS.DISCONTINUED &&
                 'bg-rose-500/10 text-rose-600',
-              !(brand as any)?.status &&
+              !brand?.status &&
                 'bg-transparent text-muted-foreground/40 border border-muted-foreground/20',
             )}
           >
-            {(brand as any)?.status || (isEditing ? 'Draft' : 'Preview')}
+            {brand?.status || (isEditing ? 'Draft' : 'Preview')}
           </Badge>
           {isEditing && (
-            <div className="px-3 py-1 rounded-full bg-orange-500/10 text-orange-600 text-[10px] font-black uppercase tracking-widest border border-orange-500/20 animate-pulse">
+            <div className="px-3 py-1 rounded-md bg-orange-500/10 text-orange-600 text-[10px] font-bold uppercase tracking-wider border border-orange-500/20 animate-pulse">
               Edit Mode
             </div>
           )}
@@ -129,22 +129,22 @@ export function BrandStudioPreview({
 
         <div className="mt-6 grid grid-cols-2 gap-6 w-full">
           <div className="text-center sm:text-left">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/40 mb-1">
               {t('catalog.brands.preview.visibility', {
                 defaultValue: 'Hiển thị',
               })}
             </p>
-            <p className="text-sm font-black uppercase text-foreground">
+            <p className="text-sm font-bold uppercase text-foreground/80">
               {t('catalog.brands.preview.public', { defaultValue: 'Cửa hàng' })}
             </p>
           </div>
           <div className="text-center sm:text-left">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/40 mb-1">
               {t('catalog.brands.preview.hierarchy', {
                 defaultValue: 'Phân cấp',
               })}
             </p>
-            <p className="text-sm font-black uppercase text-foreground">
+            <p className="text-sm font-bold uppercase text-foreground/80">
               {t('catalog.brands.preview.primary', { defaultValue: 'Chính' })}
             </p>
           </div>

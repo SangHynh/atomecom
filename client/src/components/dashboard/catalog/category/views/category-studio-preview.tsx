@@ -18,7 +18,9 @@ export function CategoryStudioPreview({
   parent,
   isEditing,
 }: CategoryStudioPreviewProps) {
-  const categoryIconData = getCategoryIcon(category?.icon || 'Folder');
+  const categoryIconData = getCategoryIcon(
+    (category as Category & { icon?: string })?.icon || 'Folder',
+  );
   const CategoryIcon = categoryIconData.icon;
   const iconColor = categoryIconData.color;
 
@@ -41,7 +43,7 @@ export function CategoryStudioPreview({
       <div className="relative z-10 w-full">
         <div className="flex items-center gap-2 mb-10 opacity-40">
           <Layout className="h-4 w-4" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/40">
             Category System
           </span>
         </div>
@@ -52,7 +54,7 @@ export function CategoryStudioPreview({
           transition={{ delay: 0.2 }}
           className="mb-8"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground/5 border border-border/10 text-foreground text-[10px] font-bold uppercase tracking-wider mb-4">
             {isEditing ? (
               <FileEdit className="h-3 w-3" />
             ) : (
@@ -61,7 +63,7 @@ export function CategoryStudioPreview({
             {isEditing ? 'Refine Mode' : 'Draft Mode'}
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-[0.9] text-foreground transition-all">
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight uppercase leading-[0.9] text-foreground transition-all">
             {isEditing ? 'Edit' : 'Create'}
             <br />
             <span className="text-muted-foreground/40 font-bold italic">
@@ -83,10 +85,10 @@ export function CategoryStudioPreview({
 
       {/* Icon Visualizer */}
       <div className="relative z-10 w-full mt-8">
-        <div className="p-6 rounded-[32px] bg-white dark:bg-zinc-900 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] border border-white/10 flex flex-col items-center justify-center group relative overflow-hidden cursor-pointer">
+        <div className="p-6 rounded-sm bg-white dark:bg-zinc-900 shadow-none border-[0.5px] border-border/40 flex flex-col items-center justify-center group relative overflow-hidden cursor-pointer">
           {/* Upload Overlay (UI Only) */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-2 z-20">
-            <div className="p-2.5 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white">
+            <div className="p-2.5 rounded-sm bg-white/20 backdrop-blur-md border-[0.5px] border-white/30 text-white">
               <Camera className="h-5 w-5" />
             </div>
           </div>
@@ -96,10 +98,10 @@ export function CategoryStudioPreview({
 
           <div
             className={cn(
-              'h-20 w-20 rounded-[24px] flex items-center justify-center mb-4 shadow-2xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-3 relative z-10',
+              'h-20 w-20 rounded-sm flex items-center justify-center mb-4 shadow-none transition-all duration-700 group-hover:scale-110 group-hover:rotate-3 relative z-10',
               isEditing
-                ? 'bg-primary text-white shadow-primary/30'
-                : 'bg-zinc-100 dark:bg-zinc-800 text-muted-foreground shadow-black/5',
+                ? 'bg-foreground text-background shadow-none border-[0.5px] border-foreground/20'
+                : 'bg-muted text-muted-foreground shadow-none border-[0.5px] border-border/40',
             )}
           >
             <CategoryIcon className="h-8 w-8" />
