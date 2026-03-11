@@ -30,33 +30,51 @@ export const FindUserByPhoneSchema = z.object({
   }),
 });
 
-// Create user validation
-export const CreateUserRequestSchema = z.object({
-  body: z.object({
-    name: z.string().min(2, ErrorUserCodes.INVALID_NAME_FORMAT),
-    email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT),
-    phone: z.string().min(10, ErrorUserCodes.INVALID_PHONE_FORMAT).optional(),
-    password: z.string().min(6, ErrorUserCodes.INVALID_PASSWORD_FORMAT),
-    role: z.nativeEnum(USER_ROLE).optional().default(USER_ROLE.USER),
-    addresses: z.array(UserAddressSchema).optional().default([]),
-  }),
+// Client-side schemas (without request wrapper)
+export const createUserSchema = z.object({
+  name: z.string().min(2, ErrorUserCodes.INVALID_NAME_FORMAT),
+  email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT),
+  phone: z.string().min(10, ErrorUserCodes.INVALID_PHONE_FORMAT).optional(),
+  password: z
+    .string()
+    .min(8, ErrorUserCodes.PASSWORD_TOO_SHORT)
+    .regex(/[A-Z]/, ErrorUserCodes.PASSWORD_NEED_UPPERCASE)
+    .regex(/[0-9]/, ErrorUserCodes.PASSWORD_NEED_NUMBER)
+    .regex(/[^a-zA-Z0-9]/, ErrorUserCodes.PASSWORD_NEED_SPECIAL_CHAR),
+  role: z.nativeEnum(USER_ROLE).optional().default(USER_ROLE.USER),
+  addresses: z.array(UserAddressSchema).optional().default([]),
 });
+
+export type CreateUserSchema = z.infer<typeof createUserSchema>;
+
+// Create user validation (Server)
+export const CreateUserRequestSchema = z.object({
+  body: createUserSchema,
+});
+
+// Client-side update schema
+export const updateUserSchema = z.object({
+  name: z.string().min(2, ErrorUserCodes.INVALID_NAME_FORMAT).optional(),
+  email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT).optional(),
+  phone: z.string().min(10, ErrorUserCodes.INVALID_PHONE_FORMAT).optional(),
+  role: z.nativeEnum(USER_ROLE).optional(),
+  status: z.nativeEnum(USER_STATUS).optional(),
+  isVerified: z.boolean().optional(),
+  password: z
+    .string()
+    .min(8, ErrorUserCodes.PASSWORD_TOO_SHORT)
+    .regex(/[A-Z]/, ErrorUserCodes.PASSWORD_NEED_UPPERCASE)
+    .regex(/[0-9]/, ErrorUserCodes.PASSWORD_NEED_NUMBER)
+    .regex(/[^a-zA-Z0-9]/, ErrorUserCodes.PASSWORD_NEED_SPECIAL_CHAR)
+    .optional(),
+  addresses: z.array(UserAddressSchema).optional(),
+});
+
+export type UpdateUserSchema = z.infer<typeof updateUserSchema>;
 
 // Update user validation (Admin/General)
 export const UpdateUserRequestSchema = z.object({
-  body: z.object({
-    name: z.string().min(2, ErrorUserCodes.INVALID_NAME_FORMAT).optional(),
-    email: z.string().email(ErrorUserCodes.INVALID_EMAIL_FORMAT).optional(),
-    phone: z.string().min(10, ErrorUserCodes.INVALID_PHONE_FORMAT).optional(),
-    role: z.nativeEnum(USER_ROLE).optional(),
-    status: z.nativeEnum(USER_STATUS).optional(),
-    isVerified: z.boolean().optional(),
-    password: z
-      .string()
-      .min(6, ErrorUserCodes.INVALID_PASSWORD_FORMAT)
-      .optional(),
-    addresses: z.array(UserAddressSchema).optional(),
-  }),
+  body: updateUserSchema,
 });
 
 // Update profile validation (for "Me")
