@@ -22,14 +22,14 @@ export class UserActivityListener {
     // 1. Record real-time activity (Heartbeat)
     this._eventBus.on(
       DomainEvents.USER_ACTIVITY,
-      ({ userId, ip, userAgent }) => {
-        this._handleActivity(userId, ip, userAgent);
+      async ({ userId, ip, userAgent }) => {
+        await this._handleActivity(userId, ip, userAgent);
       },
     );
 
     // 2. Persist last login time to DB
-    this._eventBus.on(DomainEvents.USER_LOGGED_IN, ({ userId }) => {
-      this._handleLastLogin(userId);
+    this._eventBus.on(DomainEvents.USER_LOGGED_IN, async ({ userId }) => {
+      await this._handleLastLogin(userId);
     });
   }
 
