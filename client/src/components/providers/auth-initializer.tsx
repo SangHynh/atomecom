@@ -7,6 +7,7 @@ import { setAccessToken, getAccessToken } from '@/lib/axios';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import logger from '@/lib/logger';
 
 export default function AuthInitializer({
   children,
@@ -58,8 +59,8 @@ export default function AuthInitializer({
           const response = await AuthService.refreshToken();
           const newAccessToken = response.data.tokens.accessToken;
           setAccessToken(newAccessToken);
-        } catch (error) {
-          console.error('Silent refresh failed', error);
+        } catch (error: unknown) {
+          logger.error(`Silent refresh failed: ${error}`);
           if (axios.isAxiosError(error) && error.response?.status === 401) {
             if (isAuthenticatedRef.current) {
               // DO NOT call logout() here again, just clear auth state

@@ -29,7 +29,7 @@ import { Line, LineChart, ResponsiveContainer } from 'recharts';
 interface UserRowProps {
   user: User;
   currentUser?: User | null;
-  activityData: any[];
+  activityData: Array<{ value: number }>;
   visibleColumns?: string[];
   onViewDetails: (user: User) => void;
   onEdit: (user: User) => void;

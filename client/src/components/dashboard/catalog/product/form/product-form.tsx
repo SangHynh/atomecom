@@ -11,6 +11,7 @@ import {
   ProductFormSchema,
 } from '@atomecom/shared';
 import { DefaultValues } from 'react-hook-form';
+import axios from 'axios';
 
 type ProductFormValues = ProductFormSchema;
 import { Form } from '@/components/ui/form';
@@ -84,21 +85,26 @@ export function ProductForm({
   const handleActualSubmit = async (data: ProductFormValues) => {
     try {
       await onSubmit(data);
-    } catch (error: any) {
-      if (error.response?.data?.message === 'VALIDATION_ERROR') {
+    } catch (error: unknown) {
+      if (
+        axios.isAxiosError(error) &&
+        error.response?.data?.message === 'VALIDATION_ERROR'
+      ) {
         const backendErrors = error.response.data.errors || [];
-        backendErrors.forEach((err: any) => {
-          const path = Array.isArray(err.path)
-            ? err.path.join('.').replace(/^body\./, '')
-            : (err.path as string)?.replace(/^body\./, '');
+        backendErrors.forEach(
+          (err: { path: string | string[]; message: string }) => {
+            const path = Array.isArray(err.path)
+              ? err.path.join('.').replace(/^body\./, '')
+              : (err.path as string)?.replace(/^body\./, '');
 
-          if (path) {
-            form.setError(path as any, {
-              type: 'manual',
-              message: err.message,
-            });
-          }
-        });
+            if (path) {
+              form.setError(path as any, {
+                type: 'manual',
+                message: err.message,
+              });
+            }
+          },
+        );
       }
     }
   };

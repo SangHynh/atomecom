@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, TriangleAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
+import logger from '@/lib/logger';
 
 export default function GlobalError({
   error,
@@ -17,7 +18,7 @@ export default function GlobalError({
 
   useEffect(() => {
     // Log the error to an error reporting service
-    console.error('Global Application Error:', error);
+    logger.error(`Global Application Error: ${error}`);
   }, [error]);
 
   return (

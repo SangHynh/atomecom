@@ -5,13 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserForm } from '../form/user-form';
-import { User } from '@atomecom/shared';
+import { User, CreateUserSchema } from '@atomecom/shared';
 import { cn } from '@/lib/utils';
 
 interface UserFormOverlayProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: CreateUserSchema) => void;
   initialData?: User;
   isLoading?: boolean;
 }

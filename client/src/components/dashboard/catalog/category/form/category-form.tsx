@@ -81,16 +81,10 @@ export function CategoryForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((data) => {
-          const { name, slug, description, image, status, parentId } =
-            data as any;
-          const formattedData = {
-            name,
-            slug,
-            description,
-            image,
-            status,
-            parentId: parentId === 'root' ? null : parentId,
-          } as unknown as CategoryFormData;
+          const formattedData: CategoryFormData = {
+            ...data,
+            parentId: data.parentId === 'root' ? null : data.parentId,
+          };
           onSubmit(formattedData);
         })}
         className="flex flex-col h-full bg-background mt-4"

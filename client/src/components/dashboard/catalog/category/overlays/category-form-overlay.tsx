@@ -4,7 +4,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FolderTree } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Category } from '@atomecom/shared';
+import { Category, CategorySchema } from '@atomecom/shared';
 import { CategoryForm } from '../form/category-form';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +12,7 @@ interface CategoryFormOverlayProps {
   category?: Category | null;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: CategorySchema) => void;
   isLoading?: boolean;
 }
 

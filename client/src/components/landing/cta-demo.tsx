@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 import emailjs from '@emailjs/browser';
+import logger from '@/lib/logger';
 
 export function CtaDemo() {
   const { t } = useTranslation();
@@ -31,7 +32,7 @@ export function CtaDemo() {
       serviceId === 'your_service_id'
     ) {
       // Infra not configured — simulate for demo, log only
-      console.warn('[CTA] EmailJS keys not configured, using simulation');
+      logger.warn('[CTA] EmailJS keys not configured, using simulation');
       setTimeout(() => {
         toast.success(t('landing.cta_success'));
         setEmail('');
@@ -49,8 +50,8 @@ export function CtaDemo() {
       await emailjs.send(serviceId, templateId, templateParams, publicKey);
       toast.success(t('landing.cta_success'));
       setEmail('');
-    } catch (error) {
-      console.error('EmailJS Error:', error);
+    } catch (error: unknown) {
+      logger.error(`EmailJS Error: ${error}`);
       toast.error(t('landing.cta_error'));
     } finally {
       setIsSubmitting(false);

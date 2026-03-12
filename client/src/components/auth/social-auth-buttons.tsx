@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
 import { ClientErrorCodes } from '@atomecom/shared';
 import { useTranslation } from 'react-i18next';
+import logger from '@/lib/logger';
 
 interface TokenResponse {
   access_token: string;
@@ -43,13 +44,13 @@ interface SocialAuthButtonsProps {
 export function SocialAuthButtons({ isLoading }: SocialAuthButtonsProps) {
   const { socialLogin, isSocialLoggingIn } = useAuth();
   const { t } = useTranslation();
-  const [tokenClient, setTokenClient] = useState<any>(null);
+  const [tokenClient, setTokenClient] = useState<any>(null); // Keep any for external SDK client for now
 
   const initializeGoogle = () => {
     if (tokenClient) return;
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     if (!clientId) {
-      console.warn('[SocialAuth] NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set');
+      logger.warn('[SocialAuth] NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set');
       return;
     }
     if (window.google?.accounts?.oauth2) {
@@ -95,7 +96,7 @@ export function SocialAuthButtons({ isLoading }: SocialAuthButtonsProps) {
   const handleGoogleLogin = () => {
     if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
       // Missing env var — infra issue, not user-facing
-      console.warn(
+      logger.warn(
         '[SocialAuth] NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured',
       );
       return;
@@ -105,19 +106,19 @@ export function SocialAuthButtons({ isLoading }: SocialAuthButtonsProps) {
     } else {
       // SDK not ready yet — retry init silently
       initializeGoogle();
-      console.warn('[SocialAuth] Google SDK not ready, retrying init...');
+      logger.warn('[SocialAuth] Google SDK not ready, retrying init...');
     }
   };
 
   const handleFacebookLogin = () => {
     if (!process.env.NEXT_PUBLIC_FACEBOOK_APP_ID) {
-      console.warn(
+      logger.warn(
         '[SocialAuth] NEXT_PUBLIC_FACEBOOK_APP_ID is not configured',
       );
       return;
     }
     if (!window.FB) {
-      console.warn('[SocialAuth] Facebook SDK not loaded');
+      logger.warn('[SocialAuth] Facebook SDK not loaded');
       return;
     }
     window.FB.login(

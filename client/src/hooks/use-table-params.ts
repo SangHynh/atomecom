@@ -10,7 +10,12 @@ export interface TableParams {
   sortField?: string;
   sortOrder?: 'asc' | 'desc';
   status?: string;
-  [key: string]: any;
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | (string | number | boolean)[]
+    | undefined;
 }
 
 /**

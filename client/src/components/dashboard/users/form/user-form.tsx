@@ -46,7 +46,7 @@ export function UserForm({ user, onSubmit, isLoading }: UserFormProps) {
       phone: user?.phone || '',
       role: (user?.role as USER_ROLE) || USER_ROLE.USER,
       password: '',
-      addresses: (user as any)?.addresses || [],
+      addresses: user?.addresses || [],
     } as DefaultValues<UserFormData>,
   });
 
