@@ -139,7 +139,7 @@ function createTestApp(): Express {
   // Mock Auth/User context
   app.use((req, res, next) => {
     (req as any).user = (req as any).user || {
-      userId: 'admin-id',
+      userId: '507f191e810c19729de860ea',
       role: USER_ROLE.OWNER,
     };
     next();
@@ -172,7 +172,7 @@ describe('Users Module - Integration Tests', () => {
       const dto = {
         name: 'Jane Doe',
         email: 'jane.doe@example.com',
-        password: 'password123',
+        password: 'Password123!',
         phone: '09123456789',
         role: USER_ROLE.USER,
         addresses: [
@@ -364,14 +364,22 @@ describe('Users Module - Integration Tests', () => {
       await request(app).delete(`${BASE_PATH}/users/${user._id}`).expect(204);
 
       // Verify masking
-      const dbUser = await UserModel.findById(user._id);
+      const dbUser = await UserModel.collection.findOne({ _id: user._id });
       expect(dbUser?.status).toBe(USER_STATUS.DELETED);
       expect(dbUser?.email).toContain('deleted_');
     });
 
     it('2. Prevent self-deletion - 403 Forbidden', async () => {
-      const adminId = 'admin-id';
-      // In createTestApp we set current user id to 'admin-id'
+      const adminId = '507f191e810c19729de860ea';
+      // Create the user first so it doesn't 404
+      await UserModel.create({
+        _id: adminId,
+        name: 'Admin',
+        email: 'admin@example.com',
+        password: 'h',
+        role: USER_ROLE.OWNER,
+        status: USER_STATUS.ACTIVE,
+      });
 
       const res = await request(app)
         .delete(`${BASE_PATH}/users/${adminId}`)
@@ -398,7 +406,7 @@ describe('Users Module - Integration Tests', () => {
         .send({
           name: 'New User',
           email: 'existing@example.com',
-          password: 'password123',
+          password: 'Password123!',
           role: USER_ROLE.USER,
         })
         .expect(409);
@@ -430,7 +438,7 @@ describe('Users Module - Integration Tests', () => {
         .send({
           name: 'Existing',
           email: 'newemail@example.com',
-          password: 'password123',
+          password: 'Password123!',
           phone: '09888888888', // Duplicate phone
           role: USER_ROLE.USER,
         })
@@ -471,7 +479,7 @@ describe('Users Module - Integration Tests', () => {
         .send({
           name: 'Test User',
           email: 'not-an-email',
-          password: 'password123',
+          password: 'Password123!',
           role: 'user',
         })
         .expect(400);
@@ -511,7 +519,7 @@ describe('Users Module - Integration Tests', () => {
         .send({
           name: 'A',
           email: 'test@example.com',
-          password: 'password123',
+          password: 'Password123!',
           role: 'user',
         })
         .expect(400);
@@ -531,7 +539,7 @@ describe('Users Module - Integration Tests', () => {
         .send({
           name: 'Jane Doe',
           email: 'jane.address@example.com',
-          password: 'password123',
+          password: 'Password123!',
           addresses: [{ city: 'HCM' }], // street missing
         })
         .expect(400);

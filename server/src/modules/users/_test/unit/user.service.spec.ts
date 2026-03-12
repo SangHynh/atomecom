@@ -10,10 +10,12 @@ import type { IUserRepository } from '@modules/users/domain/user.repo.js';
 import type { IHashService } from '@modules/users/domain/IHash.service.js';
 import type { EventBus } from '@shared/infra/event-bus.js';
 import { ErrorUserCodes } from '@atomecom/shared';
+import { DomainEvents } from '@shared/constants/event.constants.js';
 import {
   ConflictError,
   NotFoundError,
   UnauthorizedError,
+  BadRequestError,
 } from '@shared/core/error.response.js';
 import { USER_STATUS } from '@atomecom/shared';
 import type { UserEntity } from '@modules/users/domain/user.entity.js';
@@ -113,11 +115,11 @@ describe('UserService', () => {
       mockUserRepo.findByEmail.mockResolvedValue(null);
 
       await expect(
-        userService.verifyCredentials('nonexistent@example.com', 'password123'),
+        userService.verifyCredentials('nonexistent@example.com', 'Password123!'),
       ).rejects.toThrow(UnauthorizedError);
 
       await expect(
-        userService.verifyCredentials('nonexistent@example.com', 'password123'),
+        userService.verifyCredentials('nonexistent@example.com', 'Password123!'),
       ).rejects.toMatchObject({
         message: ErrorUserCodes.INVALID_CREDENTIALS,
       });
@@ -132,11 +134,11 @@ describe('UserService', () => {
       } as any as UserEntity);
 
       await expect(
-        userService.verifyCredentials('jane@example.com', 'password123'),
+        userService.verifyCredentials('jane@example.com', 'Password123!'),
       ).rejects.toThrow(UnauthorizedError);
 
       await expect(
-        userService.verifyCredentials('jane@example.com', 'password123'),
+        userService.verifyCredentials('jane@example.com', 'Password123!'),
       ).rejects.toMatchObject({
         message: ErrorUserCodes.INVALID_CREDENTIALS,
       });
@@ -543,6 +545,317 @@ describe('UserService', () => {
       await expect(userService.delete('nonexistent')).rejects.toThrow(
         NotFoundError,
       );
+    });
+
+    it('should mask both email and phone when user has phone (TC-USR-22)', async () => {
+      const userWithPhone = { ...mockUser, phone: '0987654321' };
+      mockUserRepo.findById.mockResolvedValue(userWithPhone as UserEntity);
+      mockUserRepo.update.mockResolvedValue({
+        ...userWithPhone,
+        status: USER_STATUS.DELETED,
+      } as UserEntity);
+
+      await userService.delete(userWithPhone.id!);
+
+      expect(mockUserRepo.update).toHaveBeenCalledWith(
+        userWithPhone.id,
+        expect.objectContaining({
+          email: expect.stringContaining('deleted_'),
+          phone: expect.stringContaining('deleted_'),
+          status: USER_STATUS.DELETED,
+        }),
+      );
+    });
+  });
+
+  // ==================== CREATE & UPDATE PROFILE ====================
+
+  describe('create', () => {
+    it('should create user, hash password and emit USER_CREATED event (TC-USR-23)', async () => {
+      const createUserDto = {
+        name: 'New User',
+        email: 'new@example.com',
+        password: 'plainpassword',
+      };
+
+      mockUserRepo.findByEmail.mockResolvedValue(null);
+      mockHashService.hash.mockResolvedValue('hashed_password');
+      mockUserRepo.create.mockImplementation(
+        async (data) =>
+          ({
+            ...data,
+            id: 'new-id',
+          }) as UserEntity,
+      );
+
+      const result = await userService.create(createUserDto);
+
+      expect(mockHashService.hash).toHaveBeenCalledWith('plainpassword');
+      expect(mockUserRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          password: 'hashed_password',
+          email: 'new@example.com',
+        }),
+      );
+      expect(mockEventBus.emit).toHaveBeenCalledWith(DomainEvents.USER_CREATED, {
+        userId: 'new-id',
+        email: 'new@example.com',
+      });
+      expect(result).not.toHaveProperty('password');
+    });
+
+    it('should throw ConflictError if email exists (TC-USR-24)', async () => {
+      mockUserRepo.findByEmail.mockResolvedValue(mockUser);
+
+      await expect(
+        userService.create({
+          name: 'New User',
+          email: 'jane@example.com',
+          password: 'Password123!',
+        }),
+      ).rejects.toThrow(ConflictError);
+
+      expect(mockUserRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw ConflictError if phone exists (TC-USR-25)', async () => {
+      mockUserRepo.findByEmail.mockResolvedValue(null);
+      mockUserRepo.findByPhone.mockResolvedValue(mockUser);
+
+      await expect(
+        userService.create({
+          name: 'New User',
+          email: 'new@example.com',
+          password: 'Password123!',
+          phone: '09123456789',
+        }),
+      ).rejects.toThrow(ConflictError);
+
+      expect(mockUserRepo.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateProfile', () => {
+    it('should update profile and return SafeDTO (TC-USR-26)', async () => {
+      const updateDto = {
+        name: 'Updated Name',
+        avatar: 'http://new-avatar.jpg',
+        addresses: [
+          {
+            province: 'Hanoi',
+            city: 'Hanoi',
+            district: 'Cau Giay',
+            detail: '123 ABC',
+          },
+        ] as any,
+      };
+
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockUserRepo.update.mockResolvedValue({
+        ...mockUser,
+        ...updateDto,
+      } as UserEntity);
+
+      const result = await userService.updateProfile(mockUser.id!, updateDto);
+
+      expect(mockUserRepo.update).toHaveBeenCalledWith(
+        mockUser.id,
+        expect.objectContaining({
+          name: 'Updated Name',
+          version: mockUser.version,
+        }),
+      );
+      expect(result.name).toBe('Updated Name');
+    });
+
+    it('should throw BadRequestError if more than 3 addresses (TC-USR-27)', async () => {
+      const tooManyAddresses = {
+        addresses: [{}, {}, {}, {}] as any,
+      };
+
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+
+      await expect(
+        userService.updateProfile(mockUser.id!, tooManyAddresses),
+      ).rejects.toThrow(BadRequestError);
+
+      expect(mockUserRepo.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('changePassword', () => {
+    it('should hash new password and update user (TC-USR-28)', async () => {
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockHashService.hash.mockResolvedValue('new_hashed_password');
+      mockUserRepo.update.mockResolvedValue({
+        ...mockUser,
+        password: 'new_hashed_password',
+      } as UserEntity);
+
+      await userService.changePassword(mockUser.id!, 'new_plain_password');
+
+      expect(mockHashService.hash).toHaveBeenCalledWith('new_plain_password');
+      expect(mockUserRepo.update).toHaveBeenCalledWith(
+        mockUser.id,
+        expect.objectContaining({
+          password: 'new_hashed_password',
+          version: mockUser.version,
+        }),
+      );
+    });
+  });
+
+  describe('findAll', () => {
+    it('should handle pagination and filtering (TC-USR-29)', async () => {
+      const queryDto = {
+        page: 2,
+        limit: 10,
+        status: USER_STATUS.ACTIVE,
+        keyword: 'john',
+      };
+      mockUserRepo.findAll.mockResolvedValue({
+        data: [mockUser],
+        totalElements: 25,
+      });
+      mockCache.get.mockResolvedValue(null);
+
+      const result = await userService.findAll(queryDto);
+
+      expect(mockUserRepo.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          offset: 10,
+          limit: 10,
+          status: USER_STATUS.ACTIVE,
+        }),
+      );
+      expect(result.pagination.totalPages).toBe(3);
+      expect(result.pagination.currentPage).toBe(2);
+    });
+  });
+
+  describe('updateUser - Uniqueness Logic', () => {
+    it('should only validate uniqueness when email or phone changes (TC-USR-30)', async () => {
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockUserRepo.update.mockResolvedValue(mockUser);
+
+      // Scenario 1: Update name only
+      await userService.updateUser(mockUser.id!, { name: 'New Name' });
+      expect(mockUserRepo.findByEmail).not.toHaveBeenCalled();
+      expect(mockUserRepo.findByPhone).not.toHaveBeenCalled();
+
+      // Scenario 2: Update email
+      jest.clearAllMocks();
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockUserRepo.findByEmail.mockResolvedValue(null);
+      mockUserRepo.update.mockResolvedValue(mockUser);
+
+      await userService.updateUser(mockUser.id!, {
+        email: 'different@example.com',
+      });
+      expect(mockUserRepo.findByEmail).toHaveBeenCalledWith(
+        'different@example.com',
+      );
+    });
+  });
+
+  describe('upsertOAuthUser - Edge Cases', () => {
+    it('should skip linking if provider is already in the list (TC-USR-31)', async () => {
+      const existingUserWithGoogle = {
+        ...mockUser,
+        providers: [{ provider: 'GOOGLE', providerId: '123' }],
+      } as UserEntity;
+
+      mockUserRepo.findByOAuthId.mockResolvedValue(null);
+      mockUserRepo.findByEmail.mockResolvedValue(existingUserWithGoogle);
+      mockUserRepo.update.mockResolvedValue(existingUserWithGoogle);
+
+      await userService.upsertOAuthUser({
+        providerInfo: { provider: 'GOOGLE' as any, providerId: '123' },
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+      });
+
+      // Line 458 update will be called for Name/Avatar, but line 434 (linking) should be skipped.
+      // We check that the update call doesn't include the 'providers' field.
+      expect(mockUserRepo.update).toHaveBeenCalledWith(
+        mockUser.id,
+        expect.not.objectContaining({
+          providers: expect.any(Array),
+        }),
+      );
+    });
+
+    it('should update name and avatar when user exists by providerId (TC-USR-32)', async () => {
+      mockUserRepo.findByOAuthId.mockResolvedValue(mockUser);
+      mockUserRepo.update.mockResolvedValue({
+        ...mockUser,
+        avatar: 'new.jpg',
+      } as UserEntity);
+
+      await userService.upsertOAuthUser({
+        providerInfo: { provider: 'GOOGLE' as any, providerId: '123' },
+        name: 'Jane New Name',
+        avatar: 'new.jpg',
+      });
+
+      expect(mockUserRepo.update).toHaveBeenCalledWith(
+        mockUser.id,
+        expect.objectContaining({
+          name: 'Jane New Name',
+          avatar: 'new.jpg',
+        }),
+      );
+    });
+  });
+
+  describe('hardDelete', () => {
+    it('should hard delete and log (TC-USR-33)', async () => {
+      mockUserRepo.findById.mockResolvedValue(mockUser);
+      mockUserRepo.hardDelete.mockResolvedValue(true);
+
+      const result = await userService.hardDelete(mockUser.id!);
+
+      expect(mockUserRepo.hardDelete).toHaveBeenCalledWith(mockUser.id);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('findById - Error', () => {
+    it('should throw NotFoundError if user not found (TC-USR-34)', async () => {
+      mockUserRepo.findById.mockResolvedValue(null);
+
+      await expect(userService.findById('non-existent')).rejects.toThrow(
+        NotFoundError,
+      );
+    });
+  });
+
+  describe('findByEmail', () => {
+    it('should return SafeDTO if user found (TC-USR-35)', async () => {
+      mockUserRepo.findByEmail.mockResolvedValue(mockUser);
+      const result = await userService.findByEmail('jane@example.com');
+      expect(result).toMatchObject({ email: 'jane@example.com' });
+      expect(result).not.toHaveProperty('password');
+    });
+
+    it('should return null if user not found (TC-USR-36)', async () => {
+      mockUserRepo.findByEmail.mockResolvedValue(null);
+      const result = await userService.findByEmail('missing@example.com');
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('findByPhone', () => {
+    it('should return SafeDTO if user found (TC-USR-37)', async () => {
+      mockUserRepo.findByPhone.mockResolvedValue(mockUser);
+      const result = await userService.findByPhone('09123456789');
+      expect(result).toMatchObject({ phone: '09123456789' });
+    });
+
+    it('should return null if user not found (TC-USR-38)', async () => {
+      mockUserRepo.findByPhone.mockResolvedValue(null);
+      const result = await userService.findByPhone('0000000000');
+      expect(result).toBeNull();
     });
   });
 });
