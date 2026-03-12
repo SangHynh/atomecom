@@ -64,6 +64,10 @@ export class AuthService {
     this._eventBus = eventBus;
   }
 
+  /**
+   * TODO: Refactor to Unit of Work (UoW) pattern.
+   * Currently using manual compensating transactions for atomicity.
+   */
   public async register(dto: RegisterInputDTO): Promise<AuthResponseDTO> {
     const user = await this._userService.create({ ...dto });
     if (!user || !user.id || !user.email)

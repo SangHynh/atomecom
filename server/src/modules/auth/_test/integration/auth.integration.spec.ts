@@ -31,6 +31,11 @@ import {
 import { errorHandler } from '@shared/middlewares/error.middleware.js';
 import type { ICacheRepo } from '@shared/interfaces/ICache.repo.js';
 import type { IEmailService } from '@modules/emails/domain/IEmail.service.js';
+import {
+  connect,
+  closeDatabase,
+  clearDatabase,
+} from '@shared/test/db-helper.js';
 
 // env for JWT
 process.env.ACCESS_TOKEN_SECRET = 'test-access-secret';
@@ -179,20 +184,16 @@ function createTestApp(): Express {
   return app;
 }
 
-import {
-  connect,
-  closeDatabase,
-  clearDatabase,
-} from '@shared/test/db-helper.js';
-
-// ... (previous imports)
 
 describe('Auth Module - Integration Tests', () => {
   let app: Express;
 
   beforeAll(async () => {
+    console.log('--- BEFORE ALL: Connecting to DB... ---');
     await connect();
+    console.log('--- BEFORE ALL: DB Connected. Creating App... ---');
     app = createTestApp();
+    console.log('--- BEFORE ALL: App created. ---');
   }, 120000);
 
   afterAll(async () => {
@@ -200,8 +201,10 @@ describe('Auth Module - Integration Tests', () => {
   });
 
   beforeEach(async () => {
+    console.log('--- BEFORE EACH: Cleaning DB... ---');
     await clearDatabase();
     jest.clearAllMocks();
+    console.log('--- BEFORE EACH: Cleaned. ---');
   });
 
   describe('Happy Path', () => {
