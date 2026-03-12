@@ -6,7 +6,9 @@ export default {
   testMatch: ['**/_test/**/*.spec.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   moduleNameMapper: {
-    '^@shared/utils/logger\\.js$':
+    '^.*[/\\\\]shared[/\\\\]utils[/\\\\]logger\\.js$':
+      '<rootDir>/src/shared/utils/__mocks__/logger.ts',
+    '^.*[/\\\\]utils[/\\\\]logger\\.js$':
       '<rootDir>/src/shared/utils/__mocks__/logger.ts',
     '^(\\.\\.?/.+)\\.js$': '$1',
     '^(\\.\\./)+app$': '<rootDir>/src/app.ts',
@@ -31,14 +33,13 @@ export default {
     '^@atomecom/shared$': '<rootDir>/../shared/src/index.ts',
     '^@atomecom/shared/(.*)\\.js$': '<rootDir>/../shared/src/$1.ts',
     '^@atomecom/shared/(.*)$': '<rootDir>/../shared/src/$1',
-    '^chalk$': '<rootDir>/src/shared/utils/__mocks__/logger.ts',
-    '^morgan$': '<rootDir>/src/shared/utils/__mocks__/logger.ts',
-    '^winston$': '<rootDir>/src/shared/utils/__mocks__/logger.ts',
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
   },
-  transformIgnorePatterns: ['/node_modules/(?!(.*\\.mjs$|@shared|@atomecom)/)'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!(.*\\.mjs$|@shared|@atomecom|chalk)/)',
+  ],
   testTimeout: 30000,
   verbose: false,
   collectCoverage: true,
