@@ -5,6 +5,7 @@ import type {
   ProductQueryDTO,
   UpdateProductDTO,
 } from '../dtos/product.dtos.js';
+import type { CreateSkuDTO } from '../dtos/sku.dtos.js';
 import type { CategoryService } from './category.service.js';
 import type { BrandService } from './brand.service.js';
 import type { SkuService } from './sku.service.js';
@@ -19,6 +20,7 @@ import {
 } from '@shared/core/error.response.js';
 import { PRODUCT_STATUS } from '@shared/enum/productStatus.enum.js';
 import type { PaginatedResult } from '@atomecom/shared';
+import logger from '@shared/utils/logger.js';
 
 interface ProductServiceDependencies {
   productRepo: IProductRepository;
@@ -28,6 +30,10 @@ interface ProductServiceDependencies {
   inventoryService: InventoryService;
 }
 
+/**
+ * TODO: Refactor multi-step write operations to use Unit of Work (UoW) pattern
+ * to replace manual compensating transactions.
+ */
 export class ProductService {
   private readonly _productRepo: IProductRepository;
   private readonly _categoryService: CategoryService;
@@ -206,16 +212,17 @@ export class ProductService {
     };
   }
 
-  private _buildSkuEntity(productId: string, skuDto: any): SkuEntity {
+  private _buildSkuEntity(productId: string, skuDto: CreateSkuDTO): SkuEntity {
     return {
       ...skuDto,
       productId,
       id: new mongoose.Types.ObjectId().toString(),
+      status: 'ACTIVE',
       version: 1,
       priceHistory: [
         {
           basePrice: skuDto.price.basePrice,
-          salePrice: skuDto.price.salePrice,
+          salePrice: skuDto.price.salePrice || skuDto.price.basePrice,
           type: 'MANUAL',
           reason: 'Initial price on product creation',
           appliedAt: new Date(),
@@ -249,7 +256,7 @@ export class ProductService {
    */
   private async _createSkusAndInventory(
     productId: string,
-    skuDtos: any[],
+    skuDtos: CreateSkuDTO[],
   ): Promise<void> {
     const createdSkuIds: string[] = [];
 
@@ -281,9 +288,8 @@ export class ProductService {
   private async _compensateDeleteProduct(productId: string): Promise<void> {
     await this._productRepo.hardDelete(productId).catch((err: unknown) => {
       // Log but don't throw — primary error should propagate
-      console.error(
-        `[Compensate] Failed to hard-delete product ${productId}:`,
-        err,
+      logger.error(
+        `[Compensate] Failed to hard-delete product ${productId}: ${err}`,
       );
     });
   }
@@ -296,7 +302,7 @@ export class ProductService {
     await Promise.allSettled(
       skuIds.map((id) =>
         this._skuService.hardDelete(id).catch((err: unknown) => {
-          console.error(`[Compensate] Failed to hard-delete SKU ${id}:`, err);
+          logger.error(`[Compensate] Failed to hard-delete SKU ${id}: ${err}`);
         }),
       ),
     );
@@ -341,9 +347,8 @@ export class ProductService {
     await Promise.allSettled(
       skus.map((sku) =>
         this._inventoryService.delete(sku.id, now).catch((err: unknown) => {
-          console.error(
-            `[Cascade] Failed to soft-delete inventory for SKU ${sku.id}:`,
-            err,
+          logger.error(
+            `[Cascade] Failed to soft-delete inventory for SKU ${sku.id}: ${err}`,
           );
         }),
       ),
