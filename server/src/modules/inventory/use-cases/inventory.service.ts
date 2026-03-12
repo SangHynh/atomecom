@@ -1,7 +1,7 @@
 import type { InventoryEntity } from '../domain/entities/inventory.entity.js';
 import type { IInventoryRepository } from '../domain/repositories/inventory.repo.js';
 import type { ICacheRepo } from '@shared/interfaces/ICache.repo.js';
-import { ConflictError, NotFoundError } from '@shared/core/error.response.js';
+import { ConflictError, NotFoundError, BadRequestError } from '@shared/core/error.response.js';
 
 const LOCK_TTL_MS = 5000;
 const LOCK_TIMEOUT_MS = 3000;
@@ -43,7 +43,13 @@ export class InventoryService {
 
     try {
       // 2. Perform atomic reservation in database
-      return await this._inventoryRepo.reserveStock(skuId, quantity);
+      const success = await this._inventoryRepo.reserveStock(skuId, quantity);
+      if (!success) {
+        throw new BadRequestError(
+          'Insufficient stock or reservation failed for this product.',
+        );
+      }
+      return true;
     } finally {
       // 3. Release Lock
       await this._cacheRepo.releaseLock(lockKey);
@@ -57,7 +63,13 @@ export class InventoryService {
     skuId: string,
     quantity: number,
   ): Promise<boolean> {
-    return this._inventoryRepo.releaseStock(skuId, quantity);
+    const success = await this._inventoryRepo.releaseStock(skuId, quantity);
+    if (!success) {
+      throw new BadRequestError(
+        'Failed to release stock. Check if reserved quantity is sufficient.',
+      );
+    }
+    return true;
   }
 
   /**
@@ -67,13 +79,23 @@ export class InventoryService {
     skuId: string,
     quantity: number,
   ): Promise<boolean> {
-    return this._inventoryRepo.confirmStock(skuId, quantity);
+    const success = await this._inventoryRepo.confirmStock(skuId, quantity);
+    if (!success) {
+      throw new BadRequestError(
+        'Failed to confirm stock. Check if reserved and total quantity are sufficient.',
+      );
+    }
+    return true;
   }
 
   /**
    * Manually update stock (e.g., admin restocking)
    */
   public async addStock(skuId: string, amount: number): Promise<void> {
+    if (amount <= 0) {
+      throw new BadRequestError('Amount to add must be greater than zero.');
+    }
+
     const inventory = await this._inventoryRepo.findBySkuId(skuId);
     if (!inventory) throw new NotFoundError('Inventory not found');
 
