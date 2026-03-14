@@ -164,6 +164,36 @@ export class UserService {
     return this._toSafeResponse(user);
   }
 
+  /**
+   * Creates a user and executes a session creation callback.
+   * If the session creation fails, it performs a compensating transaction (hard-delete)
+   * to ensure atomicity without leaving "zombie" users.
+   */
+  public async createWithSession<T>(
+    dto: CreateUserDTO,
+    sessionCreator: (user: SafeUserResponseDTO) => Promise<T>,
+  ): Promise<{ user: SafeUserResponseDTO; result: T }> {
+    const user = await this.create(dto);
+
+    try {
+      const result = await sessionCreator(user);
+      return { user, result };
+    } catch (err) {
+      // Compensating Transaction: Hard delete the created user if session creation fails
+      logger.error(
+        `[${MODULE}][${LAYER}][CreateWithSession] Session creation failed for ${user.email}, rolling back user creation...`,
+      );
+      await this.hardDelete(user.id).catch((rollbackErr) => {
+        logger.error(
+          `[${MODULE}][${LAYER}][CreateWithSession] FATAL: Failed to hard-delete user ${user.id} during compensation:`,
+          rollbackErr,
+        );
+      });
+      throw err;
+    }
+  }
+
+
   public async changePassword(
     id: string,
     newPasswordPlain: string,

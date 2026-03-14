@@ -93,7 +93,38 @@ sequenceDiagram
 
 ---
 
-### 3.2 Identity Queries (Find by Unique Field)
+### 3.2 Create with Session (Compensating Transaction)
+
+Used primarily for registration flows where user creation must be coupled with session creation.
+
+```mermaid
+sequenceDiagram
+    participant AS as AuthService
+    participant S as UserService
+    participant Repo as UserRepo
+
+    AS->>S: createWithSession(dto, sessionCreator)
+    S->>S: create(dto)
+    S->>Repo: create(entityData)
+    Repo-->>S: userEntity
+    S->>AS: sessionCreator(user)
+    alt Callback Success
+        AS-->>S: sessionResult
+        S-->>AS: {user, sessionResult}
+    else Callback Fails
+        AS-->>S: throw error
+        S->>Repo: hardDelete(user.id)
+        S-->>AS: propagate error
+    end
+```
+
+- **Callback Pattern:** Decouples user persistence from session logic while maintaining atomicity.
+- **Compensation:** Automatically triggers `hardDelete` if the session initialization fails.
+
+---
+
+### 3.3 Identity Queries (Find by Unique Field)
+
 
 These methods provide flexible lookups for internal and external modules.
 

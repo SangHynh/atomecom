@@ -127,27 +127,32 @@ sequenceDiagram
     participant SS as SessionService
 
     C->>AS: register(RegisterDTO)
-    AS->>US: create(userProps) — Step 1 ✅
-    US-->>AS: SafeUserResponseDTO
-
+    AS->>US: createWithSession(dto, sessionCreator)
+    
+    US->>US: create(userProps) — Step 1 ✅
+    
+    US->>AS: sessionCreator(user) — Step 2 callback
+    
     alt Session Creation Success
         AS->>AS: _createNewSession(user)
-        AS->>SS: saveRefreshTokenToCache(sessionData) — Step 2 ✅
+        AS->>SS: saveRefreshTokenToCache(sessionData)
+        AS-->>US: tokens
+        US-->>AS: {user, tokens}
         AS-->>C: AuthResponseDTO (user + tokens)
-        Note over AS, EB: Post-Response Side Effects
-        AS->>EB: emit(USER_CREATED)
-        EB-->>EMAIL: Listener: sendVerificationEmail
     else Session Creation Fails (Redis Down, etc.)
-        AS->>US: 🔴 hardDelete(user.id) — Rollback Step 1
-        AS-->>C: throw InternalServerError
+        AS-->>US: throw error
+        US->>US: 🔴 hardDelete(user.id) — Rollback Step 1 (Compensating)
+        US-->>AS: throw original error
+        AS-->>C: propagate error
     end
 ```
 
-1. **User Creation:** **AuthService** calls **UserService** to persist the new user in MongoDB.
-2. **Compensation:** If the next step (Session Initialization) fails, the created user is **hard-deleted** to prevent orphan accounts without sessions or verification emails.
-3. **Session Initialization:** If successful, it generates a unique `sessionId` and a pair of JWTs (Access/Refresh).
-4. **Persistence:** The session (refresh token context) is saved to **Redis** for rotation checks.
-5. **Onboarding:** Triggers an async email verification task via `USER_CREATED` event.
+1. **Transaction Ownership:** **UserService** now owns the atomicity of the registration flow via `createWithSession`.
+2. **User Creation:** **UserService** persists the new user in MongoDB first.
+3. **Session Initialization:** **UserService** executes the `sessionCreator` callback provided by **AuthService**.
+4. **Compensation:** If the `sessionCreator` fails, **UserService** automatically performs a **hard-delete** on the newly created user to prevent "zombie" accounts.
+5. **Persistence:** If successful, session data is saved to **Redis** as usual.
+
 6. **Response:** Returns the user profile and initial tokens immediately.
 
 ---

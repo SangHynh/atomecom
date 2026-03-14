@@ -65,31 +65,15 @@ export class AuthService {
   }
 
   /**
-   * TODO: Refactor to Unit of Work (UoW) pattern.
-   * Currently using manual compensating transactions for atomicity.
+   * Registers a new user and creates a session.
    */
   public async register(dto: RegisterInputDTO): Promise<AuthResponseDTO> {
-    const user = await this._userService.create({ ...dto });
-    if (!user || !user.id || !user.email)
-      throw new InternalServerError(ErrorUserCodes.CREATE_USER_FAILED);
+    const { user, result: tokens } = await this._userService.createWithSession(
+      dto,
+      (newUser) => this._createNewSession(newUser),
+    );
 
-    try {
-      const tokens = await this._createNewSession(user as SafeUserResponseDTO);
-      // NOTE: Emit UserRegistered event for Email notification
-      return this._mapToAuthResponse(user as SafeUserResponseDTO, tokens);
-    } catch (err) {
-      // Compensating Transaction: Hard delete the created user if session creation fails
-      logger.error(
-        `[${MODULE}][${LAYER}][Register] Session creation failed for ${user.email}, rolling back user creation...`,
-      );
-      await this._userService.hardDelete(user.id).catch((rollbackErr) => {
-        logger.error(
-          `[${MODULE}][${LAYER}][Register] FATAL: Failed to hard-delete user ${user.id} during compensation:`,
-          rollbackErr,
-        );
-      });
-      throw err;
-    }
+    return this._mapToAuthResponse(user as SafeUserResponseDTO, tokens);
   }
 
   public async login(dto: LoginInputDTO): Promise<AuthResponseDTO> {
