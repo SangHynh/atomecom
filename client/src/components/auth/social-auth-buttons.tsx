@@ -155,7 +155,7 @@ export function SocialAuthButtons({ isLoading }: SocialAuthButtonsProps) {
         <Button
           variant="outline"
           type="button"
-          className="h-11 rounded-xl border-border/60 hover:bg-muted/50 font-bold tracking-tight transition-all active:scale-95"
+          className="h-11 rounded-[var(--radius)] border-border/60 hover:bg-muted/50 font-bold tracking-tight transition-all active:scale-95"
           onClick={handleGoogleLogin}
           disabled={isLoading || isSocialLoggingIn}
         >
@@ -186,7 +186,7 @@ export function SocialAuthButtons({ isLoading }: SocialAuthButtonsProps) {
         <Button
           variant="outline"
           type="button"
-          className="h-11 rounded-xl border-border/60 hover:bg-muted/50 font-bold tracking-tight transition-all active:scale-95"
+          className="h-11 rounded-[var(--radius)] border-border/60 hover:bg-muted/50 font-bold tracking-tight transition-all active:scale-95"
           onClick={handleFacebookLogin}
           disabled={isLoading || isSocialLoggingIn}
         >
