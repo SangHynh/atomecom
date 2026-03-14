@@ -39,7 +39,7 @@ export function Hero() {
             className="mb-6 sm:mb-8 text-4xl sm:text-6xl lg:text-8xl font-extrabold tracking-tight leading-[1.1] sm:leading-[1.05] text-balance max-w-5xl"
           >
             {t('landing.title_modern')}{' '}
-            <span className="text-[0.85em] bg-gradient-to-r from-primary via-blue-500 to-indigo-600 bg-clip-text text-transparent">
+            <span className="text-[0.85em] bg-gradient-to-r from-primary via-info to-primary/60 bg-clip-text text-transparent">
               {t('landing.title_ecommerce')}
             </span>{' '}
             <span className="text-[0.85em]">{t('landing.title_suffix')}</span>
@@ -59,7 +59,7 @@ export function Hero() {
             <Link href="/home" className="w-full sm:w-auto">
               <Button
                 size="lg"
-                className="group w-full sm:w-auto h-12 px-10 font-bold rounded-xl shadow-xl shadow-primary/20 transition-all duration-500 hover:scale-110 active:scale-95 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 border-none text-white cursor-pointer relative overflow-hidden group"
+                className="group w-full sm:w-auto h-12 px-10 font-bold rounded-xl shadow-xl shadow-primary/20 transition-all duration-500 hover:scale-110 active:scale-95 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 border-none text-background cursor-pointer relative overflow-hidden group"
               >
                 <span className="relative z-10 flex items-center justify-center">
                   {t('landing.explore_now')}
@@ -78,22 +78,22 @@ export function Hero() {
               {
                 icon: <ShieldCheck className="h-4 w-4" />,
                 label: t('landing.secure_payments'),
-                color: 'group-hover:text-blue-500',
+                color: 'group-hover:text-info',
               },
               {
                 icon: <Zap className="h-4 w-4" />,
                 label: t('landing.ultra_fast'),
-                color: 'group-hover:text-yellow-500',
+                color: 'group-hover:text-warning',
               },
               {
                 icon: <CheckCircle2 className="h-4 w-4" />,
                 label: t('landing.data_integrity'),
-                color: 'group-hover:text-emerald-500',
+                color: 'group-hover:text-success',
               },
               {
                 icon: <Scaling className="h-4 w-4" />,
                 label: t('landing.ready_scaling'),
-                color: 'group-hover:text-indigo-500',
+                color: 'group-hover:text-primary',
               },
             ].map((item, idx) => (
               <div

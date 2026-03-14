@@ -2,21 +2,19 @@
 
 import React, { useState } from 'react';
 import { Search, RefreshCw, Loader2, LayoutGrid, List } from 'lucide-react';
-import { useBrands, useBrand } from '@/hooks/use-brands';
+import { useBrands } from '@/hooks/use-brands';
 import { useStudioManager } from '@/hooks/use-studio-manager';
-import { BrandTable } from '@/components/dashboard/catalog/brand/views/brand-table';
-import { BrandGrid } from '@/components/dashboard/catalog/brand/views/brand-grid';
-import { BrandDetailOverlay } from '@/components/dashboard/catalog/brand/overlays/brand-detail-overlay';
-import { BrandFormOverlay } from '@/components/dashboard/catalog/brand/overlays/brand-form-overlay';
-import { BrandFilters } from '@/components/dashboard/catalog/brand/controls/brand-filters';
+import { BrandTable } from '@/components/dashboard/catalog/brand/table/brand-table';
+import { BrandExplorer } from '@/components/dashboard/catalog/brand/explorer/brand-explorer';
+import { BrandDetailOverlay } from '@/components/dashboard/catalog/brand/overlays/details/brand-detail-overlay';
+import { BrandFormOverlay } from '@/components/dashboard/catalog/brand/overlays/form/brand-form-overlay';
+import { BrandFilters } from '@/components/dashboard/catalog/brand/toolbar/brand-filters';
 import { Button } from '@/components/ui/button';
-import { StudioConfirmationDialog } from '@/components/dashboard/studio/studio-confirmation-dialog';
+import { useConfirmation } from '@/components/dashboard/studio/studio-confirmation-provider';
 import { StudioPagination } from '@/components/dashboard/studio/studio-pagination';
 import { Brand } from '@atomecom/shared';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useTableParams } from '@/hooks/use-table-params';
-import { extractData } from '@/lib/api-utils';
-import { cn } from '@/lib/utils';
 
 export default function BrandsPage() {
   // ─── Table & URL State ─────────────────────────────────────
@@ -34,14 +32,13 @@ export default function BrandsPage() {
     editingId: editingBrandId,
     isFormOpen,
     isDetailOpen: isDetailOpenOverlay,
-    confirmDelete,
     openForm,
     closeForm,
     openDetail,
     closeDetail,
-    openDeleteConfirm,
-    closeDeleteConfirm,
   } = useStudioManager();
+
+  const { confirm } = useConfirmation();
 
   // ─── Data Fetching ─────────────────────────────────────────
   const {
@@ -50,8 +47,10 @@ export default function BrandsPage() {
     isLoading,
     isFetching,
     createBrand,
+    createBrandAsync,
     isCreating,
     updateBrand,
+    updateBrandAsync,
     isUpdating,
     deleteBrand,
   } = useBrands({
@@ -62,23 +61,34 @@ export default function BrandsPage() {
     sortOrder: params.sortOrder,
   });
 
-  const { data: selectedBrandInfo } = useBrand(selectedBrandId);
-  const selectedBrand = extractData(selectedBrandInfo);
-
-  const { data: editingBrandInfo } = useBrand(editingBrandId);
-  const editingBrand = extractData(editingBrandInfo);
+  const selectedBrand = brands.find((b) => b.id === selectedBrandId) || null;
+  const editingBrand = brands.find((b) => b.id === editingBrandId) || null;
 
   // ─── Handlers ──────────────────────────────────────────────
   const handleCreate = () => openForm(null);
   const handleEdit = (brand: Brand) => openForm(brand.id);
-  const handleDelete = (id: string) => openDeleteConfirm(id);
   const handleViewDetail = (brand: Brand) => openDetail(brand.id);
 
-  const onFormSubmit = (data: any) => {
+  const handleDelete = (id: string) => {
+    confirm({
+      title: 'Xóa thương hiệu này?',
+      description: 'Toàn bộ thông tin thương hiệu sẽ bị gỡ bỏ khỏi hệ thống. Các sản phẩm đang liên kết có thể hiển thị dưới dạng thương hiệu không xác định.',
+      variant: 'danger',
+      onConfirm: async () => {
+        await deleteBrand(id);
+      },
+    });
+  };
+
+  const onFormSubmit = async (data: any) => {
     if (editingBrand) {
-      updateBrand({ id: editingBrand.id, data }, { onSuccess: closeForm });
+      await updateBrandAsync({ id: editingBrand.id, data }).then(() => {
+        closeForm();
+      });
     } else {
-      createBrand(data, { onSuccess: closeForm });
+      await createBrandAsync(data).then(() => {
+        closeForm();
+      });
     }
   };
 
@@ -126,7 +136,7 @@ export default function BrandsPage() {
             />
           ) : (
             <div className="p-8">
-              <BrandGrid
+              <BrandExplorer
                 brands={brands}
                 isLoading={isLoading}
                 onView={handleViewDetail}
@@ -165,17 +175,7 @@ export default function BrandsPage() {
         isUpdating={isUpdating}
       />
 
-      <StudioConfirmationDialog
-        isOpen={confirmDelete.isOpen}
-        title="Xóa thương hiệu này?"
-        description="Toàn bộ thông tin thương hiệu sẽ bị gỡ bỏ khỏi hệ thống. Các sản phẩm đang liên kết có thể hiển thị dưới dạng thương hiệu không xác định."
-        variant="danger"
-        onClose={closeDeleteConfirm}
-        onConfirm={() => {
-          deleteBrand(confirmDelete.id);
-          closeDeleteConfirm();
-        }}
-      />
+
     </div>
   );
 }

@@ -4,14 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { User, USER_STATUS } from '@atomecom/shared';
 import { useUsers } from '@/hooks/use-users';
-import { UserTable } from '@/components/dashboard/users/views/user-table';
-import { UserFormOverlay } from '@/components/dashboard/users/overlays/user-form-overlay';
-import { UserDetailSheet as UserDetailOverlay } from '@/components/dashboard/users/overlays/user-detail-sheet';
-import { UserFilters } from '@/components/dashboard/users/controls/user-filters';
-import { UserStats } from '@/components/dashboard/users/controls/user-stats';
-import { StudioConfirmationDialog } from '@/components/dashboard/studio/studio-confirmation-dialog';
+import { UserTable } from '@/components/dashboard/users/table/user-table';
+import { UserFormOverlay } from '@/components/dashboard/users/overlays/form/user-form-overlay';
+import { UserDetailOverlay } from '@/components/dashboard/users/overlays/details/user-detail-overlay';
+import { UserFilters } from '@/components/dashboard/users/toolbar/user-filters';
+import { UserStats } from '@/components/dashboard/users/metrics/user-stats';
 import { useTableParams } from '@/hooks/use-table-params';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useConfirmation } from '@/components/dashboard/studio/studio-confirmation-provider';
+import { useStudioManager } from '@/hooks/use-studio-manager';
 import { Loader2 } from 'lucide-react';
 
 export default function UsersPage() {
@@ -32,23 +33,17 @@ export default function UsersPage() {
     'activity',
   ]);
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [detailUser, setDetailUser] = useState<User | null>(null);
+  const {
+    selectedId: selectedUserId,
+    isFormOpen,
+    isDetailOpen,
+    openForm,
+    closeForm,
+    openDetail,
+    closeDetail,
+  } = useStudioManager();
 
-  const [confirmConfig, setConfirmConfig] = useState<{
-    isOpen: boolean;
-    title: string;
-    description: string;
-    onConfirm: () => void;
-    variant: 'danger' | 'warning' | 'info' | 'primary';
-  }>({
-    isOpen: false,
-    title: '',
-    description: '',
-    onConfirm: () => {},
-    variant: 'danger',
-  });
+  const { confirm } = useConfirmation();
 
   // ─── Data Fetching ─────────────────────────────────────────
   const { user: currentUser } = useAuth();
@@ -57,9 +52,8 @@ export default function UsersPage() {
     pagination,
     isLoading,
     isFetching,
-    createUser,
+    createUserAsync,
     isCreating,
-    updateUser,
     updateUserAsync,
     isUpdating,
     deleteUser,
@@ -73,6 +67,7 @@ export default function UsersPage() {
     page: params.page,
     limit: params.limit,
   });
+  const detailUser = users.find((u) => u.id === selectedUserId) || null;
 
   // ─── Handlers ──────────────────────────────────────────────
   const handleToggleColumn = (colId: string) => {
@@ -81,28 +76,25 @@ export default function UsersPage() {
     );
   };
 
-  const handleClearFilters = () => {
-    clearParams();
-  };
-
   const activeFilterCount =
     (params.role !== 'all' && params.role ? 1 : 0) +
     (params.status !== 'all' && params.status ? 1 : 0);
 
-  const handleViewDetails = (user: User) => {
-    setDetailUser(user);
-    setIsDetailOpen(true);
+  const handleDeleteUser = (id: string) => {
+    confirm({
+      title: 'Xác nhận xóa tài khoản?',
+      description: 'Hành động này sẽ xóa vĩnh viễn tài khoản người dùng khỏi hệ thống. Bạn có chắc chắn muốn tiếp tục?',
+      variant: 'danger',
+      onConfirm: async () => {
+        await deleteUser(id);
+        if (selectedUserId === id) closeDetail();
+      },
+    });
   };
 
-  const handleDeleteUser = (id: string) => {
-    setConfirmConfig({
-      isOpen: true,
-      title: 'Xác nhận xóa tài khoản?',
-      description:
-        'Hành động này sẽ xóa vĩnh viễn tài khoản người dùng khỏi hệ thống. Bạn có chắc chắn muốn tiếp tục?',
-      variant: 'danger',
-      onConfirm: () => deleteUser(id),
-    });
+  const onFormSubmit = async (data: any) => {
+    await createUserAsync(data);
+    closeForm();
   };
 
   // ─── Render ────────────────────────────────────────────────
@@ -112,7 +104,7 @@ export default function UsersPage() {
       <UserFilters
         visibleColumns={visibleColumns}
         onToggleColumn={handleToggleColumn}
-        onAddAction={() => setIsFormOpen(true)}
+        onAddAction={() => openForm(null)}
       />
 
       {/* 2. Stats Section */}
@@ -144,29 +136,11 @@ export default function UsersPage() {
           <UserTable
             users={users}
             currentUser={currentUser}
-            sortField={params.sortField || 'createdAt'}
-            sortOrder={params.sortOrder || 'desc'}
-            onSort={(field) => {
-              if (params.sortField === field)
-                setParams({
-                  sortOrder: params.sortOrder === 'asc' ? 'desc' : 'asc',
-                });
-              else {
-                setParams({ sortField: field, sortOrder: 'asc' });
-              }
-            }}
-            onEdit={handleViewDetails}
+            onEdit={(u) => openDetail(u.id)}
             onDelete={handleDeleteUser}
-            onViewDetails={handleViewDetails}
+            onViewDetails={(u) => openDetail(u.id)}
             visibleColumns={visibleColumns}
-            pagination={{
-              totalElements: pagination.totalElements,
-              currentPage: pagination.currentPage,
-              totalPages: pagination.totalPages,
-              limit: params.limit,
-              onPageChange: (p) => setParams({ page: p }),
-              onLimitChange: (l) => setParams({ limit: l }),
-            }}
+            totalElements={pagination.totalElements}
             isLoading={isLoading}
           />
         </div>
@@ -175,37 +149,26 @@ export default function UsersPage() {
       {/* ─── Overlays ─── */}
       <UserFormOverlay
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSubmit={(data) => {
-          createUser(data);
-          setIsFormOpen(false);
-        }}
+        onClose={closeForm}
+        onSubmit={onFormSubmit}
         isLoading={isCreating}
       />
 
       <UserDetailOverlay
         user={detailUser}
         isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
+        onClose={closeDetail}
         onDelete={(id: string) => {
-          setIsDetailOpen(false);
+          closeDetail();
           handleDeleteUser(id);
         }}
         onUpdate={async (id: string, data: any) => {
           await updateUserAsync({ id, data });
-          setDetailUser((prev) => (prev ? { ...prev, ...data } : prev));
         }}
         isUpdating={isUpdating}
       />
 
-      <StudioConfirmationDialog
-        isOpen={confirmConfig.isOpen}
-        onClose={() => setConfirmConfig((prev) => ({ ...prev, isOpen: false }))}
-        onConfirm={confirmConfig.onConfirm}
-        title={confirmConfig.title}
-        description={confirmConfig.description}
-        variant={confirmConfig.variant}
-      />
+
     </div>
   );
 }

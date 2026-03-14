@@ -2,20 +2,18 @@
 
 import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useProducts, useProduct } from '@/hooks/use-products';
+import { useProducts } from '@/hooks/use-products';
 import { useStudioManager } from '@/hooks/use-studio-manager';
-import { ProductTable } from '@/components/dashboard/catalog/product/views/product-table';
-import { ProductGrid } from '@/components/dashboard/catalog/product/views/product-grid';
-import { ProductDetailOverlay } from '@/components/dashboard/catalog/product/overlays/product-detail-overlay';
-import { ProductFormOverlay } from '@/components/dashboard/catalog/product/overlays/product-form-overlay';
-import { ProductFilters } from '@/components/dashboard/catalog/product/controls/product-filters';
-import { StudioConfirmationDialog } from '@/components/dashboard/studio/studio-confirmation-dialog';
+import { ProductTable } from '@/components/dashboard/catalog/product/table/product-table';
+import { ProductExplorer } from '@/components/dashboard/catalog/product/explorer/product-explorer';
+import { ProductDetailOverlay } from '@/components/dashboard/catalog/product/overlays/details/product-detail-overlay';
+import { ProductFormOverlay } from '@/components/dashboard/catalog/product/overlays/form/product-form-overlay';
+import { ProductFilters } from '@/components/dashboard/catalog/product/toolbar/product-filters';
+import { useConfirmation } from '@/components/dashboard/studio/studio-confirmation-provider';
 import { StudioPagination } from '@/components/dashboard/studio/studio-pagination';
 import { Product } from '@atomecom/shared';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useTableParams } from '@/hooks/use-table-params';
-import { extractData } from '@/lib/api-utils';
-import { cn } from '@/lib/utils';
 
 export default function ProductsPage() {
   // ─── Table & URL State ─────────────────────────────────────
@@ -33,14 +31,13 @@ export default function ProductsPage() {
     editingId: editingProductId,
     isFormOpen,
     isDetailOpen: isDetailOpenOverlay,
-    confirmDelete,
     openForm,
     closeForm,
     openDetail,
     closeDetail,
-    openDeleteConfirm,
-    closeDeleteConfirm,
   } = useStudioManager();
+
+  const { confirm } = useConfirmation();
 
   // ─── Data Fetching ─────────────────────────────────────────
   const {
@@ -64,17 +61,24 @@ export default function ProductsPage() {
     status: params.status !== 'all' ? params.status : undefined,
   });
 
-  const { data: selectedProductInfo } = useProduct(selectedProductId);
-  const selectedProduct = extractData(selectedProductInfo);
-
-  const { data: editingProductInfo } = useProduct(editingProductId);
-  const editingProduct = extractData(editingProductInfo);
+  const selectedProduct = products.find((p) => p.id === selectedProductId) || null;
+  const editingProduct = products.find((p) => p.id === editingProductId) || null;
 
   // ─── Handlers ──────────────────────────────────────────────
   const handleCreate = () => openForm(null);
   const handleEdit = (product: Product) => openForm(product.id);
-  const handleDelete = (id: string) => openDeleteConfirm(id);
   const handleViewDetail = (product: Product) => openDetail(product.id);
+
+  const handleDelete = (id: string) => {
+    confirm({
+      title: 'Xác nhận xóa sản phẩm?',
+      description: 'Hành động này sẽ xóa tạm thời sản phẩm, tất cả biến thế (SKU) và các bản ghi tồn kho liên quan. Bạn có thể khôi phục lại trong thùng rác.',
+      variant: 'danger',
+      onConfirm: async () => {
+        await deleteProduct(id);
+      },
+    });
+  };
 
   const onFormSubmit = async (data: any) => {
     if (editingProduct) {
@@ -87,19 +91,6 @@ export default function ProductsPage() {
     } else {
       return createProductAsync(data).then(() => {
         closeForm();
-      });
-    }
-  };
-
-  const handleSort = (field: string) => {
-    if (params.sortField === field) {
-      setParams({
-        sortOrder: params.sortOrder === 'asc' ? 'desc' : 'asc',
-      });
-    } else {
-      setParams({
-        sortField: field,
-        sortOrder: 'asc',
       });
     }
   };
@@ -133,16 +124,13 @@ export default function ProductsPage() {
             <ProductTable
               products={products}
               isLoading={isLoading}
-              sortField={params.sortField || 'name'}
-              sortOrder={params.sortOrder || 'asc'}
-              onSort={handleSort}
               onView={handleViewDetail}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />
           ) : (
             <div className="p-8">
-              <ProductGrid
+              <ProductExplorer
                 products={products}
                 isLoading={isLoading}
                 onView={handleViewDetail}
@@ -179,17 +167,7 @@ export default function ProductsPage() {
         onDelete={handleDelete}
       />
 
-      <StudioConfirmationDialog
-        isOpen={confirmDelete.isOpen}
-        title="Xác nhận xóa sản phẩm?"
-        description="Hành động này sẽ xóa tạm thời sản phẩm, tất cả biến thế (SKU) và các bản ghi tồn kho liên quan. Bạn có thể khôi phục lại trong thùng rác."
-        variant="danger"
-        onClose={closeDeleteConfirm}
-        onConfirm={() => {
-          deleteProduct(confirmDelete.id);
-          closeDeleteConfirm();
-        }}
-      />
+
     </div>
   );
 }

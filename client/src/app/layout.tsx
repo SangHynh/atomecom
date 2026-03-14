@@ -5,7 +5,7 @@ import QueryProvider from '@/providers/query-provider';
 import { Toaster } from 'sonner';
 import I18nProvider from '@/providers/i18n-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
-import AuthInitializer from '@/components/providers/auth-initializer';
+import AuthInitializer from '@/components/auth/providers/auth-initializer';
 
 const jakarta = Plus_Jakarta_Sans({
   variable: '--font-jakarta',

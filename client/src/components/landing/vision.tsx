@@ -32,25 +32,25 @@ export function Vision() {
               icon: <Sparkles className="h-6 sm:h-7 w-6 sm:w-7" />,
               title: t('landing.stats_innovation'),
               desc: t('landing.stats_innovation_desc'),
-              color: 'group-hover:text-amber-500',
+              color: 'group-hover:text-warning',
             },
             {
               icon: <MousePointer2 className="h-6 sm:h-7 w-6 sm:w-7" />,
               title: t('landing.stats_experience'),
               desc: t('landing.stats_experience_desc'),
-              color: 'group-hover:text-rose-500',
+              color: 'group-hover:text-danger-soft',
             },
             {
               icon: <Rocket className="h-6 sm:h-7 w-6 sm:w-7" />,
               title: t('landing.stats_growth'),
               desc: t('landing.stats_growth_desc'),
-              color: 'group-hover:text-indigo-500',
+              color: 'group-hover:text-primary',
             },
             {
               icon: <ShieldCheck className="h-6 sm:h-7 w-6 sm:w-7" />,
               title: t('landing.stats_security'),
               desc: t('landing.stats_security_desc'),
-              color: 'group-hover:text-emerald-500',
+              color: 'group-hover:text-success',
             },
           ].map((item, idx) => (
             <motion.div

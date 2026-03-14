@@ -47,19 +47,19 @@ export function Architecture() {
                   icon: <LayoutGrid className="h-5 w-5" />,
                   title: t('landing.domain_centric'),
                   desc: t('landing.domain_centric_desc'),
-                  color: 'group-hover:text-amber-500',
+                  color: 'group-hover:text-warning',
                 },
                 {
                   icon: <MousePointer2 className="h-5 w-5" />,
                   title: t('landing.independent_view'),
                   desc: t('landing.independent_view_desc'),
-                  color: 'group-hover:text-rose-500',
+                  color: 'group-hover:text-danger-soft',
                 },
                 {
                   icon: <ShieldCheck className="h-5 w-5" />,
                   title: t('landing.highly_testable'),
                   desc: t('landing.highly_testable_desc'),
-                  color: 'group-hover:text-emerald-500',
+                  color: 'group-hover:text-success',
                 },
                 {
                   icon: <Activity className="h-5 w-5" />,
@@ -71,13 +71,13 @@ export function Architecture() {
                   icon: <Database className="h-5 w-5" />,
                   title: t('landing.flexible_tech'),
                   desc: t('landing.flexible_tech_desc'),
-                  color: 'group-hover:text-sky-500',
+                  color: 'group-hover:text-info',
                 },
                 {
                   icon: <Rocket className="h-5 w-5" />,
                   title: t('landing.future_proof'),
                   desc: t('landing.future_proof_desc'),
-                  color: 'group-hover:text-amber-500',
+                  color: 'group-hover:text-warning',
                 },
               ].map((item, idx) => (
                 <motion.div
@@ -113,7 +113,7 @@ export function Architecture() {
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             className="flex-1 relative lg:max-w-md w-full px-4 sm:px-0"
           >
-            <div className="aspect-square rounded-[2rem] sm:rounded-[3rem] bg-gradient-to-tr from-primary/80 to-indigo-600/80 p-8 sm:p-12 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] relative overflow-hidden group cursor-default">
+            <div className="aspect-square rounded-[2rem] sm:rounded-[3rem] bg-gradient-to-tr from-primary/80 to-primary/40 p-8 sm:p-12 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] relative overflow-hidden group cursor-default">
               <div className="absolute inset-0 bg-white/5 dark:bg-black/5 backdrop-blur-3xl" />
 
               <div className="relative h-full flex flex-col justify-center items-center text-white space-y-6 sm:space-y-8">

@@ -39,37 +39,37 @@ export function Solutions() {
               icon: <ShieldCheck className="h-6 w-6" />,
               title: t('landing.auth_title'),
               desc: t('landing.auth_desc'),
-              color: 'group-hover:text-blue-500',
+              color: 'group-hover:text-info',
             },
             {
               icon: <Settings2 className="h-6 w-6" />,
               title: t('landing.module_title'),
               desc: t('landing.module_desc'),
-              color: 'group-hover:text-indigo-500',
+              color: 'group-hover:text-primary',
             },
             {
               icon: <Zap className="h-6 w-6" />,
               title: t('landing.api_title'),
               desc: t('landing.api_desc'),
-              color: 'group-hover:text-yellow-500',
+              color: 'group-hover:text-warning',
             },
             {
               icon: <BarChart3 className="h-6 w-6" />,
               title: t('landing.analytics_title'),
               desc: t('landing.analytics_desc'),
-              color: 'group-hover:text-rose-500',
+              color: 'group-hover:text-danger-soft',
             },
             {
               icon: <Layers className="h-6 w-6" />,
               title: t('landing.manage_title'),
               desc: t('landing.manage_desc'),
-              color: 'group-hover:text-emerald-500',
+              color: 'group-hover:text-success',
             },
             {
               icon: <Share2 className="h-6 w-6" />,
               title: t('landing.integrate_title'),
               desc: t('landing.integrate_desc'),
-              color: 'group-hover:text-sky-500',
+              color: 'group-hover:text-info',
             },
           ].map((solution, idx) => (
             <motion.div

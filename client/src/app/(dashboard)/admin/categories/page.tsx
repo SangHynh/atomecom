@@ -2,17 +2,16 @@
 
 import React, { useState, useMemo } from 'react';
 import { Plus, Loader2 } from 'lucide-react';
-import { CategoryExplorer } from '@/components/dashboard/catalog/category/views/category-explorer';
-import { CategoryDetailOverlay } from '@/components/dashboard/catalog/category/overlays/category-detail-overlay';
-import { CategoryFormOverlay } from '@/components/dashboard/catalog/category/overlays/category-form-overlay';
+import { CategoryExplorer } from '@/components/dashboard/catalog/category/explorer/category-explorer';
+import { CategoryDetailOverlay } from '@/components/dashboard/catalog/category/overlays/details/category-detail-overlay';
+import { CategoryFormOverlay } from '@/components/dashboard/catalog/category/overlays/form/category-form-overlay';
 import {
   useCategories,
-  useCategory,
   useCategoryAncestors,
 } from '@/hooks/use-categories';
 import { useStudioManager } from '@/hooks/use-studio-manager';
 import { Button } from '@/components/ui/button';
-import { StudioConfirmationDialog } from '@/components/dashboard/studio/studio-confirmation-dialog';
+import { useConfirmation } from '@/components/dashboard/studio/studio-confirmation-provider';
 import { Category } from '@atomecom/shared';
 import { useTableParams } from '@/hooks/use-table-params';
 import { extractData } from '@/lib/api-utils';
@@ -23,7 +22,7 @@ export default function CategoriesPage() {
     limit: 50,
   });
 
-  const currentPath = params.path || null;
+  const currentPath = (params.path as string) || null;
   const searchTerm = params.q || '';
 
   const {
@@ -31,20 +30,13 @@ export default function CategoriesPage() {
     editingId: editingCategoryId,
     isFormOpen,
     isDetailOpen: isDetailOpenOverlay,
-    confirmDelete,
     openForm,
     closeForm,
     openDetail,
     closeDetail,
-    openDeleteConfirm,
-    closeDeleteConfirm,
   } = useStudioManager();
 
-  const [confirmMove, setConfirmMove] = useState<{
-    isOpen: boolean;
-    categoryId: string;
-    targetPath: string | null;
-  }>({ isOpen: false, categoryId: '', targetPath: null });
+  const { confirm } = useConfirmation();
 
   // ─── Data Fetching ─────────────────────────────────────────
   const {
@@ -52,8 +44,10 @@ export default function CategoriesPage() {
     pagination,
     isLoading,
     createCategory,
+    createCategoryAsync,
     isCreating,
     updateCategory,
+    updateCategoryAsync,
     isUpdating,
     moveCategory,
     deleteCategory,
@@ -69,11 +63,8 @@ export default function CategoriesPage() {
   const ancestors = (extractData(ancestorsInfo) as Category[]) || [];
   const parent = ancestors.length > 0 ? ancestors[ancestors.length - 1] : null;
 
-  const { data: selectedCategoryInfo } = useCategory(selectedCategoryId);
-  const selectedCategory = extractData(selectedCategoryInfo);
-
-  const { data: editingCategoryInfo } = useCategory(editingCategoryId);
-  const editingCategory = extractData(editingCategoryInfo);
+  const selectedCategory = categories.find((c) => c.id === selectedCategoryId) || null;
+  const editingCategory = categories.find((c) => c.id === editingCategoryId) || null;
 
   // ─── Handlers ──────────────────────────────────────────────
   const extraBreadcrumbs = useMemo(() => {
@@ -92,18 +83,21 @@ export default function CategoriesPage() {
     setParams({ path: newPath || undefined, page: 1 });
   };
 
-  const onFormSubmit = (data: any) => {
+  const onFormSubmit = async (data: any) => {
     const finalData = editingCategory
       ? { ...data, version: editingCategory.version }
       : { ...data, parentId: parent?.id || null };
 
     if (editingCategory) {
-      updateCategory(
-        { id: editingCategory.id, data: finalData },
-        { onSuccess: closeForm },
+      await updateCategoryAsync({ id: editingCategory.id, data: finalData }).then(
+        () => {
+          closeForm();
+        },
       );
     } else {
-      createCategory(finalData, { onSuccess: closeForm });
+      await createCategoryAsync(finalData).then(() => {
+        closeForm();
+      });
     }
   };
 
@@ -113,25 +107,26 @@ export default function CategoriesPage() {
   ) => {
     const categoryToMove = categories.find((c) => c.id === categoryId);
     if (!categoryToMove || categoryToMove.path === targetPath) return;
-    setConfirmMove({ isOpen: true, categoryId, targetPath });
-  };
 
-  const executeMove = () => {
-    const { categoryId, targetPath } = confirmMove;
-    const categoryToMove = categories.find((c) => c.id === categoryId);
-    if (!categoryToMove) return;
+    confirm({
+      title: 'Di chuyển danh mục?',
+      description: 'Việc thay đổi cấu trúc danh mục sẽ ảnh hưởng đến phân cấp sản phẩm và đường dẫn SEO.',
+      variant: 'warning',
+      onConfirm: async () => {
+        const targetCategory = targetPath
+          ? categories.find((c) => c.path === targetPath)
+          : null;
+        const parentId = targetPath ? targetCategory?.id || null : null;
 
-    const targetCategory = targetPath
-      ? categories.find((c) => c.path === targetPath)
-      : null;
-    const parentId = targetPath ? targetCategory?.id || null : null;
-
-    moveCategory({
-      id: categoryId,
-      data: { parentId, version: categoryToMove.version },
+        await moveCategory({
+          id: categoryId,
+          data: { parentId, version: categoryToMove.version },
+        });
+      },
     });
-    setConfirmMove({ isOpen: false, categoryId: '', targetPath: null });
   };
+
+
 
   // ─── Render ────────────────────────────────────────────────
   return (
@@ -157,7 +152,17 @@ export default function CategoriesPage() {
         category={selectedCategory}
         isOpen={isDetailOpenOverlay}
         onClose={closeDetail}
-        onDelete={(id) => openDeleteConfirm(id)}
+        onDelete={(id) => {
+          confirm({
+            title: 'Xác nhận xóa danh mục?',
+            description: 'Toàn bộ thông tin và các danh mục con bên trong cũng sẽ bị gỡ bỏ.',
+            variant: 'danger',
+            onConfirm: async () => {
+              await deleteCategory(id);
+              closeDetail();
+            },
+          });
+        }}
         onUpdate={(id: string, data: any, onSuccess: () => void) => {
           updateCategory({ id, data }, { onSuccess });
         }}
@@ -172,28 +177,7 @@ export default function CategoriesPage() {
         category={editingCategory}
       />
 
-      <StudioConfirmationDialog
-        isOpen={confirmDelete.isOpen}
-        title="Xác nhận xóa danh mục?"
-        description="Toàn bộ thông tin và các danh mục con bên trong cũng sẽ bị gỡ bỏ."
-        variant="danger"
-        onClose={closeDeleteConfirm}
-        onConfirm={() => {
-          deleteCategory(confirmDelete.id);
-          closeDeleteConfirm();
-        }}
-      />
 
-      <StudioConfirmationDialog
-        isOpen={confirmMove.isOpen}
-        title="Di chuyển danh mục?"
-        description="Việc thay đổi cấu trúc danh mục sẽ ảnh hưởng đến phân cấp sản phẩm và đường dẫn SEO."
-        variant="warning"
-        onClose={() =>
-          setConfirmMove({ isOpen: false, categoryId: '', targetPath: null })
-        }
-        onConfirm={executeMove}
-      />
     </div>
   );
 }

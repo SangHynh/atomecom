@@ -41,13 +41,14 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-danger-soft: var(--danger-soft);
+
+  --font-vibe-heading: var(--font-heading);
+  --font-vibe-body: var(--font-body);
 
   --animate-spin-slow: spin-slow 8s linear infinite;
   --shadow-3xl: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
@@ -62,75 +63,173 @@
   }
 }
 
-:root {
-  --radius: 0.625rem;
+/* ====================================================================
+   MULTIPLE VIBES (THEME) ARCHITECTURE
+   ==================================================================== */
+
+/* ─── VIBE 1: BRUTALIST (MẶC ĐỊNH) ─── */
+:root,
+[data-vibe="default"] {
+  /* Geometry & Typography mapping */
+  --radius: 0.125rem; /* Rất sắc cạnh chuẩn Brutalism */
+  --font-heading: var(--font-editorial);
+  --font-body: var(--font-jakarta);
+
+  /* Colors */
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.8); /* zinc-950 */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.141 0.005 285.8);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.141 0.005 285.8);
-  --primary: oklch(0.531 0.22 295.5); /* violet-600 */
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: oklch(0 0 0); /* Pure Black for Editorial */
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.967 0.001 286.3); /* zinc-100 */
-  --secondary-foreground: oklch(0.531 0.22 295.5); /* violet-600 */
+  --secondary-foreground: oklch(0.141 0.005 285.8);
+  
+  /* Status Tokens (Semantic) */
+  --success: oklch(0.627 0.194 149.2); /* emerald-600 */
+  --warning: oklch(0.769 0.188 70.08);  /* amber-500 */
+  --info: oklch(0.6 0.18 255);         /* blue-600 */
+  --danger-soft: oklch(0.637 0.237 25.33); /* rose-600 */
+
   --muted: oklch(0.967 0.001 286.3);
   --muted-foreground: oklch(0.552 0.016 285.9); /* zinc-500 */
   --accent: oklch(0.967 0.001 286.3);
-  --accent-foreground: oklch(0.511 0.262 276.1); /* indigo-600 */
+  --accent-foreground: oklch(0.141 0.005 285.8);
   --destructive: oklch(0.577 0.245 27.325); /* red-500 */
   --border: oklch(0.92 0.004 286.3); /* zinc-200 */
   --input: oklch(0.92 0.004 286.3);
-  --ring: oklch(0.531 0.22 295.5); /* violet-600 */
-  --chart-1: oklch(0.531 0.22 295.5);
-  --chart-2: oklch(0.511 0.262 276.1);
-  --chart-3: oklch(0.667 0.295 322);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --ring: oklch(0.141 0.005 285.8);
+  
+  --chart-1: oklch(0.141 0.005 285.8);
+  --chart-2: oklch(0.552 0.016 285.9);
+  --chart-3: oklch(0.92 0.004 286.3);
+  --chart-4: oklch(0.8 0.1 150);
+  --chart-5: oklch(0.7 0.15 30);
+
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.141 0.005 285.8);
-  --sidebar-primary: oklch(0.531 0.22 295.5);
+  --sidebar-primary: oklch(0.141 0.005 285.8);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.967 0.001 286.3);
-  --sidebar-accent-foreground: oklch(0.531 0.22 295.5);
+  --sidebar-accent-foreground: oklch(0.141 0.005 285.8);
   --sidebar-border: oklch(0.92 0.004 286.3);
-  --sidebar-ring: oklch(0.531 0.22 295.5);
-  --primary-rgb: 139, 92, 246;
+  --sidebar-ring: oklch(0.141 0.005 285.8);
+}
+
+/* ─── VIBE 2: MODERN SOFT ─── */
+[data-vibe="soft"] {
+  --radius: 1rem;
+  --font-heading: var(--font-jakarta);
+  --font-body: var(--font-jakarta);
+
+  --background: oklch(0.985 0.005 200);
+  --foreground: oklch(0.2 0.01 200);
+  --primary: oklch(0.6 0.18 250);
+  --primary-foreground: oklch(1 0 0);
+  --muted: oklch(0.95 0.01 200);
+  --muted-foreground: oklch(0.5 0.01 200);
+  --border: oklch(0.9 0.01 200);
+}
+
+[data-vibe="soft"].dark,
+.dark [data-vibe="soft"] {
+  --background: oklch(0.18 0.02 220); /* Xanh đen dịu */
+  --foreground: oklch(0.9 0.01 220);
+  --primary: oklch(0.7 0.12 220);
+  --muted: oklch(0.22 0.02 220);
+  --muted-foreground: oklch(0.6 0.01 220);
+  --border: oklch(0.25 0.02 220);
+}
+
+/* ─── VIBE 3: LUXURY NOIR ─── */
+[data-vibe="luxury"] {
+  --radius: 0.375rem;
+  --font-heading: var(--font-editorial);
+  --font-body: var(--font-jakarta);
+
+  --background: oklch(0.98 0 0); /* Trắng ngà sang trọng */
+  --foreground: oklch(0.2 0.02 60); /* Nâu đồng sẫm */
+  --primary: oklch(0.6 0.1 60); /* Đồng/Gold */
+  --primary-foreground: oklch(1 0 0);
+  --muted: oklch(0.94 0.01 60);
+  --muted-foreground: oklch(0.5 0.02 60);
+  --border: oklch(0.92 0.02 60);
+}
+
+[data-vibe="luxury"].dark,
+.dark [data-vibe="luxury"] {
+  --background: oklch(0.1 0 0); /* Đen sâu */
+  --foreground: oklch(0.85 0.05 60); /* Vàng Champagne nhạt */
+  --primary: oklch(0.75 0.1 60); /* Gold sáng */
+  --primary-foreground: oklch(0.1 0 0);
+  --muted: oklch(0.15 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  --border: oklch(0.2 0 0);
+}
+
+/* ─── VIBE 4: GOTHIC NOIR ─── */
+[data-vibe="gothic"] {
+  --radius: 0px;
+  --font-heading: var(--font-editorial);
+  --font-body: var(--font-jakarta);
+
+  --background: oklch(0.98 0.01 50); /* Trắng xương (Bone White) */
+  --foreground: oklch(0.1 0 0); /* Đen than (Charcoal) - Sắc lẹm */
+  --primary: oklch(0.4 0.25 25); /* Đỏ Crimson */
+  --primary-foreground: oklch(1 0 0);
+  --muted: oklch(0.92 0 0);
+  --muted-foreground: oklch(0.4 0 0);
+  --border: oklch(0 0 0 / 0.1);
+}
+
+[data-vibe="gothic"].dark,
+.dark [data-vibe="gothic"] {
+  --background: oklch(0.08 0 0); /* Đen sáp sâu thẳm */
+  --foreground: oklch(0.65 0.2 25); /* Đỏ máu tươi nổi bật */
+  --primary: oklch(0.5 0.3 25); /* Crimson core */
+  --primary-foreground: oklch(1 0 0);
+  --muted: oklch(0.12 0 0);
+  --muted-foreground: oklch(0.4 0 0);
+  --border: oklch(0.5 0.3 25 / 0.25);
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.8); /* zinc-950 */
+  --background: oklch(0.141 0.005 285.8);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.8); /* zinc-900 */
+  --card: oklch(0.21 0.006 285.8);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.21 0.006 285.8);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.6 0.18 255); /* Premium Tech Blue for Dark Mode */
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.274 0.006 286); /* zinc-800 */
-  --secondary-foreground: oklch(0.6 0.18 255);
+  --primary: oklch(1 0 0);
+  --primary-foreground: oklch(0.141 0.005 285.8);
+  --secondary: oklch(0.274 0.006 286);
+  --secondary-foreground: oklch(1 0 0);
+
+  /* Status Tokens (Semantic) - Dark Mode Adjustments */
+  --success: oklch(0.75 0.15 150);
+  --warning: oklch(0.85 0.15 80);
+  --info: oklch(0.7 0.15 250);
+  --danger-soft: oklch(0.7 0.2 25);
+
   --muted: oklch(0.274 0.006 286);
-  --muted-foreground: oklch(0.705 0.015 286); /* zinc-400 */
+  --muted-foreground: oklch(0.705 0.015 286);
   --accent: oklch(0.274 0.006 286);
-  --accent-foreground: oklch(0.6 0.18 255);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(0.274 0.006 286); /* zinc-800 */
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.5 0.2 25);
+  --border: oklch(0.274 0.006 286);
   --input: oklch(0.274 0.006 286);
-  --ring: oklch(0.6 0.18 255);
-  --chart-1: oklch(0.6 0.18 255);
-  --chart-2: oklch(0.789 0.154 211.5);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.6 0.18 255);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.141 0.005 285.8); /* zinc-950 */
+  --ring: oklch(1 0 0);
+  
+  --sidebar: oklch(0.141 0.005 285.8);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.6 0.18 255);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(1 0 0);
+  --sidebar-primary-foreground: oklch(0.141 0.005 285.8);
   --sidebar-accent: oklch(0.274 0.006 286);
-  --sidebar-accent-foreground: oklch(0.6 0.18 255);
+  --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.274 0.006 286);
-  --sidebar-ring: oklch(0.6 0.18 255);
-  --primary-rgb: 37, 99, 235;
+  --sidebar-ring: oklch(1 0 0);
 }
 
 @layer base {

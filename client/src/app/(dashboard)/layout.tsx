@@ -4,10 +4,11 @@ import React, { useState } from 'react';
 import { Sidebar } from '@/components/dashboard/sidebar';
 import { AdminHeader } from '@/components/dashboard/header';
 import { motion, AnimatePresence } from 'framer-motion';
-import AuthGuard from '@/components/providers/auth-guard';
+import AuthGuard from '@/components/auth/providers/auth-guard';
 import { USER_ROLE } from '@atomecom/shared';
 import { cn } from '@/lib/utils';
 import { Menu, X } from 'lucide-react';
+import { StudioConfirmationProvider } from '@/components/dashboard/studio/studio-confirmation-provider';
 
 export default function DashboardLayout({
   children,
@@ -87,7 +88,9 @@ export default function DashboardLayout({
                 key="dashboard-content"
                 className="h-full"
               >
-                {children}
+                <StudioConfirmationProvider>
+                  {children}
+                </StudioConfirmationProvider>
               </motion.div>
             </AnimatePresence>
           </main>

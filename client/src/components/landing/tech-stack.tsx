@@ -31,17 +31,17 @@ export function TechStack() {
             {
               name: 'TypeScript',
               icon: <Code2 className="h-10 sm:h-12 w-10 sm:w-12" />,
-              color: 'group-hover:text-blue-500',
+              color: 'group-hover:text-info',
             },
             {
               name: 'Express.js',
               icon: <Server className="h-10 sm:h-12 w-10 sm:w-12" />,
-              color: 'group-hover:text-emerald-500',
+              color: 'group-hover:text-success',
             },
             {
               name: 'MongoDB',
               icon: <Database className="h-10 sm:h-12 w-10 sm:w-12" />,
-              color: 'group-hover:text-green-500',
+              color: 'group-hover:text-success',
             },
           ].map((tech, idx) => (
             <motion.div
