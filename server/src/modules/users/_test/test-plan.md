@@ -53,8 +53,11 @@
 | TC-USR-36 | `findByEmail` | Không tìm thấy → trả null (không throw) | Edge Case | ✅ DONE |
 | TC-USR-37 | `findByPhone` | Tìm thấy → trả SafeDTO | Happy Path | ✅ DONE |
 | TC-USR-38 | `findByPhone` | Không tìm thấy → trả null | Edge Case | ✅ DONE |
+| TC-USR-39 | `createWithSession` | Happy Path: User + Session thành công | Happy Path | ⏳ TODO |
+| TC-USR-40 | `createWithSession` | Session lỗi → Trigger hardDelete (Compensate) | Edge Case | ⏳ TODO |
+| TC-USR-41 | `createWithSession` | Session lỗi + hardDelete lỗi → Fatal Rollback | Resilience| ⏳ TODO |
 
-> **Tiến độ: 38/38 (100%)** — Hoàn tất UNIT TEST cho UserService.
+> **Tiến độ: 38/41 (92%)** — Đang cập nhật cho `createWithSession`.
 
 ---
 
@@ -358,6 +361,36 @@
 - **Mô tả**: Return null thay vì throw để caller tự quyết định logic (validate email hoặc login OAuth).
 - **Mock setup**: `userRepo.findByEmail(email)` → `null`.
 - **Expected**: Trả về `null`.
+
+---
+
+### `createWithSession(dto, sessionCreator)`
+
+#### TC-USR-39: Happy Path: User + Session thành công [⏳ TODO]
+- **Loại**: Happy Path
+- **Input**: `dto`, `sessionCreator` (mock callback returning tokens)
+- **Verify**:
+  - `this.create(dto)` được gọi.
+  - `sessionCreator(user)` được gọi với user vừa tạo.
+  - Trả về `{ user, result: tokens }`.
+  - `hardDelete` KHÔNG được gọi.
+
+#### TC-USR-40: Session lỗi → Trigger hardDelete (Compensate) [⏳ TODO]
+- **Loại**: Edge Case (Compensating Transaction)
+- **Mock setup**:
+  - `this.create(dto)` → SUCCESS.
+  - `sessionCreator(user)` → throw `Error('Session Fail')`.
+  - `this.hardDelete(user.id)` → SUCCESS.
+- **Expected**: Propagate `Error('Session Fail')`.
+- **Verify**: `hardDelete(user.id)` được gọi để rollback.
+
+#### TC-USR-41: Session lỗi + hardDelete lỗi → Fatal Rollback [⏳ TODO]
+- **Loại**: Resilience
+- **Mock setup**:
+  - `sessionCreator` → throw `Error('Session Fail')`.
+  - `this.hardDelete` → throw `Error('DB Down')`.
+- **Expected**: `logger.error` được gọi cho cả 2 lỗi. Vẫn propagate `Error('Session Fail')`.
+- **Verify**: Handler không "nuốt" lỗi rollback nhưng prioritize ném lỗi gốc.
 
 ---
 

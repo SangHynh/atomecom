@@ -207,7 +207,7 @@ describe('Auth Module - Integration Tests', () => {
     console.log('--- BEFORE EACH: Cleaned. ---');
   });
 
-  describe('Happy Path', () => {
+  describe('Part 1: Happy Path', () => {
     const registerDto = {
       email: 'test@example.com',
       password: 'Password@123',
@@ -299,7 +299,7 @@ describe('Auth Module - Integration Tests', () => {
     });
   });
 
-  describe('Edge Cases & Security', () => {
+  describe('Part 2: Edge Cases & Security', () => {
     it('1. Token Reuse Detection (Security Rotation)', async () => {
       const regRes = await request(app).post('/auth/register').send({
         email: 'security@test.com',
