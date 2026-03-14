@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn, maskEmail, maskPhone } from '@/lib/utils';
 import { format } from 'date-fns';
-import { MaskedContactRow } from '../views/masked-contact-row';
+import { MaskedContactRow } from '../../../table/masked-contact-row';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
@@ -92,9 +92,9 @@ export function UserDetailContact({
           <div className="h-px flex-1 bg-gradient-to-l from-border/60 to-transparent" />
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <div className="p-3 rounded-sm bg-muted/30 border border-border/30">
+          <div className="p-3 rounded-[var(--radius)] bg-muted/30 border border-border/30">
             <div className="flex items-center gap-2 mb-1">
-              <Calendar className="h-3 w-3 text-blue-600" />
+              <Calendar className="h-3 w-3 text-info" />
               <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60">
                 {t('users.table.columns.joined')}
               </p>
@@ -104,7 +104,7 @@ export function UserDetailContact({
             </p>
           </div>
           <div
-            className="p-3 rounded-sm bg-muted/30 border border-border/30 group cursor-pointer hover:bg-muted/50 transition-colors"
+            className="p-3 rounded-[var(--radius)] bg-muted/30 border border-border/30 group cursor-pointer hover:bg-muted/50 transition-colors"
             onClick={() => copyToClipboard(user.id)}
           >
             <div className="flex items-center justify-between mb-1">
@@ -124,7 +124,7 @@ export function UserDetailContact({
 
         {/* Account Metrics */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-md border border-border/10 bg-muted/5 hover:bg-muted/10 transition-all p-3.5 space-y-2">
+          <div className="rounded-[var(--radius)] border border-border/10 bg-muted/5 hover:bg-muted/10 transition-all p-3.5 space-y-2">
             <div className="flex items-center gap-2 text-primary font-bold text-[11px] uppercase tracking-wide">
               <ShoppingBag className="h-3 w-3" />
               {t('users.details.usage')}
@@ -147,8 +147,8 @@ export function UserDetailContact({
             </div>
           </div>
 
-          <div className="rounded-md border border-border/10 bg-muted/5 hover:bg-muted/10 transition-all p-3.5 space-y-2">
-            <div className="flex items-center gap-2 text-orange-500 font-bold text-[11px] uppercase tracking-wide">
+          <div className="rounded-[var(--radius)] border border-border/10 bg-muted/5 hover:bg-muted/10 transition-all p-3.5 space-y-2">
+            <div className="flex items-center gap-2 text-warning font-bold text-[11px] uppercase tracking-wide">
               <Zap className="h-3 w-3" />
               {t('users.details.value')}
             </div>
@@ -161,7 +161,7 @@ export function UserDetailContact({
                   {t('users.details.tier')}
                 </div>
               </div>
-              <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 text-[10px] font-bold px-1.5 py-0 shadow-none">
+              <Badge className="bg-warning/10 text-warning border-warning/20 text-[10px] font-bold px-1.5 py-0 shadow-none">
                 98% SCORE
               </Badge>
             </div>
@@ -184,7 +184,7 @@ export function UserDetailContact({
               <div
                 key={index}
                 className={cn(
-                  'p-3 rounded-md border transition-all',
+                  'p-3 rounded-[var(--radius)] border transition-all',
                   address.isDefault
                     ? 'bg-primary/5 border-primary/20'
                     : 'bg-muted/30 border-border/10 opacity-70 hover:opacity-100',
@@ -194,15 +194,15 @@ export function UserDetailContact({
                   <div className="flex items-start gap-3">
                     <div
                       className={cn(
-                        'h-8 w-8 rounded-sm flex items-center justify-center shrink-0',
-                        address.isDefault ? 'bg-blue-600/20' : 'bg-muted/50',
+                        'h-8 w-8 rounded-[var(--radius)] flex items-center justify-center shrink-0',
+                        address.isDefault ? 'bg-info/20' : 'bg-muted/50',
                       )}
                     >
                       <MapPin
                         className={cn(
                           'h-4 w-4',
                           address.isDefault
-                            ? 'text-blue-600'
+                            ? 'text-info'
                             : 'text-muted-foreground',
                         )}
                       />
@@ -226,7 +226,7 @@ export function UserDetailContact({
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-6 px-4 rounded-sm border border-dashed border-border/50 bg-muted/5 opacity-50">
+          <div className="flex flex-col items-center justify-center py-6 px-4 rounded-[var(--radius)] border border-dashed border-border/50 bg-muted/5 opacity-50">
             <MapPin className="h-8 w-8 text-muted-foreground/30 mb-2" />
             <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
               {t('users.details.no_addresses')}
@@ -237,3 +237,8 @@ export function UserDetailContact({
     </div>
   );
 }
+
+
+
+
+

@@ -24,8 +24,8 @@ export function PasswordAction({
   return (
     <div className="p-3 space-y-2">
       <div className="flex items-center gap-3 mb-2">
-        <div className="h-8 w-8 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0">
-          <KeyRound className="h-4 w-4 text-blue-500" />
+        <div className="h-8 w-8 rounded-[var(--radius)] bg-info/10 flex items-center justify-center shrink-0">
+          <KeyRound className="h-4 w-4 text-info" />
         </div>
         <div>
           <div className="text-[10px] font-bold uppercase tracking-wide text-foreground/80">
@@ -46,13 +46,13 @@ export function PasswordAction({
           placeholder={t('users.form.password_placeholder')}
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          className="h-8 text-[10px] bg-background border-border/10 rounded-md flex-1"
+          className="h-8 text-[10px] bg-background border-border/10 rounded-[var(--radius)] flex-1"
         />
         <Button
           size="sm"
           onClick={onReset}
           disabled={!newPassword || newPassword.length < 8 || isSavingPw}
-          className="h-8 px-3 rounded-md bg-primary text-background hover:bg-primary/90 font-bold text-[9px] uppercase tracking-wide shadow-none"
+          className="h-8 px-3 rounded-[var(--radius)] text-background font-bold text-[9px] uppercase tracking-wide shadow-none"
         >
           {isSavingPw ? '...' : t('common.save', { defaultValue: 'Save' })}
         </Button>

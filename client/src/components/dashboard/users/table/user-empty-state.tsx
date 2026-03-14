@@ -24,12 +24,12 @@ export function UserEmptyState({
       className="flex flex-col items-center justify-center py-20 px-4 text-center"
     >
       <div className="relative mb-6">
-        <div className="absolute inset-0 bg-blue-600/10 blur-3xl rounded-full" />
-        <div className="relative h-24 w-24 rounded-3xl bg-gradient-to-br from-background to-muted/50 border border-border/50 flex items-center justify-center shadow-none">
+        <div className="absolute inset-0 bg-info/10 blur-3xl rounded-full" />
+        <div className="relative h-24 w-24 rounded-[var(--radius)]-3xl bg-gradient-to-br from-background to-muted/50 border border-border/50 flex items-center justify-center shadow-none">
           {isFiltering ? (
-            <FilterX className="h-10 w-10 text-blue-600" />
+            <FilterX className="h-10 w-10 text-info" />
           ) : (
-            <SearchX className="h-10 w-10 text-blue-600" />
+            <SearchX className="h-10 w-10 text-info" />
           )}
         </div>
       </div>
@@ -46,7 +46,7 @@ export function UserEmptyState({
       <Button
         onClick={onClearFilters}
         variant="outline"
-        className="rounded-md font-bold text-[10px] uppercase tracking-wide border-blue-600/20 text-blue-600 hover:bg-blue-600/5 hover:border-blue-600/40 transition-all gap-2"
+        className="rounded-[var(--radius)] font-bold text-[10px] uppercase tracking-wide border-info/20 text-info hover:bg-info/5 hover:border-info/40 transition-all gap-2"
       >
         <RotateCcw className="h-3.5 w-3.5" />
         {t('users.empty.clear_filters')}
@@ -54,3 +54,8 @@ export function UserEmptyState({
     </motion.div>
   );
 }
+
+
+
+
+

@@ -16,6 +16,7 @@ import {
 } from '@atomecom/shared';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { extractData, extractPagination } from '@/lib/api-utils';
 
 type CreateUserRequest = z.infer<typeof createUserSchema>;
 type UpdateUserRequest = z.infer<typeof updateUserSchema>;
@@ -110,15 +111,18 @@ export const useUsers = (filters?: Record<string, unknown>) => {
     },
   });
 
+  const data = usersQuery.data;
+  const statsData = statsQuery.data;
+
   return {
-    users: usersQuery.data?.data || [],
-    pagination: usersQuery.data?.pagination || {
+    users: extractData(data) || [],
+    pagination: extractPagination(data) || {
       totalElements: 0,
       totalPages: 0,
       currentPage: 1,
       elementsPerPage: 10,
     },
-    stats: statsQuery.data?.data || {
+    stats: extractData(statsData) || {
       total: 0,
       active: 0,
       banned: 0,

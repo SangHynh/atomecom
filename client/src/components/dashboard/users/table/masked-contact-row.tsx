@@ -44,7 +44,7 @@ export function MaskedContactRow({
 
   return (
     <div className="flex items-center gap-3 group">
-      <div className="h-9 w-9 rounded-md bg-muted/50 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+      <div className="h-9 w-9 rounded-[var(--radius)] bg-muted/50 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
         <span className="text-muted-foreground group-hover:text-primary transition-colors">
           {icon}
         </span>
@@ -86,3 +86,8 @@ export function MaskedContactRow({
     </div>
   );
 }
+
+
+
+
+

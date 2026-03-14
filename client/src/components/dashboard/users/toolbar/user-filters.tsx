@@ -53,13 +53,13 @@ export function UserFilters({
           />
 
           {/* Add Action */}
-          <Button
+          <button
             onClick={onAddAction}
-            className="h-11 px-6 rounded-md bg-foreground text-background hover:bg-foreground/90 font-bold text-[10px] uppercase tracking-wide gap-2 shrink-0 shadow-none border border-border/10"
+            className="h-11 px-6 rounded-[var(--radius)] bg-foreground text-background hover:bg-foreground/90 font-black text-[10px] uppercase tracking-[0.15em] flex items-center gap-2 shrink-0 transition-all active:scale-[0.98] border border-transparent"
           >
-            <ChevronRight className="h-3 w-3 rotate-[-90deg]" />
-            Thêm người dùng
-          </Button>
+            <ChevronRight className="h-3 w-3 rotate-[-90deg] stroke-[3]" />
+            Thêm tài khoản
+          </button>
         </div>
 
         <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
@@ -68,31 +68,31 @@ export function UserFilters({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="h-11 px-4 rounded-md border border-border/10 bg-background font-bold text-[10px] uppercase tracking-wide gap-2 transition-all shrink-0 shadow-none hover:border-border/20"
+                className="h-11 px-4 rounded-[var(--radius)] border border-border/10 bg-background font-black text-[10px] uppercase tracking-[0.15em] gap-2 transition-all shrink-0 shadow-none hover:border-border/20"
               >
-                <span className="text-muted-foreground/30 font-medium lowercase">
-                  Hiển thị:
+                <span className="text-muted-foreground/30 font-bold lowercase italic">
+                  hiển thị:
                 </span>
-                <span>{params.limit} hàng</span>
+                <span>{params.limit} items</span>
                 <ChevronRight className="h-3 w-3 opacity-30 rotate-90" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="w-32 rounded-sm border-[0.5px] border-border/40 shadow-none p-1"
+              className="w-40 rounded-[var(--radius)] border-border/40 shadow-2xl p-1 bg-background/95 backdrop-blur-xl"
             >
               {[5, 10, 20, 50].map((val) => (
                 <DropdownMenuItem
                   key={val}
                   onClick={() => setParams({ limit: val })}
                   className={cn(
-                    'font-bold text-[10px] uppercase justify-center rounded-md cursor-pointer py-2.5 transition-colors',
+                    'font-black text-[10px] uppercase justify-center rounded-none cursor-pointer py-3 transition-colors tracking-[0.1em]',
                     params.limit === val
-                      ? 'bg-primary/10 text-primary'
+                      ? 'bg-foreground text-background'
                       : 'focus:bg-muted/50',
                   )}
                 >
-                  {val} hàng
+                  {val} bản ghi
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -104,16 +104,16 @@ export function UserFilters({
               <Button
                 variant="outline"
                 className={cn(
-                  'h-11 px-4 rounded-md border border-border/10 font-bold uppercase tracking-wide gap-2 transition-all text-[10px] shrink-0 shadow-none',
+                  'h-11 px-4 rounded-[var(--radius)] border border-border/10 font-black uppercase tracking-[0.15em] gap-2 transition-all text-[10px] shrink-0 shadow-none',
                   activeFilterCount > 0
-                    ? 'border-primary/30 bg-primary/5 text-primary'
+                    ? 'border-foreground/30 bg-foreground/5 text-foreground'
                     : 'border-border/40 bg-background hover:border-border/60 text-muted-foreground/40',
                 )}
               >
                 <Filter className="h-3.5 w-3.5 opacity-60" />
-                Bộ lọc nâng cao
+                Lọc nâng cao
                 {activeFilterCount > 0 && (
-                  <span className="h-4 w-4 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[8px] font-bold ml-1 scale-110">
+                  <span className="h-4 w-4 flex items-center justify-center rounded-none bg-foreground text-background text-[8px] font-black ml-1 scale-110">
                     {activeFilterCount}
                   </span>
                 )}
@@ -121,80 +121,86 @@ export function UserFilters({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="w-64 rounded-sm border-[0.5px] border-border/40 shadow-2xl p-2 bg-background/95 backdrop-blur-xl"
+              className="w-64 rounded-[var(--radius)] border-border/40 shadow-2xl p-2 bg-background/95 backdrop-blur-xl"
             >
-              <DropdownMenuLabel className="font-bold text-[9px] uppercase tracking-wider text-muted-foreground/40 p-2 leading-loose">
-                Phân quyền truy cập
+              <DropdownMenuLabel className="font-black text-[9px] uppercase tracking-[0.2em] text-muted-foreground/40 p-3 leading-loose">
+                Phân quyền hệ thống
               </DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => setParams({ role: 'all' })}
-                className="rounded-sm text-[11px] font-bold uppercase tracking-wider p-2.5 cursor-pointer gap-2"
+                className="rounded-none text-[10px] font-black uppercase tracking-[0.15em] p-3 cursor-pointer gap-3"
               >
-                {params.role === 'all' && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-foreground" />
-                )}
+                <div className={cn(
+                  "h-1.5 w-1.5 rounded-none border border-border/40",
+                  params.role === 'all' ? "bg-foreground" : "bg-transparent"
+                )} />
                 Tất cả vai trò
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setParams({ role: USER_ROLE.ADMIN })}
-                className="rounded-sm text-[11px] font-bold uppercase tracking-wider p-2.5 cursor-pointer gap-2"
+                className="rounded-none text-[10px] font-black uppercase tracking-[0.15em] p-3 cursor-pointer gap-3"
               >
-                {params.role === USER_ROLE.ADMIN && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-foreground" />
-                )}
+                <div className={cn(
+                  "h-1.5 w-1.5 rounded-none border border-border/40",
+                  params.role === USER_ROLE.ADMIN ? "bg-foreground" : "bg-transparent"
+                )} />
                 Quản trị viên
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setParams({ role: USER_ROLE.USER })}
-                className="rounded-sm text-[11px] font-bold uppercase tracking-wider p-2.5 cursor-pointer gap-2"
+                className="rounded-none text-[10px] font-black uppercase tracking-[0.15em] p-3 cursor-pointer gap-3"
               >
-                {params.role === USER_ROLE.USER && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-foreground" />
-                )}
+                <div className={cn(
+                  "h-1.5 w-1.5 rounded-none border border-border/40",
+                  params.role === USER_ROLE.USER ? "bg-foreground" : "bg-transparent"
+                )} />
                 Khách hàng
               </DropdownMenuItem>
 
-              <DropdownMenuSeparator className="my-2 bg-border/10" />
+              <DropdownMenuSeparator className="my-2 bg-border/40" />
 
-              <DropdownMenuLabel className="font-bold text-[9px] uppercase tracking-wider text-muted-foreground/40 p-2 leading-loose">
+              <DropdownMenuLabel className="font-black text-[9px] uppercase tracking-[0.2em] text-muted-foreground/40 p-3 leading-loose">
                 Tình trạng hồ sơ
               </DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => setParams({ status: 'all' })}
-                className="rounded-sm text-[11px] font-bold uppercase tracking-wider p-2.5 cursor-pointer gap-2"
+                className="rounded-none text-[10px] font-black uppercase tracking-[0.15em] p-3 cursor-pointer gap-3"
               >
-                {params.status === 'all' && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-foreground" />
-                )}
+                <div className={cn(
+                  "h-1.5 w-1.5 rounded-none border border-border/40",
+                  params.status === 'all' ? "bg-foreground" : "bg-transparent"
+                )} />
                 Tất cả trạng thái
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setParams({ status: USER_STATUS.ACTIVE })}
-                className="rounded-sm text-[11px] font-bold uppercase tracking-wider p-2.5 cursor-pointer gap-2 focus:bg-emerald-500/5 focus:text-emerald-600"
+                className="rounded-none text-[10px] font-black uppercase tracking-[0.15em] p-3 cursor-pointer gap-3 focus:bg-success/5 focus:text-success"
               >
-                {params.status === USER_STATUS.ACTIVE && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                )}
+                <div className={cn(
+                  "h-1.5 w-1.5 rounded-none border border-border/40",
+                  params.status === USER_STATUS.ACTIVE ? "bg-success" : "bg-transparent"
+                )} />
                 Đang hoạt động
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setParams({ status: USER_STATUS.BANNED })}
-                className="rounded-sm text-[11px] font-bold uppercase tracking-wider p-2.5 cursor-pointer gap-2 focus:bg-rose-500/5 focus:text-rose-600"
+                className="rounded-none text-[10px] font-black uppercase tracking-[0.15em] p-3 cursor-pointer gap-3 focus:bg-danger-soft/5 focus:text-danger-soft"
               >
-                {params.status === USER_STATUS.BANNED && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                )}
+                <div className={cn(
+                  "h-1.5 w-1.5 rounded-none border border-border/40",
+                  params.status === USER_STATUS.BANNED ? "bg-danger-soft" : "bg-transparent"
+                )} />
                 Đã khóa tài khoản
               </DropdownMenuItem>
 
               {activeFilterCount > 0 && (
                 <>
-                  <DropdownMenuSeparator className="my-2 bg-border/10" />
+                  <DropdownMenuSeparator className="my-2 bg-border/40" />
                   <DropdownMenuItem
                     onClick={() => clearParams()}
-                    className="font-bold text-[10px] uppercase tracking-wider text-rose-500 focus:bg-rose-500/5 focus:text-rose-500 rounded-md justify-center py-3 bg-rose-500/5"
+                    className="font-black text-[10px] uppercase tracking-[0.15em] text-white bg-destructive hover:bg-destructive/90 focus:bg-destructive focus:text-white rounded-none justify-center py-3.5"
                   >
-                    Làm mới bộ lọc
+                    Xóa tất cả bộ lọc
                   </DropdownMenuItem>
                 </>
               )}
@@ -205,9 +211,9 @@ export function UserFilters({
           <Button
             variant="outline"
             className={cn(
-              'h-11 w-11 p-0 rounded-sm border-[0.5px] transition-all shadow-none group shrink-0 shrink-0',
+              'h-11 w-11 p-0 rounded-[var(--radius)] border-[0.5px] transition-all shadow-none group shrink-0',
               activeFilterCount > 0 || params.q
-                ? 'text-rose-500 border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10'
+                ? 'text-destructive border-destructive/20 bg-destructive/5 hover:bg-destructive/10'
                 : 'text-muted-foreground/20 border-border/40 bg-background hover:border-border/60',
             )}
             onClick={() => clearParams()}
@@ -226,19 +232,19 @@ export function UserFilters({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="h-11 w-11 p-0 rounded-sm border-[0.5px] border-border/40 bg-background/50 hover:border-border/60 transition-all shadow-none shrink-0"
+                className="h-11 w-11 p-0 rounded-[var(--radius)] border-[0.5px] border-border/40 bg-background/50 hover:border-border/60 transition-all shadow-none shrink-0"
               >
                 <MoreHorizontal className="h-4 w-4 text-muted-foreground/30" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-52 rounded-sm border-[0.5px] border-border/40 shadow-2xl p-2 bg-background/95 backdrop-blur-xl"
+              className="w-52 rounded-[var(--radius)] border-[0.5px] border-border/40 shadow-2xl p-2 bg-background/95 backdrop-blur-xl"
             >
               <DropdownMenuLabel className="font-bold text-[9px] uppercase tracking-wider text-muted-foreground/40 p-2">
                 Công cụ hỗ trợ
               </DropdownMenuLabel>
-              <DropdownMenuItem className="rounded-sm text-[11px] font-bold uppercase tracking-wider p-2.5 cursor-pointer gap-2">
+              <DropdownMenuItem className="rounded-[var(--radius)] text-[11px] font-bold uppercase tracking-wider p-2.5 cursor-pointer gap-2">
                 <Download className="h-3.5 w-3.5 opacity-40" />
                 Xuất dữ liệu CSV
               </DropdownMenuItem>
@@ -256,14 +262,14 @@ export function UserFilters({
                 ].map((col) => (
                   <div
                     key={col.id}
-                    className="flex items-center gap-3 px-2.5 py-2 hover:bg-muted/50 rounded-sm cursor-pointer transition-colors"
+                    className="flex items-center gap-3 px-2.5 py-2 hover:bg-muted/50 rounded-[var(--radius)] cursor-pointer transition-colors"
                     onClick={() => onToggleColumn(col.id)}
                   >
                     <div
                       className={cn(
                         'h-2 w-2 rounded-full transition-all border border-border/40',
                         visibleColumns.includes(col.id)
-                          ? 'bg-primary border-primary scale-110'
+                          ? 'bg-foreground border-foreground scale-110'
                           : 'bg-transparent',
                       )}
                     />
@@ -280,3 +286,8 @@ export function UserFilters({
     </div>
   );
 }
+
+
+
+
+

@@ -25,6 +25,7 @@ import { cn, maskEmail } from '@/lib/utils';
 import { formatDistanceToNow, format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Line, LineChart, ResponsiveContainer } from 'recharts';
+import { canManageUser, canEditUser, isPrivileged } from '@/lib/user-permissions';
 
 interface UserRowProps {
   user: User;
@@ -45,21 +46,9 @@ export function UserRow({
   onEdit,
   onUpdateUser,
 }: UserRowProps) {
-  const canManageUser = () => {
-    if (!currentUser) return false;
-    if (currentUser.id === user.id) return false;
-    if (user.role === USER_ROLE.OWNER) return false;
-    if (currentUser.role === USER_ROLE.OWNER) return true;
-    if (currentUser.role === USER_ROLE.ADMIN && user.role === USER_ROLE.USER)
-      return true;
-    return false;
-  };
-
-  const canEditUser = () => {
-    if (!currentUser) return true;
-    if (currentUser.id === user.id) return true;
-    return canManageUser();
-  };
+  const isUserManageable = canManageUser(currentUser, user);
+  const isUserEditable = canEditUser(currentUser, user);
+  const isUserPrivileged = isPrivileged(user);
 
   return (
     <div
@@ -69,45 +58,43 @@ export function UserRow({
       {/* Identity */}
       <div className="flex items-center gap-4 px-4 min-w-0">
         <div className="relative shrink-0">
-          <Avatar className="h-10 w-10 rounded-md border border-border/20 group-hover:scale-105 transition-transform duration-500">
+          <Avatar className="h-10 w-10 rounded-[var(--radius)] border border-border/20 group-hover:scale-105 transition-transform duration-500">
             <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback className="bg-muted text-foreground font-semibold text-lg">
+            <AvatarFallback className="bg-muted text-foreground font-black text-lg">
               {user.name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           {user.isOnline && (
             <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/40 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-primary border-2 border-background"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full bg-foreground opacity-20"></span>
+              <span className="relative inline-flex h-3 w-3 bg-foreground border-2 border-background"></span>
             </span>
           )}
         </div>
         <div className="flex flex-col min-w-0">
-          <span className="font-semibold text-base leading-none truncate text-foreground group-hover:text-primary transition-colors">
+          <span className="font-black text-base leading-none truncate text-foreground group-hover:text-primary transition-colors uppercase tracking-tight">
             {user.name}
           </span>
-          <span className="text-[10px] text-muted-foreground/40 font-mono mt-1 truncate tracking-tight">
-            {maskEmail(user.email)}
+          <span className="text-[9px] text-muted-foreground/60 font-mono mt-1.5 truncate tracking-tight uppercase">
+            {user.email}
           </span>
         </div>
       </div>
 
       {/* Role */}
       <div className="px-4">
-        {user.role === USER_ROLE.ADMIN || user.role === USER_ROLE.OWNER ? (
+        {isUserPrivileged ? (
           <Badge
             variant="outline"
-            className="bg-amber-500/5 text-amber-600 border-amber-500/10 text-[9px] font-bold uppercase tracking-wide px-2.5 shadow-none"
+            className="bg-foreground text-background border-transparent text-[9px] font-black uppercase tracking-[0.15em] px-2.5 py-1 rounded-none shadow-none"
           >
-            <Shield className="h-3 w-3 mr-1.5" />
             Quản trị
           </Badge>
         ) : (
           <Badge
             variant="outline"
-            className="bg-muted/30 text-muted-foreground/50 border-border/20 text-[9px] font-bold uppercase tracking-wide px-2.5 shadow-none"
+            className="bg-transparent text-foreground border-foreground/30 text-[9px] font-black uppercase tracking-[0.15em] px-2.5 py-1 rounded-none shadow-none"
           >
-            <UserIcon className="h-3 w-3 mr-1.5" />
             Khách hàng
           </Badge>
         )}
@@ -115,22 +102,21 @@ export function UserRow({
 
       {/* Status */}
       <div
-        className="px-4 flex flex-col gap-1.5"
+        className="px-4 flex flex-col gap-2"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-1.5">
           {user.isVerified ? (
             <Badge
               variant="outline"
-              className="bg-primary/5 text-primary border-primary/10 text-[8px] font-bold uppercase tracking-wide px-2 shadow-none"
+              className="bg-transparent text-foreground/40 border-foreground/10 text-[8px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-none shadow-none"
             >
-              <CheckCircle2 className="h-2.5 w-2.5 mr-1" />
               Verified
             </Badge>
           ) : (
             <Badge
               variant="outline"
-              className="bg-zinc-500/5 text-zinc-500 border-zinc-500/10 text-[8px] font-bold uppercase tracking-wide px-2 shadow-none"
+              className="bg-muted/30 text-muted-foreground/30 border-border/10 text-[8px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-none shadow-none"
             >
               Unverified
             </Badge>
@@ -138,47 +124,46 @@ export function UserRow({
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild disabled={!canManageUser()}>
+          <DropdownMenuTrigger asChild disabled={!isUserManageable}>
             <div
               className={cn(
-                'flex items-center gap-2 px-2.5 py-1 rounded-md border text-[9px] font-bold uppercase tracking-wide transition-all w-fit shadow-none',
+                'flex items-center gap-2 px-2.5 py-1.5 rounded-none border text-[9px] font-black uppercase tracking-[0.15em] transition-all w-fit shadow-none',
                 user.status === USER_STATUS.ACTIVE
-                  ? 'bg-emerald-500/5 text-emerald-600 border-emerald-500/10'
+                  ? 'bg-transparent text-foreground border-foreground/30'
                   : user.status === USER_STATUS.BANNED
-                    ? 'bg-rose-500/5 text-rose-600 border-rose-500/10'
-                    : 'bg-zinc-500/5 text-zinc-500 border-zinc-500/10',
-                canManageUser()
-                  ? 'cursor-pointer hover:bg-opacity-20'
+                    ? 'bg-destructive text-destructive-foreground border-destructive'
+                    : 'bg-muted text-muted-foreground border-border',
+                isUserManageable
+                  ? 'cursor-pointer hover:bg-foreground/5'
                   : 'cursor-default opacity-50',
               )}
             >
               {user.status}
-              {canManageUser() && (
+              {isUserManageable && (
                 <Clock className="h-2.5 w-2.5 opacity-40 ml-1" />
               )}
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="start"
-            className="w-44 rounded-md border-border/40 p-1 shadow-none"
+            className="w-48 rounded-none border-border p-1 shadow-none bg-background/95 backdrop-blur-md"
           >
-            <DropdownMenuLabel className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/40 px-2 py-1.5">
+            <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 px-3 py-2">
               Thiết lập trạng thái
             </DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() =>
                 onUpdateUser?.(user.id, { status: USER_STATUS.ACTIVE })
               }
-              className="text-[10px] font-semibold uppercase tracking-wide py-2 rounded-md cursor-pointer gap-2"
+              className="text-[10px] font-black uppercase tracking-[0.1em] py-2.5 px-3 rounded-none cursor-pointer gap-2"
             >
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Kích
-              hoạt
+              <CheckCircle2 className="h-3.5 w-3.5" /> Kích hoạt
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
                 onUpdateUser?.(user.id, { status: USER_STATUS.BANNED })
               }
-              className="text-[10px] font-semibold uppercase tracking-wide py-2 rounded-md cursor-pointer gap-2 text-rose-500 focus:text-rose-600"
+              className="text-[10px] font-black uppercase tracking-[0.1em] py-2.5 px-3 rounded-none cursor-pointer gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
             >
               <Ban className="h-3.5 w-3.5" /> Khóa tài khoản
             </DropdownMenuItem>
@@ -188,7 +173,7 @@ export function UserRow({
 
       {/* Last Login */}
       <div className="px-4">
-        <div className="flex items-center gap-2 text-muted-foreground/50 font-mono text-[10px] uppercase font-semibold tracking-tight">
+        <div className="flex items-center gap-2 text-muted-foreground/40 font-mono text-[9px] uppercase font-bold tracking-tight">
           <Clock className="h-3 w-3" />
           <span>
             {user.lastLoginAt
@@ -202,7 +187,7 @@ export function UserRow({
       </div>
 
       {/* Activity Chart */}
-      <div className="px-4 opacity-30 group-hover:opacity-60 transition-opacity">
+      <div className="px-4 opacity-20 group-hover:opacity-40 transition-opacity">
         <div className="h-6 w-24">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={activityData}>
@@ -210,7 +195,7 @@ export function UserRow({
                 type="monotone"
                 dataKey="value"
                 stroke="currentColor"
-                strokeWidth={1.2}
+                strokeWidth={1.5}
                 dot={false}
               />
             </LineChart>
@@ -219,9 +204,10 @@ export function UserRow({
       </div>
 
       {/* Joined Date */}
-      <div className="px-4">
-        <span className="text-[10px] font-bold text-muted-foreground/30 uppercase tracking-wide font-mono">
-          {format(new Date(user.createdAt), 'dd.MM.yyyy')}
+      <div className="px-4 text-right pr-6">
+        <span className="text-[9px] font-black text-muted-foreground/20 uppercase tracking-[0.1em] font-mono">
+          {format(new Date(user.createdAt), 'dd.MM')}
+          <span className="ml-0.5 opacity-50">.26</span>
         </span>
       </div>
 
@@ -230,17 +216,22 @@ export function UserRow({
         className="px-4 flex justify-end"
         onClick={(e) => e.stopPropagation()}
       >
-        {canEditUser() && (
+        {isUserEditable && (
           <Button
             variant="ghost"
             size="icon"
             onClick={() => onEdit(user)}
-            className="h-10 w-10 rounded-md border border-border/10 opacity-0 group-hover:opacity-100 hover:bg-foreground hover:text-background transition-all"
+            className="h-10 w-10 border border-border/10 opacity-0 group-hover:opacity-100 hover:bg-foreground hover:text-background transition-all rounded-[var(--radius)] shadow-none"
           >
-            <Edit className="h-4 w-4" />
+            <Edit className="h-3.5 w-3.5" />
           </Button>
         )}
       </div>
     </div>
   );
 }
+
+
+
+
+

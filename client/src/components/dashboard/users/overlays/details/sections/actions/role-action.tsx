@@ -28,8 +28,8 @@ export function RoleAction({
   return (
     <div className="flex items-center justify-between p-3 gap-3">
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        <div className="h-8 w-8 rounded-md bg-rose-500/10 flex items-center justify-center shrink-0">
-          <UserCog className="h-4 w-4 text-rose-500" />
+        <div className="h-8 w-8 rounded-[var(--radius)] bg-danger-soft/10 flex items-center justify-center shrink-0">
+          <UserCog className="h-4 w-4 text-danger-soft" />
         </div>
         <div className="min-w-0">
           <div className="text-[10px] font-bold uppercase tracking-wide text-foreground/80 truncate">
@@ -47,7 +47,7 @@ export function RoleAction({
         onValueChange={onRoleChange}
         disabled={isUpdating}
       >
-        <SelectTrigger className="h-8 w-[130px] shrink-0 text-[10px] font-bold uppercase tracking-wide border-border/10 rounded-md">
+        <SelectTrigger className="h-8 w-[130px] shrink-0 text-[10px] font-bold uppercase tracking-wide border-border/10 rounded-[var(--radius)]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -62,3 +62,8 @@ export function RoleAction({
     </div>
   );
 }
+
+
+
+
+

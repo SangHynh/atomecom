@@ -37,7 +37,7 @@ function StatItem({
 }: StatItemProps) {
   if (isLoading) {
     return (
-      <div className="relative rounded-sm border border-border/40 bg-background/60 backdrop-blur-xl shadow-sm overflow-hidden p-4">
+      <div className="relative rounded-[var(--radius)] border border-border/40 bg-background/60 backdrop-blur-xl shadow-sm overflow-hidden p-4">
         <div className="absolute inset-x-0 top-0 h-0.5 bg-border/30 rounded-full" />
         <div className="flex items-center justify-between gap-3">
           <div className="space-y-2 flex-1">
@@ -45,7 +45,7 @@ function StatItem({
             <Skeleton className="h-8 w-20" />
             <Skeleton className="h-2 w-24" />
           </div>
-          <Skeleton className="h-11 w-11 rounded-md shrink-0" />
+          <Skeleton className="h-11 w-11 rounded-[var(--radius)] shrink-0" />
         </div>
       </div>
     );
@@ -57,9 +57,9 @@ function StatItem({
         <TooltipTrigger asChild>
           <div
             className={cn(
-              'relative rounded-md border bg-background/60 backdrop-blur-xl overflow-hidden group cursor-pointer transition-all duration-300',
+              'relative border bg-background/60 backdrop-blur-xl overflow-hidden group cursor-pointer transition-all duration-300',
               'hover:-translate-y-0.5 hover:shadow-none active:scale-[0.98]',
-              `border-border/10 hover:border-${accentColor}/30`,
+              `border-border/10 hover:border-border/30`,
               `hover:shadow-none`,
             )}
           >
@@ -67,15 +67,15 @@ function StatItem({
             <div
               className={cn(
                 'absolute inset-x-0 top-0 h-0.5 transition-all duration-300',
-                `bg-gradient-to-r ${accentColor}`,
-                'opacity-60 group-hover:opacity-100',
+                `bg-${accentColor}`,
+                'opacity-0 group-hover:opacity-100',
               )}
             />
             {/* Subtle glow bg */}
             <div
               className={cn(
                 'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none',
-                `bg-gradient-to-br ${glowColor} to-transparent`,
+                `bg-${glowColor}`,
               )}
             />
 
@@ -84,24 +84,24 @@ function StatItem({
                 <div className="min-w-0 flex-1">
                   <p
                     className={cn(
-                      'text-[9px] md:text-[10px] font-bold uppercase tracking-wider mb-1 transition-colors duration-200 truncate',
+                      'text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] mb-1 transition-colors duration-200 truncate',
                       'text-muted-foreground/40 group-hover:text-foreground/80',
                     )}
                   >
                     {label}
                   </p>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight leading-none tabular-nums text-foreground/90">
+                    <span className="text-xl md:text-2xl lg:text-3xl font-black tracking-tighter leading-none tabular-nums text-foreground/90">
                       {value}
                     </span>
                   </div>
-                  <p className="text-[10px] md:text-[11px] font-bold text-muted-foreground mt-1.5 truncate">
+                  <p className="text-[10px] md:text-[11px] font-bold text-muted-foreground/40 mt-1.5 truncate uppercase tracking-tight italic">
                     {description}
                   </p>
                 </div>
                 <div
                   className={cn(
-                    'shrink-0 h-9 w-9 md:h-11 md:w-11 rounded-md flex items-center justify-center transition-all duration-500',
+                    'shrink-0 h-9 w-9 md:h-11 md:w-11 rounded-[var(--radius)] flex items-center justify-center transition-all duration-500',
                     'group-hover:scale-110 group-hover:rotate-[8deg]',
                     iconBg,
                   )}
@@ -143,9 +143,9 @@ export function UserStats({
       value: total,
       icon: Users,
       description: t('users.stats.growth_hint'),
-      accentColor: 'from-primary to-primary/80',
-      glowColor: 'from-primary/5',
-      iconBg: 'bg-primary/20 text-primary shadow-none shadow-primary/20',
+      accentColor: 'foreground',
+      glowColor: 'foreground/5',
+      iconBg: 'bg-foreground/5 text-foreground shadow-none',
       tooltip: t('users.stats.total_desc', {
         defaultValue: 'Total accounts registered in the system',
       }),
@@ -155,9 +155,9 @@ export function UserStats({
       value: active,
       icon: UserCheck,
       description: t('users.stats.realtime'),
-      accentColor: 'from-primary to-primary/70',
-      glowColor: 'from-primary/5',
-      iconBg: 'bg-primary/20 text-primary shadow-none shadow-primary/20',
+      accentColor: 'foreground',
+      glowColor: 'foreground/5',
+      iconBg: 'bg-foreground/5 text-foreground shadow-none',
       tooltip: t('users.stats.active_desc', {
         defaultValue: 'Users currently active',
       }),
@@ -167,9 +167,9 @@ export function UserStats({
       value: verified,
       icon: ShieldCheck,
       description: `${Math.round((verified / (total || 1)) * 100)}% ${t('users.stats.of_total', { defaultValue: 'of total' })}`,
-      accentColor: 'from-primary/90 to-primary/60',
-      glowColor: 'from-primary/5',
-      iconBg: 'bg-primary/10 text-primary shadow-none shadow-primary/10',
+      accentColor: 'foreground',
+      glowColor: 'foreground/5',
+      iconBg: 'bg-foreground/5 text-foreground shadow-none',
       tooltip: t('users.stats.verified_desc', {
         defaultValue: 'Users who verified their email address',
       }),
@@ -179,9 +179,9 @@ export function UserStats({
       value: `${banned + deactive}`,
       icon: UserX,
       description: t('users.stats.security'),
-      accentColor: 'from-rose-500 to-red-500',
-      glowColor: 'from-rose-500/5',
-      iconBg: 'bg-rose-500/10 text-rose-500 shadow-none shadow-rose-500/10',
+      accentColor: 'destructive',
+      glowColor: 'destructive/5',
+      iconBg: 'bg-destructive/10 text-destructive shadow-none',
       tooltip: t('users.stats.restricted_desc', {
         banned,
         deactive,
@@ -200,3 +200,8 @@ export function UserStats({
     </div>
   );
 }
+
+
+
+
+

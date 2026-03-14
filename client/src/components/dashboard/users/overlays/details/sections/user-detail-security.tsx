@@ -32,11 +32,11 @@ export function UserDetailSecurity({ user }: UserDetailSecurityProps) {
         <div className="h-px flex-1 bg-gradient-to-l from-border/60 to-transparent" />
       </div>
 
-      <div className="rounded-sm border border-border/40 bg-background/60 overflow-hidden divide-y divide-border/20 ring-1 ring-border/10">
+      <div className="rounded-[var(--radius)] border border-border/40 bg-background/60 overflow-hidden divide-y divide-border/20 ring-1 ring-border/10">
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-md bg-blue-500/10 flex items-center justify-center">
-              <Globe className="h-4 w-4 text-blue-600" />
+            <div className="h-8 w-8 rounded-[var(--radius)] bg-info/10 flex items-center justify-center">
+              <Globe className="h-4 w-4 text-info" />
             </div>
             <div>
               <div className="text-[11px] font-bold uppercase tracking-wider text-foreground/80">
@@ -65,8 +65,8 @@ export function UserDetailSecurity({ user }: UserDetailSecurityProps) {
         </div>
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-md bg-purple-500/10 flex items-center justify-center">
-              <Laptop className="h-4 w-4 text-purple-600" />
+            <div className="h-8 w-8 rounded-[var(--radius)] bg-primary/10 flex items-center justify-center">
+              <Laptop className="h-4 w-4 text-primary" />
             </div>
             <div>
               <div className="text-[11px] font-bold uppercase tracking-wider text-foreground/80">
@@ -101,7 +101,7 @@ export function UserDetailSecurity({ user }: UserDetailSecurityProps) {
         </div>
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-[var(--radius)] bg-primary/10 flex items-center justify-center">
               <Clock className="h-4 w-4 text-primary" />
             </div>
             <div>
@@ -126,3 +126,8 @@ export function UserDetailSecurity({ user }: UserDetailSecurityProps) {
     </div>
   );
 }
+
+
+
+
+

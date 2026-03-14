@@ -9,24 +9,15 @@ import { SortableHeader } from '@/components/dashboard/studio/sortable-header';
 import { StudioEmptyState } from '@/components/dashboard/studio/studio-empty-state';
 import { UserRow } from './user-row';
 
+import { useTableParams } from '@/hooks/use-table-params';
+
 interface UserTableProps {
   users: UserType[];
   currentUser?: UserType | null;
-  sortField?: string;
-  sortOrder?: 'asc' | 'desc';
-  onSort: (field: string) => void;
   onEdit: (user: UserType) => void;
   onDelete: (id: string) => void;
   onViewDetails: (user: UserType) => void;
-  pagination?: {
-    totalElements: number;
-    currentPage: number;
-    totalPages: number;
-    limit: number;
-    onPageChange: (page: number) => void;
-    onLimitChange: (limit: number) => void;
-  };
-  onClearFilters?: () => void;
+  totalElements: number;
   isLoading?: boolean;
   onUpdateUser?: (id: string, data: Partial<UserType>) => void;
   visibleColumns?: string[];
@@ -35,18 +26,27 @@ interface UserTableProps {
 export function UserTable({
   users,
   currentUser,
-  sortField,
-  sortOrder,
-  onSort,
   onEdit,
   onDelete,
   onViewDetails,
-  pagination,
-  onClearFilters,
+  totalElements,
   isLoading,
   onUpdateUser,
   visibleColumns,
 }: UserTableProps) {
+  const { params, setParams, clearParams } = useTableParams();
+  const sortField = params.sortField;
+  const sortOrder = params.sortOrder as 'asc' | 'desc' | undefined;
+
+  const handleSort = (field: string) => {
+    if (params.sortField === field) {
+      setParams({
+        sortOrder: params.sortOrder === 'asc' ? 'desc' : 'asc',
+      });
+    } else {
+      setParams({ sortField: field, sortOrder: 'asc' });
+    }
+  };
   // Mock background activity data for each row
   const activityData = React.useMemo(
     () =>
@@ -59,7 +59,7 @@ export function UserTable({
   );
 
   return (
-    <div className="flex flex-col rounded-md border border-border/10 bg-background/60 backdrop-blur-md overflow-hidden shadow-none ring-0 flex-1 min-h-0">
+    <div className="flex flex-col rounded-[var(--radius)] border border-border/10 bg-background/60 backdrop-blur-md overflow-hidden shadow-none ring-0 flex-1 min-h-0">
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="min-w-[1100px]">
           {/* Table Header */}
@@ -69,21 +69,21 @@ export function UserTable({
               field="name"
               currentField={sortField}
               currentOrder={sortOrder}
-              onSort={onSort}
+              onSort={handleSort}
             />
             <SortableHeader
               label="Quyền hạn"
               field="role"
               currentField={sortField}
               currentOrder={sortOrder}
-              onSort={onSort}
+              onSort={handleSort}
             />
             <SortableHeader
               label="Trạng thái"
               field="status"
               currentField={sortField}
               currentOrder={sortOrder}
-              onSort={onSort}
+              onSort={handleSort}
             />
             <SortableHeader label="Truy cập cuối" />
             <SortableHeader label="Hoạt động" />
@@ -92,9 +92,9 @@ export function UserTable({
               field="createdAt"
               currentField={sortField}
               currentOrder={sortOrder}
-              onSort={onSort}
+              onSort={handleSort}
             />
-            <div className="px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/40 text-right">
+            <div className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground/20 text-right pr-10">
               Thao tác
             </div>
           </div>
@@ -102,13 +102,13 @@ export function UserTable({
           {/* Rows */}
           <div className="divide-y divide-border/10">
             {isLoading ? (
-              Array.from({ length: pagination?.limit || 5 }).map((_, i) => (
+              Array.from({ length: params.limit || 5 }).map((_, i) => (
                 <div
                   key={i}
                   className="grid grid-cols-[300px_150px_180px_150px_120px_150px_auto] items-center px-6 py-6 border-b border-border/20"
                 >
                   <div className="flex items-center gap-4">
-                    <Skeleton className="h-11 w-11 rounded-sm" />
+                    <Skeleton className="h-11 w-11 rounded-[var(--radius)]" />
                     <div className="space-y-2">
                       <Skeleton className="h-5 w-40" />
                       <Skeleton className="h-3 w-32" />
@@ -120,7 +120,7 @@ export function UserTable({
                   <Skeleton className="h-4 w-24 px-4" />
                   <Skeleton className="h-4 w-24 px-4" />
                   <div className="flex justify-end gap-2 px-4">
-                    <Skeleton className="h-9 w-9 rounded-sm" />
+                    <Skeleton className="h-9 w-9 rounded-[var(--radius)]" />
                   </div>
                 </div>
               ))
@@ -130,7 +130,7 @@ export function UserTable({
                 title="Hồ sơ vắng bóng"
                 description="Không tìm thấy người dùng nào khớp với tiêu chí tìm kiếm của bạn."
                 actionLabel="Xóa bộ lọc tìm kiếm"
-                onAction={onClearFilters}
+                onAction={() => clearParams()}
               />
             ) : (
               users.map((user, index) => (
@@ -151,14 +151,21 @@ export function UserTable({
       </div>
 
       {/* Integrated Pagination Footer */}
-      {pagination && (
-        <StudioPagination
-          pagination={pagination}
-          currentCount={users.length}
-          itemName="Hồ sơ"
-          onPageChange={pagination.onPageChange}
-        />
-      )}
+      <StudioPagination
+        pagination={{
+          totalElements: totalElements,
+          currentPage: params.page || 1,
+          totalPages: Math.ceil(totalElements / (params.limit || 20)),
+        }}
+        currentCount={users.length}
+        itemName="Hồ sơ"
+        onPageChange={(p) => setParams({ page: p })}
+      />
     </div>
   );
 }
+
+
+
+
+

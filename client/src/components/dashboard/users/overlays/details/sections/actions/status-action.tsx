@@ -28,7 +28,7 @@ export function StatusAction({
   return (
     <div className="flex items-center justify-between p-3 gap-3">
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        <div className="h-8 w-8 rounded-md bg-amber-500/10 flex items-center justify-center shrink-0">
+        <div className="h-8 w-8 rounded-[var(--radius)] bg-warning/10 flex items-center justify-center shrink-0">
           <Shield className="h-4 w-4 text-amber-500" />
         </div>
         <div className="min-w-0">
@@ -47,7 +47,7 @@ export function StatusAction({
         onValueChange={onStatusChange}
         disabled={isUpdating}
       >
-        <SelectTrigger className="h-8 w-[130px] shrink-0 text-[10px] font-bold uppercase tracking-wide border-border/10 rounded-md">
+        <SelectTrigger className="h-8 w-[130px] shrink-0 text-[10px] font-bold uppercase tracking-wide border-border/10 rounded-[var(--radius)]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -65,7 +65,7 @@ export function StatusAction({
             className="text-xs font-semibold"
           >
             <span className="flex items-center gap-2">
-              <Ban className="h-3 w-3 text-rose-500" />
+              <Ban className="h-3 w-3 text-danger-soft" />
               {t('users.table.status.banned')}
             </span>
           </SelectItem>
@@ -74,3 +74,8 @@ export function StatusAction({
     </div>
   );
 }
+
+
+
+
+
