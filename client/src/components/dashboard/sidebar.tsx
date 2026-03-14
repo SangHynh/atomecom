@@ -96,7 +96,7 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
         {/* Logo Area */}
         <div className="h-20 flex items-center px-6 shrink-0 relative">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="h-10 w-10 min-w-[40px] rounded-sm bg-foreground flex items-center justify-center shrink-0 border border-transparent group hover:bg-transparent hover:border-foreground/20 transition-all duration-500">
+            <div className="h-10 w-10 min-w-[40px] rounded-[var(--radius)] bg-foreground flex items-center justify-center shrink-0 border border-transparent group hover:bg-transparent hover:border-foreground/20 transition-all duration-500">
               <ShieldCheck className="text-background group-hover:text-foreground h-5 w-5 transition-colors" />
             </div>
             <AnimatePresence>
@@ -145,7 +145,7 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
                       toggleExpand(item.href);
                     }}
                     className={cn(
-                      'flex w-full items-center gap-4 px-3 h-11 rounded-sm transition-all duration-300 group relative',
+                      'flex w-full items-center gap-4 px-3 h-11 rounded-[var(--radius)] transition-all duration-300 group relative',
                       isActive && !isExpanded
                         ? 'bg-foreground text-background'
                         : 'text-muted-foreground/60 hover:text-foreground hover:bg-muted/30',
@@ -183,7 +183,7 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
                   <Link
                     href={item.href}
                     className={cn(
-                      'flex items-center gap-4 px-3 h-11 rounded-sm transition-all duration-300 group relative',
+                      'flex items-center gap-4 px-3 h-11 rounded-[var(--radius)] transition-all duration-300 group relative',
                       isActive
                         ? 'bg-foreground text-background'
                         : 'text-muted-foreground/60 hover:text-foreground hover:bg-muted/30',
@@ -222,7 +222,7 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
                             key={sub.href}
                             href={sub.href}
                             className={cn(
-                              'h-9 flex items-center px-4 text-[9px] font-bold uppercase tracking-wide rounded-sm transition-all relative',
+                              'h-9 flex items-center px-4 text-[9px] font-bold uppercase tracking-wide rounded-[var(--radius)] transition-all relative',
                               isSubActive
                                 ? 'text-foreground bg-muted/20'
                                 : 'text-muted-foreground/40 hover:text-foreground hover:bg-muted/10',
@@ -252,19 +252,19 @@ export function Sidebar({ isOpen, toggle }: SidebarProps) {
         <div className="p-4 border-t border-border/40 shrink-0">
           <div
             className={cn(
-              'h-12 flex items-center gap-4 transition-all duration-500 rounded-sm border-[0.5px] border-transparent hover:bg-muted/5 group cursor-pointer',
+              'h-12 flex items-center gap-4 transition-all duration-500 rounded-[var(--radius)] border-[0.5px] border-transparent hover:bg-muted/5 group cursor-pointer',
               isOpen ? 'px-4' : 'justify-center px-0',
             )}
           >
-            <div className="h-6 w-6 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="h-6 w-6 rounded-full bg-success/10 flex items-center justify-center shrink-0">
+              <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
             </div>
             {isOpen && (
               <div className="flex flex-col">
                 <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/40">
                   Trạng thái kết nối
                 </span>
-                <span className="text-[8px] font-semibold text-emerald-500/60 uppercase">
+                <span className="text-[8px] font-semibold text-success/60 uppercase">
                   Đang hoạt động tốt
                 </span>
               </div>
