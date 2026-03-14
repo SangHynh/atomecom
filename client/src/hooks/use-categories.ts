@@ -7,6 +7,7 @@ import { categoryService } from '@/services/category.service';
 import { Category, SuccessResponse, categorySchema } from '@atomecom/shared';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { extractData, extractPagination } from '@/lib/api-utils';
 
 type CreateCategoryPayload = z.infer<typeof categorySchema>;
 type UpdateCategoryPayload = CreateCategoryPayload & { version: number };
@@ -124,25 +125,21 @@ export const useCategories = (filters: Record<string, unknown> = {}) => {
     },
   });
 
+  const data = categoriesQuery.data;
+
   return {
-    categories: categoriesQuery.data?.data || [],
-    pagination: categoriesQuery.data?.metadata?.pagination
-      ? {
-          totalElements: categoriesQuery.data.metadata.pagination.total_items,
-          totalPages: categoriesQuery.data.metadata.pagination.total_pages,
-          currentPage: categoriesQuery.data.metadata.pagination.page,
-          elementsPerPage: categoriesQuery.data.metadata.pagination.limit,
-        }
-      : {
-          totalElements: 0,
-          totalPages: 0,
-          currentPage: 1,
-          elementsPerPage: 10,
-        },
+    categories: extractData(data) || [],
+    pagination: extractPagination(data) || {
+      totalElements: 0,
+      totalPages: 0,
+      currentPage: 1,
+      elementsPerPage: 10,
+    },
     isLoading: categoriesQuery.isLoading,
     isFetching: categoriesQuery.isFetching,
     isError: categoriesQuery.isError,
     createCategory: createCategoryMutation.mutate,
+    createCategoryAsync: createCategoryMutation.mutateAsync,
     isCreating: createCategoryMutation.isPending,
     updateCategory: updateCategoryMutation.mutate,
     updateCategoryAsync: updateCategoryMutation.mutateAsync,

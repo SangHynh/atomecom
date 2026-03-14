@@ -15,18 +15,7 @@ export const UserService = {
     const response = await api.get<SuccessResponse<User[]>>('users', {
       params,
     });
-    const { data, metadata } = response.data;
-    return {
-      data,
-      pagination: metadata?.pagination
-        ? {
-            totalElements: metadata.pagination.total_items,
-            totalPages: metadata.pagination.total_pages,
-            currentPage: metadata.pagination.page,
-            elementsPerPage: metadata.pagination.limit,
-          }
-        : null,
-    };
+    return response.data;
   },
 
   getUserById: async (id: string) => {

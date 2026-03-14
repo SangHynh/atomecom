@@ -5,10 +5,6 @@ interface StudioManagerState {
   editingId: string | null;
   isFormOpen: boolean;
   isDetailOpen: boolean;
-  confirmDelete: {
-    isOpen: boolean;
-    id: string;
-  };
 }
 
 export function useStudioManager() {
@@ -17,7 +13,6 @@ export function useStudioManager() {
     editingId: null,
     isFormOpen: false,
     isDetailOpen: false,
-    confirmDelete: { isOpen: false, id: '' },
   });
 
   const openForm = useCallback((id: string | null = null) => {
@@ -25,7 +20,6 @@ export function useStudioManager() {
       ...prev,
       editingId: id,
       isFormOpen: true,
-      // If we open form, we might want to close detail or keep it (Detail handles its own edit mode)
     }));
   }, []);
 
@@ -53,27 +47,12 @@ export function useStudioManager() {
     }));
   }, []);
 
-  const openDeleteConfirm = useCallback((id: string) => {
-    setState((prev) => ({
-      ...prev,
-      confirmDelete: { isOpen: true, id },
-    }));
-  }, []);
-
-  const closeDeleteConfirm = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      confirmDelete: { isOpen: false, id: '' },
-    }));
-  }, []);
-
   const closeAll = useCallback(() => {
     setState({
       selectedId: null,
       editingId: null,
       isFormOpen: false,
       isDetailOpen: false,
-      confirmDelete: { isOpen: false, id: '' },
     });
   }, []);
 
@@ -83,8 +62,6 @@ export function useStudioManager() {
     closeForm,
     openDetail,
     closeDetail,
-    openDeleteConfirm,
-    closeDeleteConfirm,
     closeAll,
   };
 }
