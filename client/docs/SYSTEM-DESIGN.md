@@ -172,9 +172,9 @@ const pagination = extractPagination(response); // Trả về PaginationData | n
 - Cast enum/union type khi TypeScript không suy luận được (ví dụ: dynamic variant string)
 - Phải kèm comment giải thích lý do
 
-### 2.5. Quy Tắc Cấu Trúc Thư Mục Component (Folder Convention)
+### 2.5. Quy Tắc Cấu Trúc Thư Mục Component (Block-Based Colocation)
 
-Áp dụng cấu trúc phân cấp dựa trên chức năng (Type-based Grouping) để tránh tình trạng thư mục module bị quá tải.
+Áp dụng cấu trúc phân cấp dựa trên luồng Giao Diện (UI Blocks / Feature-sliced) để phản ánh trực tiếp cấu trúc màn hình (Mapping 1:1 với UI).
 
 ```
 src/components/dashboard/
@@ -183,39 +183,39 @@ src/components/dashboard/
 │   ├── ...
 │
 ├── catalog/                         ← DOMAIN: Sản phẩm, Thương hiệu, Danh mục
-│   ├── product/
-│   │   ├── views/                   ← Quy cách hiển thị (Table, Grid, Row, Card)
-│   │   ├── overlays/                ← Giao diện tầng trên (Sheet, Dialog, Tabs chi tiết)
-│   │   ├── controls/                ← Bộ điều khiển (Header, Filter, Stats)
-│   │   └── form/                    ← Logic nhập liệu (Steps, Managers)
+│   ├── product/                     ← (Mọi khía cạnh của Product)
+│   │   ├── toolbar/                 ← Cụm công cụ trên cùng (Header, Filter, Search)
+│   │   ├── metrics/                 ← Cụm thẻ thống kê số liệu (Stat Cards)
+│   │   ├── table/                   ← Cụm hiển thị dữ liệu dạng bảng/lưới (Table, Grid, Pagination)
+│   │   └── overlays/                ← Cụm giao diện đè lên trên (Sheet, Dialogs, Form)
 │   ├── brand/
 │   └── category/
 │
 └── users/                           ← DOMAIN: Quản lý người dùng
-    ├── views/                       ← UserTable, EmptyState, Row
-    ├── overlays/                    ← UserFormOverlay, UserDetailSheet
-    ├── controls/                    ← UserHeader, UserFilters, Stats
-    └── form/                        ← UserForm, steps/
+    ├── toolbar/                     ← Trực quan mapping header (UserHeader, UserFilters)
+    ├── metrics/                     ← Thống kê (UserStats)
+    ├── table/                       ← Bộ phân thân danh sách (UserTable, Row)
+    └── overlays/                    ← Biểu mẫu (UserFormOverlay, UserDetailSheet)
 ```
 
 **Quy tắc đặt tên file:**
 
 - Shared component: `studio-{tên}.tsx`
-- Domain component: `{module}-{tên}.tsx` (VD: `product-table.tsx`, `user-row.tsx`). **Lưu ý:** Khi đã nằm trong folder chuyên biệt (như `views/`), có thể đặt tên ngắn gọn như `product-table.tsx` hoặc `table.tsx` nếu không gây nhầm lẫn.
-- Step form: luôn đặt trong `form/steps/` subfolder.
-- Không tạo file `index.ts` re-export (import trực tiếp từ file).
+- Domain component: `[module]-[tên].tsx` (VD: `product-form.tsx`, `user-row.tsx`). Khi đã nằm trong cụm khối khép kín (ví dụ: `table/`), có thể giản lược: `table.tsx` thay vì `product-table.tsx`.
+- Component phục vụ duy nhất 1 luồng: Luôn được Colocate sát cùng cấp component chính.
+- Không tạo file `index.ts` re-export (Ưu tiên import tường minh từ file gốc).
 
 ### 2.6. Quy Tắc Gom Nhóm Thư Mục (Grouping Rule)
 
-Để duy trì sự gọn gàng cho mã nguồn, áp dụng "Quy tắc số 5":
+Để mã nguồn dễ dàng mở rộng, áp dụng "Quy Tắc Mảnh Ghép Giao Diện":
 
-1.  **Khi nào cần folder con:** Nếu một module (như `product`, `users`) có tổng số file vượt quá **5 file**, bắt buộc phải rã ra các sub-folders: `views/`, `overlays/`, `controls/`, `form/`.
-2.  **Gom nhóm theo loại:**
-    - `views/`: Chứa các component render dữ liệu danh sách hoặc dòng đơn.
-    - `overlays/`: Chứa các component dạng đè lên màn hình (Sheet, Dialog, Drawer).
-    - `controls/`: Chứa các thành phần tương tác điều khiển (Filter, Search, Header trang).
-    - `form/`: Chứa form chính và các sub-components phục vụ nhập liệu.
-3.  **Encapsulation (Đóng gói):** Component cha nếu có các component con chỉ dùng riêng cho nó, hãy đặt chúng vào một folder mang tên component cha đó (VD: `sku-manager/` chứa `index.tsx` và `sku-item.tsx`).
+1.  **Nhất Quán Theo Khu Vực (Visual Zones):** Một Component thuộc khoảng Không gian/Khu vực nào thì đặt vào chính thư mục đại diện cho phần đó.
+    - `toolbar/`: Thao tác bao quát (Filters, Global Actions, Search).
+    - `metrics/`: Tổng hợp thông tin, KPI trước khi vào chi tiết.
+    - `table/`: (Hoặc `grid/`) Lõi hiển thị danh sách dữ liệu.
+    - `overlays/`: Bất cứ thứ gì Modal/Sheet bật nổi lên không tuân theo luồng Flow thông thường.
+2.  **Đóng Gói Chức Năng (Encapsulation):** Nếu component `stats.tsx` cần import 1 component nhỏ `stat-item.tsx` (chỉ dùng duy nhất cho stats), thì gom tất cả đặt khép kín nội bộ trong thư mục `metrics/`.
+3.  **Tự Hoại (Easily Deletable):** Tổ chức module sao cho khi xóa bỏ một cụm UI (VD: `metrics/`), nhà phát triển chỉ cần xóa đúng 1 dòng Component từ trang cha `page.tsx` và xóa nguyên bộ thư mục, mà không làm gãy mã nguồn các luồng khác.
 
 ### 2.7. Quy Tắc Viết Custom Hook (Data Hook Convention)
 
@@ -338,26 +338,71 @@ Mọi Pull Request phải đảm bảo:
 
 ## PHẦN 3: THIẾT KẾ GIAO DIỆN (NEO-EDITORIAL DESIGN SYSTEM)
 
-> **Triết lý Thiết kế:** Mọi trang quản trị (Dashboard) khi bật lên phải cho người dùng cảm giác như đang cầm một cuốn **Tạp chí công nghệ cao cấp**. Typography thao túng mọi thứ. Không gian trắng (Whitespace) được bố trí có chủ ý. Lược bỏ hoàn toàn những hình hộp trang trí diêm dúa.
+> **Triết lý Thiết kế:** Mọi trang quản trị (Dashboard) khi bật lên phải cho người dùng cảm giác như đang cầm một cuốn **Tạp chí công nghệ cao cấp**. Typography kiểm soát mọi thứ. Không gian trắng (Whitespace) được bố trí có chủ ý. Lược bỏ hoàn toàn những hình hộp trang trí diêm dúa.
 
-### 3.1. Phân tầng Font Chữ Cơ Bản
+### 3.1. Phân định ranh giới: Storefront (Cửa hàng) vs. Dashboard (Quản trị)
 
-- **Tiêu đề (Headlines):** Cắm chết với `DM Serif Display` (`font-editorial`). Chỉ định cho tên mảng (Modules), tên sản phẩm to trong bảng/card.
+Sự khác biệt cốt lõi nằm ở mục đích sử dụng, yêu cầu 2 ngôn ngữ thiết kế (Vibe) tách biệt rõ ràng dưới cùng một vỏ bọc Neo-Editorial:
+
+- **Storefront (B2C):** Được phép sử dụng tối đa tính nghệ thuật. Ưu tiên font Serif (`font-editorial`) cỡ lớn, bố cục bất đối xứng, khoảng trắng bay bổng để tạo Cảm xúc (Emotion) và nhận diện thương hiệu.
+- **Admin Dashboard (B2B/Enterprise):** Đặt tính **Thực dụng (Utility)** lên tối thượng.
+  - KHÔNG lạm dụng font chữ Serif (`font-editorial`) cho tiêu đề trang hệ thống hay con số dữ liệu quan trọng vì chúng sẽ gây mất tập trung, hỏng đường nét khi có dấu tiếng Việt.
+  - Phải dùng **Sans-serif (`font-sans`, `font-black`)** hoặc **Monospace (`font-mono`)** cho các chỉ số KPI, bảng biểu để đảm bảo dữ liệu quét nhanh, rõ ràng nhất.
+  - Loại bỏ các thẻ `<h1 className="text-5xl font-editorial">` thừa thãi trên top đầu màn hình, thay thế bằng Hệ thống **Breadcrumb** gọn gàng kết nối liền mạch với Header để tiết kiệm "Đất diễn" (Vertical Real Estate) cho biểu đồ.
+
+### 3.2. Phân tầng Font Chữ Cơ Bản
+
+- **Tiêu đề phân khu (Module Headlines):** Cắm chết với `DM Serif Display` (`font-editorial`). Chỉ định cho tên mảng lớn (Vd: Catalog, Users) HOẶC dùng cho những đoạn nhấn mạnh ở Storefront.
+- **Dữ liệu số & Tiêu đề thực dụng (Dashboards):** Bắt buộc dùng hệ `font-sans` kết hợp nét siêu đậm (`font-black`) để hiển thị KPI (GMV, Active Carts).
 - **Văn bản / UI (Body):** Xài dòng `Plus Jakarta Sans` (`font-sans`). Chuyên dùng cho Nhãn Input (Labels), đoạn miêu tả (Description). Bắt buộc: KHÔNG BAO GIỜ mang font Serif trang trí nhồi nhét vào Label.
 - **Mã vạch / Code:** `System Monospace` (`font-mono`) luôn luôn ghim vào các mã SKU, Đường dẫn tĩnh (Slugs), ID sản phẩm.
 
-### 3.2. Chiến Lược Màu CSS Variables (Vibe System)
+### 3.3. Kiến Trúc Đa Giao Diện (Multi-Vibe System)
 
-- Khái niệm mã Hex `#FFF` hay `#000` bị CẤM trong Component JSX. Mọi thứ xài token của Tailwind v4 (VD: `bg-background text-foreground`).
-- Xài chuẩn phổ màu `oklch` toàn cục đặt ẩn sau CSS variables. Để lúc người dùng bấm chuyển Sáng/Tối với class `.dark` của bộ `next-themes`, tất cả hệ màu tự động hoán đổi. Tông màu có thể config tuỳ khu vực (VD màu xanh ở Storefront, đen trắng tạp chí ở Dashboard Catalog).
-- **Inverted Action (Màu âm bản):** Nút CTA chính phải để hệ nghịch đảo (VD nền đen chữ trắng, lúc darkmode thì nền trắng chữ đen: `bg-foreground text-background`), tạo độ rít và sự thu hút tập trung mãnh liệt vào điểm nhấp.
+Để hệ thống có khả năng linh hoạt về trải nghiệm người dùng tùy theo từng ngách (Niche) bán hàng, hệ thống quy định **Kiến trúc Vibe linh hoạt:**
 
-### 3.3. Quy Tắc Hình Học & Không Gian (Spacing)
+#### 3.3.1. Kỷ luật Vibe (Core Rules)
 
-- **Đường Nét Mảnh (Editorial Dividers):** Chia cắt layout thay vì nhồi nhét nội dung xuống từng cái Thẻ box vuông (Cards) bọc quanh. Sử dụng những dải phân cách kẻ ngang cực mỏng (Vd: mảnh vải siêu nhỏ `h-px bg-foreground/10`).
-- **Border Radius hẹp:** Chủ đạo Dashboard chốt hệ bo góc `rounded-sm` (tức là góc chặt chém dứt khoát mảng miếng Tạp Chí). Góc bo béo tròn `rounded-xl` sẽ bị đày sang bên App người dùng đầu cuối (Storefront).
+1. **Không Hardcode giá trị trong JSX:**
+   - Không được viết: `bg-[#FFF]`, `text-[#000]`, `bg-blue-500`, `rounded-lg`, `font-sans`.
+   - Phải xài biến Semantic: `bg-background`, `text-success`, `rounded-[var(--radius)]`, `font-vibe-heading`.
 
-### 3.4. Label Sinh Trắc Mảnh Trắng đen
+2. **Cấu trúc một Vibe (Atomic Vibe Anatomy):**
+   - Mỗi Vibe trong `globals.css` phải định nghĩa đủ 4 trụ cột thông qua CSS Variables:
+     - **Colors**: `--background`, `--foreground`, `--primary`, `--success`, `--warning`, `--info`, `--danger-soft`.
+     - **Typography**: `--font-heading`, `--font-body`.
+     - **Geometry**: `--radius`.
+   - Khi tạo Vibe mới (VD: `data-vibe="luxury"`), chỉ cần khai báo block biến mới trong CSS và đổi thuộc tính `data-vibe` ở thẻ `<html>`.
+
+#### 3.3.2. Bảng màu Trạng thái (Semantic Status Tokens)
+
+- Tránh dùng trực tiếp class Tailwind gốc (`emerald-500`, `amber-500`...) trong dashboard.
+- Sử dụng hệ thống token:
+  - `success`: Active, Verified.
+  - `warning`: Pending, Attention needed.
+  - `danger-soft`: Banned, Restricted (mềm hơn destructive).
+  - `info`: Processing, Metadata.
+- **Cách dùng:** `<div className="text-success bg-success/10 border-success/20">...</div>`.
+
+#### 3.3.3. Luật Inverted Action (Màu âm bản)
+
+- Nút hành động chính (Primary) trên Dashboard phải luôn dùng hệ nghịch đảo: `bg-foreground text-background` (Đen trên Trắng ở Light mode, Trắng trên Đen ở Dark mode).
+
+#### 3.3.4. Hướng dẫn Triển khai (Implementation Guide)
+
+Để thay đổi "linh hồn" giao diện tại `globals.css`:
+
+- **Geometry**: Điều chỉnh `--radius` (0px cho Brutalist, 12px cho Modern).
+- **Typography**: Gán font tương ứng vào `--font-vibe-heading` và `--font-vibe-body`.
+- **Spacing**: Tuân thủ **Rule of 12** (`p-3`, `p-6`, `p-12`).
+- **Colors**: Thay đổi sắc độ của success/warning nhưng giữ nguyên tên biến CSS.
+
+### 3.4. Quy Tắc Hình Học & Không Gian (Spacing)
+
+- **Đường Nét Mảnh (Editorial Dividers):** Chia cắt layout bằng `border-b border-border/10`. Lược bỏ Shadow (Shadow là kẻ thù của Minimalist).
+- **Radius hẹp**: Mặc định dùng `rounded-[var(--radius)]`. Dashboard thường dùng hệ Radius hẹp để giữ nét chặt chém của Tạp chí.
+
+### 3.5. Label Sinh Trắc (Biometric Labels)
 
 - Các Form Labels tiêu đề ngách nhỏ luôn phải tuân theo trật tự:
   ```css
@@ -365,7 +410,7 @@ Mọi Pull Request phải đảm bảo:
   ```
   (Chữ siêu nhỏ, viết hoa toàn khối, nhồi khoảng cách chữ dãn thật rộng, màu chữ bị đánh chìm đi để làm nổi bật dòng input gõ text hiện lên sau đó).
 
-### 3.5. Studio Overlay & Stepped Layout (Nhất quán Xem/Thêm/Sửa)
+### 3.6. Studio Overlay & Stepped Layout (Nhất quán Xem/Thêm/Sửa)
 
 Để loại bỏ sự đứt gãy trong trải nghiệm (UX Friction), tất cả các thao tác tương tác dữ liệu phải tuân thủ:
 
@@ -373,7 +418,7 @@ Mọi Pull Request phải đảm bảo:
 2. **Loại bỏ cuộn trang (No Scrolling):** Các form phức tạp không được để dài lê thê. Phải sử dụng **Step Form (Thanh tiến trình)** để chia nhỏ dữ liệu thành các bước (VD: Thông tin chung -> Nội dung -> Tồn kho). Chiều cao Form được cố định để người dùng tập trung hoàn toàn.
 3. **Commercial Language:** Ưu tiên tiếng Việt thương mại, trực diện thay vì các thuật ngữ kỹ thuật hoặc tiếng Anh (VD: dùng "Quản lý tồn kho" thay vì "Inventory", "Tư liệu thương hiệu" thay vì "Brand Media").
 
-### 3.6. Trải nghiệm Visual Asset Picking
+### 3.7. Trải nghiệm Visual Asset Picking
 
 Thay thế hoàn toàn việc dán link URL thủ công bằng trải nghiệm thị giác (Visual First):
 
@@ -381,7 +426,7 @@ Thay thế hoàn toàn việc dán link URL thủ công bằng trải nghiệm t
 - Cho phép thao tác trực tiếp (Xóa, Thay đổi) ngay trên thành phần hiển thị ảnh.
 - Đồng bộ hóa kích thước hiển thị (Aspect Ratio) giữa Form nhập liệu và View chi tiết.
 
-### 3.7. Kỷ luật UX "Studio Archive"
+### 3.8. Kỷ luật UX "Studio Archive"
 
 Mọi giao diện phải mang lại cảm giác của một phiên làm việc (Session) chuyên nghiệp:
 
@@ -423,3 +468,11 @@ Ngoài Global Error Boundary, mỗi vùng dữ liệu trong trang nên có Error
 - **Image Optimization:** Dùng `next/image` thay vì `<img>` tag trực tiếp
 
 > Thiết lập này giúp đội ngũ giữ vững kỷ luật 2 con đường song song: Thẩm mỹ thị giác chuẩn mực thời trang cao cấp và Logic mã nguồn đơn giản sạch sẽ dễ mở rộng.
+
+---
+
+Phụ lục: Danh sách tệp tin nền tảng
+
+- `client/src/app/globals.css`: Nơi chứa linh hồn của các Vibe.
+- `client/src/components/ui/`: Các nguyên tử UI (Button, Badge, Input) đã được Vibe-hoá.
+- `client/src/components/dashboard/studio/`: Các cấu trúc Layout cấp cao tuân thủ Vibe Geometry.
