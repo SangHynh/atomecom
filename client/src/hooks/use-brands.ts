@@ -7,6 +7,7 @@ import { brandService } from '@/services/brand.service';
 import { Brand, SuccessResponse, brandSchema } from '@atomecom/shared';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { extractData, extractPagination } from '@/lib/api-utils';
 
 type CreateBrandPayload = z.infer<typeof brandSchema>;
 type UpdateBrandPayload = CreateBrandPayload & { version: number };
@@ -81,25 +82,21 @@ export const useBrands = (filters: Record<string, unknown> = {}) => {
     },
   });
 
+  const data = brandsQuery.data;
+
   return {
-    brands: brandsQuery.data?.data || [],
-    pagination: brandsQuery.data?.metadata?.pagination
-      ? {
-          totalElements: brandsQuery.data.metadata.pagination.total_items,
-          totalPages: brandsQuery.data.metadata.pagination.total_pages,
-          currentPage: brandsQuery.data.metadata.pagination.page,
-          elementsPerPage: brandsQuery.data.metadata.pagination.limit,
-        }
-      : {
-          totalElements: 0,
-          totalPages: 0,
-          currentPage: 1,
-          elementsPerPage: 10,
-        },
+    brands: extractData(data) || [],
+    pagination: extractPagination(data) || {
+      totalElements: 0,
+      totalPages: 0,
+      currentPage: 1,
+      elementsPerPage: 10,
+    },
     isLoading: brandsQuery.isLoading,
     isFetching: brandsQuery.isFetching,
     isError: brandsQuery.isError,
     createBrand: createBrandMutation.mutate,
+    createBrandAsync: createBrandMutation.mutateAsync,
     isCreating: createBrandMutation.isPending,
     updateBrand: updateBrandMutation.mutate,
     updateBrandAsync: updateBrandMutation.mutateAsync,

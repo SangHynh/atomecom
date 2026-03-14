@@ -12,6 +12,7 @@ import {
 } from '@atomecom/shared';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { extractData, extractPagination } from '@/lib/api-utils';
 
 type UpdateSkuPayload = z.infer<typeof skuSchema> & { version: number };
 type UpdateSkuPricePayload = z.infer<
@@ -19,10 +20,25 @@ type UpdateSkuPricePayload = z.infer<
 > & { version: number };
 
 export const useSkus = (filters: Record<string, unknown> = {}) => {
-  return useQuery({
+  const skusQuery = useQuery({
     queryKey: ['skus', filters],
     queryFn: () => skuService.getSkus(filters),
   });
+
+  const data = skusQuery.data;
+
+  return {
+    skus: extractData(data) || [],
+    pagination: extractPagination(data) || {
+      totalElements: 0,
+      totalPages: 0,
+      currentPage: 1,
+      elementsPerPage: 10,
+    },
+    isLoading: skusQuery.isLoading,
+    isFetching: skusQuery.isFetching,
+    isError: skusQuery.isError,
+  };
 };
 
 export const useSkusByProduct = (productId: string | null) => {

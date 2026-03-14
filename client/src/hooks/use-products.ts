@@ -7,6 +7,7 @@ import { productService } from '@/services/product.service';
 import { SuccessResponse, Product, productFormSchema } from '@atomecom/shared';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { extractData, extractPagination } from '@/lib/api-utils';
 
 type CreateProductPayload = z.infer<typeof productFormSchema>;
 type UpdateProductPayload = z.infer<typeof productFormSchema> & {
@@ -105,21 +106,16 @@ export const useProducts = (filters: Record<string, unknown> = {}) => {
     },
   });
 
+  const data = productsQuery.data;
+
   return {
-    products: productsQuery.data?.data || [],
-    pagination: productsQuery.data?.metadata?.pagination
-      ? {
-          totalElements: productsQuery.data.metadata.pagination.total_items,
-          totalPages: productsQuery.data.metadata.pagination.total_pages,
-          currentPage: productsQuery.data.metadata.pagination.page,
-          elementsPerPage: productsQuery.data.metadata.pagination.limit,
-        }
-      : {
-          totalElements: 0,
-          totalPages: 0,
-          currentPage: 1,
-          elementsPerPage: 10,
-        },
+    products: extractData(data) || [],
+    pagination: extractPagination(data) || {
+      totalElements: 0,
+      totalPages: 0,
+      currentPage: 1,
+      elementsPerPage: 10,
+    },
     isLoading: productsQuery.isLoading,
     isFetching: productsQuery.isFetching,
     isError: productsQuery.isError,
