@@ -28,11 +28,11 @@ export function SortableHeader({
     <div
       onClick={() => canSort && onSort(field)}
       className={cn(
-        'flex items-center gap-2 px-4 py-4 text-[10px] font-bold uppercase tracking-wider transition-all select-none group',
+        'flex items-center gap-2 px-4 py-4 text-[10px] font-black uppercase tracking-[0.15em] transition-all select-none group',
         canSort ? 'cursor-pointer' : 'cursor-default',
         isActive
           ? 'text-foreground'
-          : 'text-muted-foreground/50 hover:text-foreground/80',
+          : 'text-muted-foreground/60 hover:text-foreground/80',
         className,
       )}
     >
@@ -53,3 +53,6 @@ export function SortableHeader({
     </div>
   );
 }
+
+
+

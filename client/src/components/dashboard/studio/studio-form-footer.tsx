@@ -46,7 +46,7 @@ export function StudioFormFooter({
         type={isSubmitStep ? 'submit' : 'button'}
         onClick={!isSubmitStep ? onNext : undefined}
         disabled={isLoading}
-        className="h-11 px-8 rounded-md bg-foreground text-background hover:bg-foreground/90 font-bold uppercase tracking-wide text-[11px] gap-3 shadow-none active:scale-[0.98] transition-all"
+        className="h-11 px-8 rounded-[var(--radius)] bg-foreground text-background hover:bg-foreground/90 font-bold uppercase tracking-wide text-[11px] gap-3 shadow-none active:scale-[0.98] transition-all"
       >
         {isLoading && (
           <Loader2 className="h-4 w-4 animate-spin text-background" />
@@ -62,3 +62,8 @@ export function StudioFormFooter({
     </div>
   );
 }
+
+
+
+
+

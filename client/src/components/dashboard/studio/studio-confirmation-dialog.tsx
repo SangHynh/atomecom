@@ -49,32 +49,34 @@ export function StudioConfirmationDialog({
 
   const colors = {
     danger:
-      'text-rose-600 bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20',
+      'text-danger-soft bg-danger-soft/10 border-danger-soft/20',
     warning:
-      'text-amber-600 bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20',
-    info: 'text-blue-600 bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20',
+      'text-warning bg-warning/10 border-warning/20',
+    info: 
+      'text-info bg-info/10 border-info/20',
     primary:
-      'text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20',
-    ban: 'text-rose-600 bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20',
+      'text-primary bg-primary/10 border-primary/20',
+    ban: 
+      'text-danger-soft bg-danger-soft/10 border-danger-soft/20',
   };
 
   const buttonClass = {
-    danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-500/20',
-    warning: 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-500/20',
-    info: 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20',
+    danger: 'bg-danger-soft hover:bg-danger-soft/90 text-white shadow-danger-soft/20',
+    warning: 'bg-warning hover:bg-warning/90 text-white shadow-warning/20',
+    info: 'bg-info hover:bg-info/90 text-white shadow-info/20',
     primary:
-      'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20',
-    ban: 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-500/20',
+      'bg-primary hover:bg-primary/90 text-white shadow-primary/20',
+    ban: 'bg-danger-soft hover:bg-danger-soft/90 text-white shadow-danger-soft/20',
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[400px] rounded-sm p-0 overflow-hidden border-[0.5px] border-border/40 shadow-none bg-background/95 backdrop-blur-xl z-[200]">
+      <DialogContent className="sm:max-w-[400px] rounded-[var(--radius)] p-0 overflow-hidden border-[0.5px] border-border/40 shadow-none bg-background/95 backdrop-blur-xl z-[200]">
         <div className="p-8 space-y-6">
           <div className="flex flex-col items-center text-center space-y-4">
             <div
               className={cn(
-                'h-16 w-16 rounded-sm flex items-center justify-center border-[0.5px] animate-in zoom-in-50 duration-300',
+                'h-16 w-16 rounded-[var(--radius)] flex items-center justify-center border-[0.5px] animate-in zoom-in-50 duration-300',
                 colors[variant],
               )}
             >
@@ -97,7 +99,7 @@ export function StudioConfirmationDialog({
           <Button
             variant="outline"
             onClick={onClose}
-            className="rounded-md font-bold text-[10px] uppercase tracking-wide active:scale-95 transition-all h-11 border border-border/10 hover:bg-muted/50 shadow-none text-muted-foreground"
+            className="rounded-[var(--radius)] font-bold text-[10px] uppercase tracking-wide active:scale-95 transition-all h-11 border border-border/10 hover:bg-muted/50 shadow-none text-muted-foreground"
             disabled={isLoading}
           >
             {cancelText || 'Hủy'}
@@ -108,7 +110,7 @@ export function StudioConfirmationDialog({
               onClose();
             }}
             className={cn(
-              'rounded-md font-bold text-[10px] uppercase tracking-wide active:scale-95 transition-all border border-transparent shadow-none h-11',
+              'rounded-[var(--radius)] font-bold text-[10px] uppercase tracking-wide active:scale-95 transition-all border border-transparent shadow-none h-11',
               buttonClass[variant],
             )}
             disabled={isLoading}
@@ -120,3 +122,8 @@ export function StudioConfirmationDialog({
     </Dialog>
   );
 }
+
+
+
+
+

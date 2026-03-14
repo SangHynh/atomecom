@@ -59,15 +59,15 @@ export function StudioPagination({
 
   return (
     <div className="flex items-center px-5 py-3 border-t border-border/10 bg-muted/5 backdrop-blur-sm z-20">
-      <div className="flex-1 hidden md:flex items-center gap-1.5 text-[10px] uppercase tracking-wide">
-        <span className="font-bold text-foreground/80">{currentCount}</span>
-        <span className="text-muted-foreground/40 font-medium px-1 capitalize">
+      <div className="flex-1 hidden md:flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.15em]">
+        <span className="text-foreground">{currentCount}</span>
+        <span className="text-muted-foreground/40 font-bold px-1">
           tổng số
         </span>
-        <span className="font-bold text-foreground/80">
+        <span className="text-foreground">
           {pagination.totalElements}
         </span>
-        <span className="text-muted-foreground/50 font-bold ml-0.5">
+        <span className="text-muted-foreground/60 ml-0.5">
           {itemName}
         </span>
       </div>
@@ -78,7 +78,7 @@ export function StudioPagination({
           size="icon"
           disabled={current <= 1}
           onClick={() => onPageChange(1)}
-          className="h-8 w-8 rounded-md disabled:opacity-20 hover:bg-muted/50"
+          className="h-8 w-8 rounded-[var(--radius)] disabled:opacity-20 hover:bg-muted/50 border border-transparent hover:border-border/40"
         >
           <ChevronsLeft className="h-4 w-4" />
         </Button>
@@ -87,7 +87,7 @@ export function StudioPagination({
           size="icon"
           disabled={current <= 1}
           onClick={() => onPageChange(current - 1)}
-          className="h-8 w-8 rounded-md disabled:opacity-20 hover:bg-muted/50"
+          className="h-8 w-8 rounded-[var(--radius)] disabled:opacity-20 hover:bg-muted/50 border border-transparent hover:border-border/40"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -97,7 +97,7 @@ export function StudioPagination({
             p === '...' ? (
               <span
                 key={`sep-${i}`}
-                className="text-[10px] font-bold text-muted-foreground/20 px-1"
+                className="text-[10px] font-black text-muted-foreground/20 px-1"
               >
                 ···
               </span>
@@ -108,10 +108,10 @@ export function StudioPagination({
                 size="icon"
                 onClick={() => onPageChange(p as number)}
                 className={cn(
-                  'h-8 w-8 rounded-md text-xs font-bold transition-all shadow-none',
+                  'h-8 w-8 rounded-[var(--radius)] text-xs font-black transition-all shadow-none',
                   current === p
                     ? 'bg-foreground text-background shadow-none border border-border/10'
-                    : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground',
+                    : 'hover:bg-muted/50 text-muted-foreground/40 hover:text-foreground border border-transparent hover:border-border/40',
                 )}
               >
                 {p}
@@ -125,7 +125,7 @@ export function StudioPagination({
           size="icon"
           disabled={current >= total}
           onClick={() => onPageChange(current + 1)}
-          className="h-8 w-8 rounded-md disabled:opacity-20 hover:bg-muted/50"
+          className="h-8 w-8 rounded-[var(--radius)] disabled:opacity-20 hover:bg-muted/50 border border-transparent hover:border-border/40"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -134,7 +134,7 @@ export function StudioPagination({
           size="icon"
           disabled={current >= total}
           onClick={() => onPageChange(total)}
-          className="h-8 w-8 rounded-md disabled:opacity-20 hover:bg-muted/50"
+          className="h-8 w-8 rounded-[var(--radius)] disabled:opacity-20 hover:bg-muted/50 border border-transparent hover:border-border/40"
         >
           <ChevronsRight className="h-4 w-4" />
         </Button>
@@ -143,3 +143,8 @@ export function StudioPagination({
     </div>
   );
 }
+
+
+
+
+
